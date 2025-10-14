@@ -1,0 +1,15 @@
+name = "probability"
+version = "0.1.0"
+defaultTargets = ["probability"]
+
+[[lean_lib]]
+name = "Probability"
+
+[[lean_exe]]
+name = "probability"
+root = "Main"
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
