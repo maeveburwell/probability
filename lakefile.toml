@@ -13,7 +13,6 @@ root = "Main"
 name = "mathlib"
 scope = "leanprover-community"
 
-
 [[require]]
 name = "checkdecls"
 git = "https://github.com/PatrickMassot/checkdecls.git"
