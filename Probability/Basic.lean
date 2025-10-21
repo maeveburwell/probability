@@ -786,5 +786,3 @@ def FinProb.MeasurableProb {L : List ℚ} (ℱ : P.SampleMap L.length) : Prop :=
 
 --example {m : ℕ} {ℱ : P.SampleMap m} (h: X.Measurable Y ℱ) : 1 = 𝔼[ X // P ] := by sorry
 end Measurability
-
---adding a comment for test purposes
