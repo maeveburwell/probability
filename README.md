@@ -1,6 +1,6 @@
 # Basic Probability Formalization in Lean
 
-[![Blueprint](https://img.shields.io/badge/Blueprint-WIP-blue)](https://formalproofs.github.io/Probability)
+[![Blueprint](https://img.shields.io/badge/Blueprint-WIP-blue)](https://formalproofs.github.io/probability)
 
 A lean proof that stationary policies can be optimal and can be computed using dynamic programming
 
