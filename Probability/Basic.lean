@@ -33,23 +33,7 @@ theorem ind_zero_one (cond : τ → Bool) (ω : τ) : ( (𝕀∘cond) ω = 1)∨
 
 end Indicator
 
----------- List Basic Properties Definitions  -----------------------------------------
-
-section List
-
-variable {L : List τ}
-
--- TODO: find the theorem in mathlib that does this 
-theorem List.nonempty_length_gt_one (h : ¬L.isEmpty) : L.length ≥ 1 := 
-    by simp_all
-       cases L 
-       · contradiction
-       · exact tsub_add_cancel_iff_le.mp rfl
-
-end List
-
 ---------- Probability Definitions  -----------------------------------------
-
 
 /-- states that p is a valid probability value -/
 @[simp]
@@ -84,20 +68,98 @@ theorem upper_bound_snd (hp : Prob p) (h : x ≤ y) : p * x + (1-p) * y ≤ y :=
 
 end Prob
 
+
+---------- List Basic Properties Definitions  -----------------------------------------
+
+section List
+namespace List
+
+variable {L : List ℚ}
+
+def scale (L : List ℚ) (c : ℚ) : List ℚ := (L.map fun x↦x*c)
+
+-- TODO: find the theorem in mathlib that does this 
+theorem nonempty_length_gt_one (h : ¬L.isEmpty) : L.length ≥ 1 := 
+    by simp_all
+       cases L 
+       · contradiction
+       · exact tsub_add_cancel_iff_le.mp rfl
+
+
+@[simp]
+theorem scale_sum : (L.scale c).sum = c * L.sum := 
+  by induction L
+     · simp [scale]
+     · simp_all [scale]
+       ring
+
+@[simp]
+theorem scale_length : (L.scale c).length = L.length := by simp [scale]
+
+theorem scale_nneg_of_nneg (h : ∀l ∈ L, 0 ≤ l) (h1 : 0 ≤ c) : (∀l ∈ L.scale c, 0 ≤ l) := 
+  by induction L 
+     · simp [List.scale]
+     · simp_all [List.scale]
+       exact Left.mul_nonneg h.1 h1
+  
+theorem append_nneg_of_nneg (h : ∀l ∈ L, 0 ≤ l) (h1 : 0 ≤ p) : (∀l ∈ p::L, 0 ≤ l) := 
+  by aesop
+
+/-- adds a new probability to a list and renormalizes the rest --/
+def grow (L : List ℚ) (p : ℚ) : List ℚ := p :: (L.scale (1-p)) 
+    
+theorem grow_sum : (L.grow p).sum = L.sum * (1-p) + p := 
+  by induction L
+     · simp [List.grow, List.scale]
+     · simp [List.grow, List.scale_sum]
+       ring
+
+
+/-- Removes head and rescales -/
+def shrink : List ℚ → List ℚ
+    | nil => nil
+    | head :: tail => tail.scale (1-head)⁻¹
+
+    
+@[simp]
+theorem shrink_length : L.shrink.length = L.tail.length := 
+  by cases L; simp [List.shrink]; simp[List.shrink, List.scale]
+
+theorem shrink_length_less_one : L.shrink.length = L.length - 1 :=
+    by simp only [shrink_length, length_tail]
+       
+    
+@[simp]
+theorem shrink_sum (npt: L ≠ []) (h : L.head npt < 1) : 
+        (L.shrink).sum = (L.tail).sum / (1 - L.head npt)  := 
+        by cases L; contradiction; simp_all [List.shrink, List.scale_sum]; ring
+
+theorem shrink_ge0 (h1 : ∀l ∈ L, Prob l) : ∀l ∈ (L.shrink), 0 ≤ l := 
+    by simp [List.shrink]
+       cases L with
+       | nil => simp_all only [List.not_mem_nil, IsEmpty.forall_iff, implies_true]
+       | cons head tail => 
+           simp_all only [List.mem_cons, Prob, forall_eq_or_imp]
+           have hh : 0 ≤ (1-head)⁻¹ := Prob.complement_inv_nneg h1.1
+           exact List.scale_nneg_of_nneg (L:=tail) (c:=(1-head)⁻¹) (fun l a ↦ (h1.2 l a).1) hh 
+
+end List
+end List
+
 ---------- LSimplex Definitions  -----------------------------------------
 
 section LSimplex
 
 variable {p : ℚ}
 
-def List.scale (L : List ℚ) (c : ℚ) : List ℚ := (L.map fun x↦x*c)
-
 /-- Self-normalizing list of probabilities  --/
 structure LSimplex (L : List ℚ) : Prop where
   nneg : ∀p ∈ L, 0 ≤ p               -- separate for convenience
   normalized : L.sum = 1             -- sums to 1
   
-def LSimplex.singleton : LSimplex [1] := 
+namespace LSimplex
+
+def singleton : LSimplex [1] := 
   ⟨fun p a => by simp_all only [List.mem_cons, List.not_mem_nil, or_false, zero_le_one], 
     List.sum_singleton⟩
 
@@ -106,70 +168,42 @@ variable (S : LSimplex L)
 
 /-- cannot define a simplex on an empty set -/
 @[simp]
-theorem LSimplex.nonempty (S : LSimplex L) : L ≠ [] := 
+theorem nonempty (S : LSimplex L) : L ≠ [] := 
         fun a => by have := S.normalized; simp_all 
        
 @[simp] 
-abbrev LSimplex.npt : LSimplex L → L ≠ [] := LSimplex.nonempty
+abbrev npt : LSimplex L → L ≠ [] := LSimplex.nonempty
 
-def LSimplex.phead (h : LSimplex L) : ℚ := L.head h.nonempty
+def phead (h : LSimplex L) : ℚ := L.head h.nonempty
 
 /-- all probability in the head element -/
-def LSimplex.degenerate (S : LSimplex L) : Bool := S.phead  == 1
+def degenerate (S : LSimplex L) : Bool := S.phead  == 1
 
 @[reducible]
-def LSimplex.supported  : Bool := ¬S.degenerate
+def supported  : Bool := ¬S.degenerate
 
 @[simp]
-theorem LSimplex.mem_prob (S : LSimplex L) : ∀ p ∈ L, Prob p := 
+theorem mem_prob (S : LSimplex L) : ∀ p ∈ L, Prob p := 
   fun p a => ⟨ S.nneg p a, 
                S.normalized ▸ List.single_le_sum S.nneg p a⟩
                
-theorem LSimplex.phead_inpr  : S.phead ∈ L := List.head_mem S.nonempty
+theorem phead_inpr  : S.phead ∈ L := List.head_mem S.nonempty
 
 @[simp]
-theorem LSimplex.phead_prob  : Prob S.phead := S.mem_prob S.phead S.phead_inpr
+theorem phead_prob  : Prob S.phead := S.mem_prob S.phead S.phead_inpr
                
-theorem LSimplex.phead_supp  (supp : S.supported) : S.phead  < 1 :=
+theorem phead_supp  (supp : S.supported) : S.phead  < 1 :=
   by simp [degenerate] at supp
      exact lt_of_le_of_ne S.phead_prob.2 supp 
 
-theorem LSimplex.supported_head_lt_one  (supp : S.supported) : L.head S.npt < 1 :=
+theorem supported_head_lt_one  (supp : S.supported) : L.head S.npt < 1 :=
     by have prob := LSimplex.mem_prob S (L.head S.npt) (List.head_mem (LSimplex.npt S))
        simp [LSimplex.degenerate] at supp              
        simp [Prob] at prob             
        exact lt_of_le_of_ne prob.2 supp
 
 @[simp]
-theorem List.scale_sum : (L.scale c).sum = c * L.sum := 
-  by induction L
-     · simp [List.scale]
-     · simp_all [List.scale]
-       ring
-
-@[simp]
-theorem List.scale_length : (L.scale c).length = L.length := by simp [List.scale]
-
-theorem List.scale_nneg_of_nneg (h : ∀l ∈ L, 0 ≤ l) (h1 : 0 ≤ c) : (∀l ∈ L.scale c, 0 ≤ l) := 
-  by induction L 
-     · simp [List.scale]
-     · simp_all [List.scale]
-       exact Left.mul_nonneg h.1 h1
-  
-theorem List.append_nneg_of_nneg (h : ∀l ∈ L, 0 ≤ l) (h1 : 0 ≤ p) : (∀l ∈ p::L, 0 ≤ l) := 
-  by aesop
-
-/-- adds a new probability to a list and renormalizes the rest --/
-def List.grow (L : List ℚ) (p : ℚ) : List ℚ := p :: (L.scale (1-p)) 
-    
-theorem List.grow_sum : (L.grow p).sum = L.sum * (1-p) + p := 
-  by induction L
-     · simp [List.grow, List.scale]
-     · simp [List.grow, List.scale_sum]
-       ring
-
-@[simp]
-theorem List.grow_ge0 (h1 : ∀l ∈ L, 0 ≤ l)  (h2 : Prob p) :  ∀ l ∈ (L.grow p), 0 ≤ l := 
+theorem List.grow_ge0 (h1 : ∀l ∈ L, 0 ≤ l) (h2 : Prob p) :  ∀ l ∈ (L.grow p), 0 ≤ l := 
     by simp [List.grow]
        constructor
        · exact h2.1
@@ -179,44 +213,17 @@ theorem List.grow_ge0 (h1 : ∀l ∈ L, 0 ≤ l)  (h2 : Prob p) :  ∀ l ∈ (L.
 
 -- grows the simplex to also incude the probability p
 @[simp]
-theorem LSimplex.grow (S : LSimplex L) {p : ℚ} (prob : Prob p) : LSimplex (L.grow p) :=
+theorem grow (S : LSimplex L) {p : ℚ} (prob : Prob p) : LSimplex (L.grow p) :=
   {nneg := List.grow_ge0 S.nneg prob,
    normalized := by simp [List.grow_sum, S.normalized]}
-
-/-- Removes head and rescales -/
-def List.shrink : List ℚ → List ℚ
-    | nil => nil
-    | head :: tail => tail.scale (1-head)⁻¹
-    
-@[simp]
-theorem List.shrink_length : L.shrink.length = L.tail.length := 
-  by cases L; simp [List.shrink]; simp[List.shrink, List.scale]
-
-theorem List.shrink_length_less_one : L.shrink.length = L.length - 1 :=
-    by simp only [shrink_length, length_tail]
-       
-    
-@[simp]
-theorem List.shrink_sum (npt: L ≠ []) (h : L.head npt < 1) : 
-        (L.shrink).sum = (L.tail).sum / (1 - L.head npt)  := 
-        by cases L; contradiction; simp_all [List.shrink, List.scale_sum]; ring
-
-theorem List.shrink_ge0 (h1 : ∀l ∈ L, Prob l) : ∀l ∈ (L.shrink), 0 ≤ l := 
-    by simp [List.shrink]
-       cases L with
-       | nil => simp_all only [List.not_mem_nil, IsEmpty.forall_iff, implies_true]
-       | cons head tail => 
-           simp_all only [mem_cons, Prob, forall_eq_or_imp]
-           have hh : 0 ≤ (1-head)⁻¹ := Prob.complement_inv_nneg h1.1
-           exact List.scale_nneg_of_nneg (L:=tail) (c:=(1-head)⁻¹) (fun l a ↦ (h1.2 l a).1) hh 
 
 lemma false_of_p_comp1_zero_p_less_one (h1 : 1 - p = 0) (h2 : p < 1) : False := by linarith
   
 @[simp]
-theorem LSimplex.tail_sum (S : LSimplex L) : L.tail.sum = (1 - L.head S.npt) := 
+theorem tail_sum (S : LSimplex L) : L.tail.sum = (1 - L.head S.npt) := 
   by cases L; have := S.npt; contradiction; have := S.normalized; simp at this ⊢; linarith
 
-theorem LSimplex.degenerate_tail_zero (degen : S.degenerate) : ∀ p ∈ L.tail, p = 0 :=
+theorem degenerate_tail_zero (degen : S.degenerate) : ∀ p ∈ L.tail, p = 0 :=
   by simp [LSimplex.degenerate, LSimplex.phead] at degen
      have ts := S.tail_sum
      rw [degen] at ts; simp at ts
@@ -228,7 +235,8 @@ theorem LSimplex.degenerate_tail_zero (degen : S.degenerate) : ∀ p ∈ L.tail,
      have hu := lez p a
      linarith
 
-theorem LSimplex.shrink (S : LSimplex L) (supp : S.supported) : LSimplex (L.shrink) :=
+
+theorem shrink (S : LSimplex L) (supp : S.supported) : LSimplex (L.shrink) :=
   {nneg := List.shrink_ge0 (LSimplex.mem_prob S),
    normalized := 
      by have npt := S.npt
@@ -238,8 +246,7 @@ theorem LSimplex.shrink (S : LSimplex L) (supp : S.supported) : LSimplex (L.shri
         rw[List.shrink_sum S.npt hh]
         exact (div_eq_one_iff_eq hh2).mpr hh1}
         
-theorem List.grow_of_shrink 
-        (S : LSimplex L) (supp : S.supported) : L = (L.shrink).grow (S.phead) := 
+theorem grow_of_shrink_list (supp : S.supported) : L = (L.shrink).grow (S.phead) := 
    by induction L with
       | nil => have := S.nonempty; contradiction 
       | cons head tail => 
@@ -248,9 +255,10 @@ theorem List.grow_of_shrink
              simp_all [List.grow, List.shrink, List.scale, LSimplex.phead]
 
 -- all props of the same type are equal
-theorem LSimplex.grow_of_shrink (S : LSimplex L) (supp : S.supported) : 
-        S = (List.grow_of_shrink S supp) ▸ (S.shrink supp).grow S.phead_prob := rfl
-             
+theorem grow_of_shrink (supp : S.supported) : 
+        S = (S.grow_of_shrink_list supp) ▸ (S.shrink supp).grow S.phead_prob := rfl
+
+end LSimplex             
 end LSimplex
 
 ---------------- FinDist ----------------------------------------------------
@@ -340,7 +348,7 @@ def growshrink (supp : F.supported) : Findist (N-1+1) :=
 example (supp : F.supported) : ((F.shrink supp).grow F.phead_prob).ℙ = F.ℙ :=
     by have h1 : F.supported := by simp_all only 
        simp [Findist.shrink, Findist.grow, Findist.phead]
-       rw [←List.grow_of_shrink F.simplex h1] 
+       rw [←LSimplex.grow_of_shrink_list F.simplex h1] 
          
 
 theorem grow_of_shrink_2 (supp : F.supported) : 
@@ -348,7 +356,7 @@ theorem grow_of_shrink_2 (supp : F.supported) :
     by have h1 : F.supported := by simp_all only  
        simp [Findist.growshrink, Findist.shrink, Findist.grow, Findist.phead]
        rw [Findist.mk.injEq]
-       rw [←List.grow_of_shrink F.simplex h1] 
+       rw [←LSimplex.grow_of_shrink_list F.simplex h1] 
        congr; --TODO: here to deal with casts; need to understand them better (see example below)
          symm; exact Nat.sub_add_cancel F.nonempty;
          simp_all only [heq_cast_iff_heq, heq_eq_eq]
@@ -369,7 +377,6 @@ lemma List.unique_head_notin_tail (L : List τ) (ne : L ≠ []) (nodup : L.Nodup
      · simp at ne 
      · simp [List.head, List.tail]
        simp_all only [ne_eq, reduceCtorEq, not_false_eq_true, List.nodup_cons]
-
 
 namespace Finprob 
 
@@ -452,7 +459,7 @@ theorem shrink_shorter (supp : P.supported) :
 theorem grow_of_shrink (supp : P.supported) : P = (P.shrink supp).grow P.phead_prob := 
     by rw [Finprob.mk.injEq] -- same fields equivalent to same structures
        simp [Finprob.shrink, Finprob.grow]
-       apply List.grow_of_shrink
+       apply LSimplex.grow_of_shrink_list 
        simp_all only [decide_not, Bool.decide_eq_true, Bool.not_eq_eq_eq_not, Bool.not_true,
                 Bool.false_eq_true, decide_false, Bool.not_false]
        exact P.prob
