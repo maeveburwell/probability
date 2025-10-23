@@ -41,7 +41,7 @@ abbrev Prob (p : ℚ) : Prop := 0 ≤ p ∧ p ≤ 1
 
 namespace Prob
 
-variable {p x y : ℚ}
+variable {p x y : ℚ} --creating variables
 
 @[simp]
 theorem of_complement ( hp : Prob p) : Prob (1-p) := by
