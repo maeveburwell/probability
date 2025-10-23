@@ -78,14 +78,6 @@ variable {L : List ℚ}
 
 def scale (L : List ℚ) (c : ℚ) : List ℚ := (L.map fun x↦x*c)
 
--- TODO: find the theorem in mathlib that does this
-theorem nonempty_length_gt_one (h : ¬L.isEmpty) : L.length ≥ 1 :=
-    by simp_all
-       cases L
-       · contradiction
-       · exact tsub_add_cancel_iff_le.mp rfl
-
-
 @[simp]
 theorem scale_sum : (L.scale c).sum = c * L.sum :=
   by induction L
@@ -413,9 +405,15 @@ theorem nonempty : ¬P.ℙ.isEmpty :=
   by intro a;
      simp_all only [LSimplex.nonempty P.prob, List.isEmpty_iff]
 
+--TODO: try to shorten/simplify the theorem below
 theorem length_gt_zero : P.length ≥ 1 :=
-    by simp [Finprob.length]
-       exact List.nonempty_length_gt_one (P.nonempty)
+  by
+    simp [Finprob.length]
+    have hne : P.ℙ ≠ [] := by
+      intro hnil
+      have : P.ℙ.isEmpty = true := by simp [List.isEmpty, hnil]
+      exact P.nonempty this
+    exact Nat.succ_le_of_lt (List.length_pos_iff.mpr hne)
 
 theorem shrink_length (supp : P.supported) : (P.shrink supp).length = P.length - 1 :=
     by  have h := Finprob.nonempty P
