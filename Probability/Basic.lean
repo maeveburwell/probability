@@ -43,11 +43,9 @@ namespace Prob
 
 variable {p x y : ℚ}
 
-@[simp]
 theorem of_complement ( hp : Prob p) : Prob (1-p) := by
         simp_all only [ Prob, sub_nonneg, tsub_le_iff_right, le_add_iff_nonneg_right, and_self]
 
-@[simp]
 theorem complement_inv_nneg (hp : Prob p) : 0 ≤ (1-p)⁻¹ := by simp_all only [Prob, inv_nonneg, sub_nonneg]
 
 theorem lower_bound_fst (hp : Prob p) (h : x ≤ y) : x ≤ p * x + (1-p) * y := by
@@ -727,6 +725,7 @@ section Expectations
 def List.iprod (ℙ : List ℚ) (X : FinRV ℚ) : ℚ :=
     match ℙ with
     | [] => 0
+
     | head :: tail =>  head * (X tail.length) + tail.iprod X
 
 
