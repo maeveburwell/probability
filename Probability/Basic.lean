@@ -405,6 +405,7 @@ theorem nonempty : ¬P.ℙ.isEmpty :=
   by intro a;
      simp_all only [LSimplex.nonempty P.prob, List.isEmpty_iff]
 
+--TODO: try to shorten/simplify the theorem below
 theorem length_gt_zero : P.length ≥ 1 :=
   by
     simp [Finprob.length]
