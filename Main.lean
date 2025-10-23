@@ -1,4 +1,5 @@
 import Probability
 
-def main : IO Unit :=
+def main : IO Unit := -- main
   IO.println s!"Hello!"
+
