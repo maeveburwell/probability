@@ -4,7 +4,7 @@
 
 A lean proof that stationary policies can be optimal and can be computed using dynamic programming
 
-See <https://formalproofs.github.io/Probability>
+See <https://formalproofs.github.io/probability>
 
 
 ## Lean
