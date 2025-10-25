@@ -550,7 +550,6 @@ def List.iprodb (ℙ : List ℚ) (B : FinRV Bool) : ℚ :=
 
 variable (P : Finprob) (B : FinRV Bool) (C : FinRV Bool)
 
-
 variable (L : List ℚ)
 
 theorem List.scale_innerprod  (x : ℚ) : (L.scale x).iprodb B = x * (L.iprodb B) :=
