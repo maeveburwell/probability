@@ -26,7 +26,7 @@ def indicator (cond : Bool) : ℚ := cond.rec 0 1
 abbrev 𝕀 : Bool → ℚ := indicator
 
 /-- Indicator is 0 or 1 -/
-theorem ind_zero_on (cond : τ → Bool) : ( (𝕀∘cond) ω = 1)∨((𝕀∘cond) ω = 0) := by
+theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀∘cond) ω = 0) := by
     by_cases h : cond ω
     · left; simp only [Function.comp_apply, h, indicator]
     · right; simp only [Function.comp_apply, h, indicator]
@@ -550,7 +550,6 @@ def List.iprodb (ℙ : List ℚ) (B : FinRV Bool) : ℚ :=
 
 variable (P : Finprob) (B : FinRV Bool) (C : FinRV Bool)
 
-
 variable (L : List ℚ)
 
 theorem List.scale_innerprod  (x : ℚ) : (L.scale x).iprodb B = x * (L.iprodb B) :=
@@ -753,6 +752,30 @@ notation "𝔼[" PX "|" B "]" => expect_cnd PX.1 PX.2 B
 -- space and a random variable
 
 variable {K : ℕ} (D : FinRV (Fin K.succ))  -- a discrete random variable with K+1 values
+
+theorem List.law_of_total_expectations (L : List ℚ) (X : FinRV ℚ) (B : FinRV Bool) :
+  L.iprod X = L.iprod (fun ω => if B ω then X ω else 0) + L.iprod (fun ω => if ¬B ω then X ω else 0) :=
+  by induction L with
+     | nil => simp [List.iprod]
+     | cons head tail =>
+        simp [List.iprod]
+        cases bB: B tail.length
+        · simp_all; ring
+        · simp_all; ring
+
+theorem Prob.law_of_total_expectation (P : Finprob) (X : FinRV ℚ) (B : FinRV Bool)
+  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
+  𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
+  by
+    simp [expect, expect_cnd] at ⊢ h1 h2
+    have h1' : P.ℙ.iprodb B ≠ 0 := Ne.symm (ne_of_lt h1)
+    have h2' : P.ℙ.iprodb (¬ᵣB) ≠ 0 := Ne.symm (ne_of_lt h2)
+
+    have h3' : P.ℙ.iprod X = P.ℙ.iprod (fun ω => if B ω then X ω else 0) + P.ℙ.iprod (fun ω => if ¬B ω then X ω else 0) :=
+      List.law_of_total_expectations P.ℙ X B
+    rw [h3']
+    simp_all
+    sorry
 
 end Expectations
 
