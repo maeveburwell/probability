@@ -1,0 +1,133 @@
+# .github/workflows/build.yml
+
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.ref }}-build
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build_artifacts:
+    runs-on: ubuntu-latest
+    name: Build Lean, Blueprint, and Website
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache elan
+        id: cache-elan
+        uses: actions/cache@v4
+        with:
+          path: ~/.elan
+          key: elan-v1
+      
+      - name: Install elan (if cache miss)
+        if: steps.cache-elan.outputs.cache-hit != 'true'
+        run: curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+      
+      - name: Add elan to PATH
+        run: echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - name: Cache project build artifacts (Mathlib)
+        id: cache-build
+        uses: actions/cache@v4
+        with:
+          path: .lake/build
+          key: build-${{ hashFiles('lake-manifest.json') }}
+
+      - name: Get Mathlib cache and Build project (if cache miss)
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        run: |
+          lake exe cache get || true 
+          lake build Probability
+          
+      - name: Build project API documentation
+        run: lake -R -Kenv=dev build Probability:docs
+
+      - name: Check declarations mentioned in the blueprint exist in Lean code
+        run: lake exe checkdecls blueprint/lean_decls
+        
+      - name: Cache Python venv
+        id: cache-venv
+        uses: actions/cache@v4
+        with:
+          path: env
+          key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Build blueprint and copy to 'home_page/blueprint'
+        uses: xu-cheng/texlive-action@v2
+        with:
+          docker_image: ghcr.io/xu-cheng/texlive-full:20250101
+          run: |
+            apk update
+            apk add --update make py3-pip git pkgconfig graphviz graphviz-dev gcc musl-dev
+            
+            if [ "${{ steps.cache-venv.outputs.cache-hit }}" != "true" ]; then
+              python3 -m venv env
+              source env/bin/activate
+              pip install --upgrade pip requests wheel
+              # Corrected pygraphviz install
+              pip install pygraphviz \
+                --config-settings="--global-option=build_ext" \
+                --config-settings="--global-option=-L/usr/lib/graphviz/" \
+                --config-settings="--global-option=-R/usr/lib/graphviz/"
+              pip install leanblueprint
+            fi
+            
+            source env/bin/activate
+            leanblueprint pdf
+            leanblueprint web
+            mkdir -p home_page
+            cp blueprint/print/print.pdf home_page/blueprint.pdf
+            cp -r blueprint/web home_page/blueprint
+            
+      - name: Copy API documentation to 'home_page/docs'
+        run: cp -r .lake/build/doc home_page/docs
+
+      - name: Remove unnecessary lake files
+        run: |
+          find home_page/docs -name "*.trace" -delete
+          find home_page/docs -name "*.hash" -delete
+          
+      - name: Check for 'home_page' folder
+        id: check_home_page
+        run: |
+          if [ -d home_page ]; then
+            echo "HOME_PAGE_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "HOME_PAGE_EXISTS=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build website using Jekyll (if 'home_page' exists)
+        if: env.HOME_PAGE_EXISTS == 'true'
+        uses: ruby/setup-ruby@v1
+        with:
+          working-directory: home_page
+          ruby-version: "3.0"
+          bundler-cache: true
+        run: |
+          export JEKYLL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          JEKYLL_ENV=production bundle exec jekyll build
+          
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.HOME_PAGE_EXISTS == 'true' && 'home_page/_site' || 'home_page/' }}
+
+  deploy:
+    name: Deploy to Pages
+    needs: build_artifacts
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit # Pass all secrets (like GITHUB_TOKEN) to the reusable workflow
