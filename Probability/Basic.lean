@@ -779,8 +779,6 @@ theorem Prob.law_of_total_expectation (P : Finprob) (X : FinRV ℚ) (B : FinRV B
 
 end Expectations
 
-
-
 -- The section defines measurabilty of random variables
 section Measurability
 
