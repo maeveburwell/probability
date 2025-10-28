@@ -1,0 +1,21 @@
+name: Deploy Workflow
+
+on:
+  workflow_call: # This workflow is ONLY triggered by another workflow
+
+permissions:
+  contents: read
+  pages: write       # Requires write permission for deployment
+  id-token: write    # Required by deploy-pages action
+
+jobs:
+  deploy_pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    name: Deploy to GitHub Pages
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
