@@ -1,5 +1,5 @@
-import Probability.Prob
 import Probability.List
+
 section LSimplex
 
 variable {p : ℚ}
