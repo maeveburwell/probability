@@ -1,6 +1,6 @@
 import Probability.Prob
 --import Mathlib.Tactic.Explode
--- Adding a comment
+-- Adding a comment.
 
 section List
 namespace List

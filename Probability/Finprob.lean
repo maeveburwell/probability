@@ -42,7 +42,7 @@ def shrink (supp : P.supported) : Finprob :=
 
 
 -- Define an induction principle for probability spaces
--- similar to the induction on lists, but also must argue about probability distributions
+-- similar  to the induction on lists, but also must argue about probability distributions
 
 theorem nonempty : ¬P.ℙ.isEmpty :=
   by intro a;

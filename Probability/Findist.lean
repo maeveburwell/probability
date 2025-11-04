@@ -1,6 +1,6 @@
 import Probability.LSimplex
 
-/-- Finite probability distribution on a set-like list (non-duplicates) -/
+/-- Finite probability distribution on a set-like list (non-duplicates)  -/
 structure Findist (N : ℕ)  : Type where
   ℙ : List ℚ                      -- probabilities
   simplex : LSimplex ℙ            -- proof of a measure

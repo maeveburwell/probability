@@ -18,7 +18,7 @@ def singleton : LSimplex [1] :=
 variable {L : List ℚ}  {c : ℚ}
 variable (S : LSimplex L)
 
-/-- cannot define a simplex on an empty set -/
+/-- cannot define a simplex on an empty set. -/
 @[simp]
 theorem nonempty (S : LSimplex L) : L ≠ [] :=
         fun a => by have := S.normalized; simp_all

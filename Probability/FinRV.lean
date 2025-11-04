@@ -2,7 +2,7 @@ import Probability.Finprob
 
 section RandomVariable
 
-/-- Random variable defined on a finite probability space (bijection to ℕ) -/
+/--  Random variable defined on a finite probability space (bijection to ℕ) -/
 
 def FinRV (ρ : Type) := ℕ → ρ
 
