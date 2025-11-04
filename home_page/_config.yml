@@ -30,5 +30,11 @@ repository: ${{github.actor}}/probability
 # Build settings
 remote_theme: pages-themes/cayman@v0.2.0 
 plugins:
+  - jekyll-paginate
+  - jekyll-sitemap
+  - jekyll-gist
+  - jekyll-feed
+  - jemoji
+  - jekyll-include-cache
   - jekyll-remote-theme
   - jekyll-github-metadata
