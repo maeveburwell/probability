@@ -12,15 +12,6 @@ import Mathlib.Data.Finset.Image
 
 import Mathlib.Algebra.Group.Pi.Basic -- for Pi.single
 
---
---import Mathlib.Tactic.Explode
--- Adding a comment
-open NNReal
-
-variable {τ : Type}
-
-section Indicator
-
 /-- states that p is a valid probability value -/
 @[simp]
 abbrev Prob (p : ℚ) : Prop := 0 ≤ p ∧ p ≤ 1
