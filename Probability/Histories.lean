@@ -74,7 +74,7 @@ instance : Coe (Fin M.S) (Hist M) where
   coe s := Hist.init s
 
 /-- The length of the history corresponds to the zero-based step of the decision -/
-@[reducible] def Hist.length : Hist M → Fin M.S → ℕ
+@[reducible] def Hist.length : Hist M → ℕ
   | init _ => 0
   | Hist.foll h _ _ => 1 + length h
 
@@ -91,6 +91,17 @@ def Hist.append (h : Hist M) (as : Fin M.A × Fin M.S) : Hist M := h.foll as.1 a
 -- TODO: remove?
 
 def Hist.one (s₀ : Fin M.S) (a : Fin M.A) (s : Fin M.S) : Hist M := (Hist.init s₀).foll a s
+
+/-- Return the prefix of hist of length k -/
+def Hist.prefix (k : ℕ)  (h : Hist M) : Hist M :=
+    match h with
+      | Hist.init s => Hist.init s
+      | Hist.foll hp a s =>
+        if hp.length + 1 ≤ k then hp.foll a s
+        else hp.prefix k
+
+
+
 
 
 end Histories
