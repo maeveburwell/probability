@@ -60,4 +60,39 @@ structure MDP : Type where
 
 end Definitions
 
+variable (M : MDP)
+
+section Histories
+
+/-- Represents a history. The state is type ℕ and action is type ℕ. -/
+inductive Hist (M : MDP)  : Type where
+  | init : Fin M.S → Hist M
+  | foll : Hist M → Fin M.A → Fin M.S → Hist M
+
+/-- Coerces a state to a history -/
+instance : Coe (Fin M.S) (Hist M) where
+  coe s := Hist.init s
+
+/-- The length of the history corresponds to the zero-based step of the decision -/
+@[reducible] def Hist.length : Hist M → Fin M.S → ℕ
+  | init _ => 0
+  | Hist.foll h _ _ => 1 + length h
+
+/-- Nonempty histories -/
+abbrev HistNE (m : MDP) : Type := {h : Hist m // h.length ≥ 1}
+
+/-- Returns the last state of the history -/
+def Hist.last : Hist M → Fin M.S
+  | init s => s
+  | Hist.foll _ _ s => s
+
+/-- Appends the state and action to the history --/
+def Hist.append (h : Hist M) (as : Fin M.A × Fin M.S) : Hist M := h.foll as.1 as.2
+-- TODO: remove?
+
+def Hist.one (s₀ : Fin M.S) (a : Fin M.A) (s : Fin M.S) : Hist M := (Hist.init s₀).foll a s
+
+
+end Histories
+
 end MDPs
