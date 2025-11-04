@@ -21,8 +21,8 @@
 title: MDP Formalization
 #email: your-email@example.com
 description: by UNH
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "https://${{ github.actor }}.github.io/probability" # the base hostname & protocol for your site, e.g. http://example.com
+baseurl: "/probability" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username:
 github_username: ${{github.actor}}
 repository: ${{github.actor}}/probability
