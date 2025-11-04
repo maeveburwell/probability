@@ -1,5 +1,21 @@
 import Probability.Finprob
 
+section Indicator
+
+/-- Boolean indicator function -/
+def indicator (cond : Bool) : ℚ := cond.rec 0 1
+
+abbrev 𝕀 : Bool → ℚ := indicator
+
+/-- Indicator is 0 or 1 -/
+theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀∘cond) ω = 0) := by
+    by_cases h : cond ω
+    · left; simp only [Function.comp_apply, h, indicator]
+    · right; simp only [Function.comp_apply, h, indicator]
+
+end Indicator
+
+
 section RandomVariable
 
 /--  Random variable defined on a finite probability space (bijection to ℕ) -/
