@@ -55,14 +55,6 @@ jobs:
       - name: Build project API documentation
         run: ~/.elan/bin/lake -R -Kenv=dev build Probability:docs
         
-      - name: Setup Node.js for Sass compilation
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20' # Use a stable Node.js version
-
-      - name: Install Sass Compiler
-        run: npm install -g sass
-          
       - name: Check for `home_page` folder # this is meant to detect a Jekyll-based website
         id: check_home_page
         run: |
@@ -110,13 +102,6 @@ jobs:
           find home_page/docs -name "*.trace" -delete
           find home_page/docs -name "*.hash" -delete
           
-      - name: Compile SCSS to CSS
-        # Modify the paths below to match where your style.scss is located
-        # and where your compiled style.css should go (likely inside home_page or a subfolder).
-        run: |
-          sass home_page/assets/css/style.scss:home_page/assets/css/style.css
-          # Example if SCSS is in home_page/scss/style.scss and CSS should be in home_page/css/style.css:
-          # sass home_page/scss/style.scss:home_page/css/style.css
 
       - name: Bundle dependencies
         uses: ruby/setup-ruby@v1
