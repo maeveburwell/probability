@@ -5,27 +5,6 @@ import Mathlib.Tactic
 
 import Mathlib.Logic.Function.Defs
 
-import Mathlib.Data.Set.Basic
-
-import Mathlib.Data.Finset.Defs
-import Mathlib.Data.Finset.Image
-
-import Mathlib.Algebra.Group.Pi.Basic -- for Pi.single
-
-import Mathlib.Data.Nat.Basic
-import Mathlib.Data.Rat.Defs
-import Mathlib.Algebra.Order.Group.Unbundled.Basic
-import Mathlib.Tactic
-
-import Mathlib.Logic.Function.Defs
-
-import Mathlib.Data.Set.Basic
-
-import Mathlib.Data.Finset.Defs
-import Mathlib.Data.Finset.Image
-
-import Mathlib.Algebra.Group.Pi.Basic -- for Pi.single
-
 /-- states that p is a valid probability value -/
 @[simp]
 abbrev Prob (p : ℚ) : Prop := 0 ≤ p ∧ p ≤ 1
