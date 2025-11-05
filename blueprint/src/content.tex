@@ -10,22 +10,26 @@
 \newcommand{\rew}{\tilde{r}^{\mathrm{h}}}
 \newcommand{\why}[1]{\text{[#1]}}
 
-\section{Probability Spaces and Expectation} \label{sec:prob-spac-expect}
-
-In this section, we define the basic probability concepts on finite sets.
-
-\subsection{Definitions}
-
 \begin{remark}
 This document omits basic intuitive definitions, such as the comparison or arithmetic operations on random variables. Arithmetic operations on random variables are performed element-wise for each element of the sample set. Please see the Lean file for complete details.
 \end{remark}
+
+\section{Probability} \label{sec:prob-spac-expect}
+
+\subsection{Prelude}
+
+This section sets up basic tools for working with probabilities. 
+
+\subsection{Basic}
+
+This section defines basic concepts of probability spaces and random variables and proves some of their basic properties. 
 
 \begin{definition} \label{def:probability-measure}
 A \emph{finite probability measure} $p\colon \Omega \to \Real_+$ on a finite set $\Omega$ is any function that satisfies
 \[
 \sum_{\omega \in \Omega } p(\omega) = 1. 
 \]
-\lean{Finprob} %\leanok
+\lean{Probability.Finprob} \leanok
 \end{definition}
 
 \begin{definition}
@@ -47,6 +51,10 @@ A \emph{random variable} defined on a finite probability space $P$ is a mapping 
 \end{definition}
 
 For the remainder of \cref{sec:prob-spac-expect}, we assume that $P = (\Omega, p)$ is a \emph{finite probability space}. All random variables are defined on the space $P$ unless specified otherwise.
+
+\subsection{Operators}
+
+Here, we define probability and expectation operators. 
 
 \begin{definition}
 A \emph{boolean} set is $\mathcal{B} = \left\{ \false, \true \right\}$.

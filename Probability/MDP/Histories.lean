@@ -13,12 +13,9 @@ import Mathlib.Data.Nat.Basic
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.NNReal.Basic
 
---import Mathlib.Data.Set.Basic
 import Mathlib.Data.Finset.Basic
 import Mathlib.Data.Finset.Image
-import Mathlib.Probability.ProbabilityMassFunction.Basic
-
-import Probability.FinRV
+import Probability.Probability.Basic
 
 namespace MDPs
 
