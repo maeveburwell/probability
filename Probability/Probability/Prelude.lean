@@ -47,7 +47,7 @@ end Prob
 
 namespace List
 
-variable {L : List ℚ}
+variable {L : List ℚ} {c : ℚ}
 
 def scale (L : List ℚ) (c : ℚ) : List ℚ := (L.map fun x↦x*c)
 
@@ -109,11 +109,19 @@ theorem shrink_ge0 (h1 : ∀l ∈ L, Prob l) : ∀l ∈ (L.shrink), 0 ≤ l :=
            exact List.scale_nneg_of_nneg (L:=tail) (c:=(1-head)⁻¹) (fun l a ↦ (h1.2 l a).1) hh
 
 
-/-- Probability of a random variable. Does not enforce normalization -/
+/-- Used to define a probability of a random variable -/
 def iprodb (ℙ : List ℚ) (B : ℕ → Bool) : ℚ :=
     match ℙ with
     | [] => 0
     | head :: tail =>  (B tail.length).rec 0 head + tail.iprodb B
+
+
+/-- Used to define an expectation of a random variable -/
+def iprod (ℙ : List ℚ) (X : ℕ → ℚ) : ℚ :=
+    match ℙ with
+    | [] => 0
+    | head :: tail =>  head * (X tail.length) + tail.iprod X
+
 
 variable (B : ℕ → Bool)
 
@@ -164,6 +172,8 @@ lemma iprodb_true_sum : L.iprodb (fun _ ↦ true) = L.sum :=
     by induction L
        · simp only  [iprodb, sum_nil]
        · simp_all only [iprodb, sum_cons]
+
+
 
 
 end List

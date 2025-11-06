@@ -178,6 +178,18 @@ theorem le_of_le_eq (D : FinRV ℕ) (n : ℕ) : ((D ≤ᵣ n) ∨ᵣ (D =ᵣ n.s
   unfold FinRV.leq FinRV.eq FinRV.or
   grind only [cases Or]
 
+@[simp]
+def mul {η : Type} [HMul η η η] (X Y : FinRV η) : FinRV η := 
+  fun ω ↦ (X ω) * (Y ω)
+
+infix:30 " *ᵣ " => FinRV.mul 
+
+@[simp]
+def add {η : Type} [HAdd η η η] (X Y : FinRV η) : FinRV η := 
+  fun ω ↦ (X ω) + (Y ω)
+
+infix:30 " +ᵣ " => FinRV.add
+
 end FinRV
 
 /-- Boolean indicator function -/
@@ -192,17 +204,16 @@ theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀�
     · right; simp only [Function.comp_apply, h, indicator]
 
 
+abbrev 𝕀ᵣ (B : FinRV Bool) : FinRV ℚ := fun ω ↦ 𝕀 (B ω)
+
 end RandomVariable
 
 
------------------------------- Section Probability ---------------------------
+------------------------------ Probability ---------------------------
 
-section Probability
+namespace Pr
 
------ standard probability
-
-
-variable (P : Finprob) (B : FinRV Bool) (C : FinRV Bool)
+variable (P : Finprob) (B C : FinRV Bool)
 
 /-- Probability of B -/
 def probability : ℚ :=  P.ℙ.iprodb B
@@ -212,74 +223,30 @@ notation "ℙ[" B "//" P "]" => probability P B
 /-- Conditional probability of B -/
 def probability_cnd : ℚ := ℙ[ B ∧ᵣ C // P ] / ℙ[ C // P ]
 
---- main decomposition properties
 
-theorem Prob.true_one : ℙ[ fun _ ↦ true // P] = 1 :=
-    by simp only [probability]; rw [List.iprodb_true_sum]; exact P.prob.normalized
-
---- sums
-
-theorem List.list_compl_sums_to_one (L : List ℚ) : L.iprodb B + L.iprodb (B.not) = L.sum :=
-  by induction L with
-     | nil => simp [List.iprodb]
-     | cons head tail =>
-        simp [List.iprodb]
-        cases (B tail.length)
-        · simp; linarith
-        · simp; linarith
-
-
-theorem List.law_of_total_probs (L : List ℚ)  : L.iprodb B = L.iprodb (B ∧ᵣ C) + L.iprodb (B ∧ᵣ (¬ᵣC) ) :=
-    by induction L with
-       | nil => simp [List.iprodb]
-       | cons head tail =>
-          simp [List.iprodb]
-          cases bB: B tail.length
-          · cases bC : C tail.length; simp_all; simp_all
-          · cases bC : C tail.length
-            · simp_all; ring;
-            · simp_all; ring;
-
-theorem Prob.prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 :=
-  calc
-    ℙ[ B // P ] + ℙ[ ¬ᵣB // P] = P.ℙ.sum := P.ℙ.list_compl_sums_to_one B
-    _ = 1 := P.prob.normalized
-
-theorem Prob.prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
-    by have := Prob.prob_compl_sums_to_one P B
-       linarith
-
-
-theorem Prob.law_of_total_probs : ℙ[B // P] = ℙ[ B ∧ᵣ C // P] + ℙ[ B ∧ᵣ ¬ᵣC //P] := P.ℙ.law_of_total_probs B C
+theorem true_one : ℙ[ fun _ ↦ true // P] = 1 :=
+    by simp only [probability]; rw [List.iprodb_true_sum] 
+       exact P.prob.normalized
 
 ---- conditional probability
-
 notation "ℙ[" B "|" C "//" P "]" => probability_cnd P B C
 
-theorem Prob.conditional_total (h : 0 < ℙ[C // P]) : ℙ[B ∧ᵣ C // P] =  ℙ[ B | C // P] * ℙ[ C // P] :=
-  by simp [probability_cnd] at ⊢ h
-     have : P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹ = 1 := Rat.mul_inv_cancel (P.ℙ.iprodb C) (Ne.symm (ne_of_lt h))
-     calc
-        P.ℙ.iprodb (B ∧ᵣC) = P.ℙ.iprodb (B ∧ᵣC) * 1 := by ring
-        _ = P.ℙ.iprodb (B ∧ᵣC) * (P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹) := by rw [←this]
-        _ = P.ℙ.iprodb (B ∧ᵣ C) / P.ℙ.iprodb C * P.ℙ.iprodb C := by ring
+end Pr
+
+------------------------------ PMF ---------------------------
+
+/-- Proof that p is a the PMF of X on probability space P -/
+def PMF {K : ℕ} (pmf : Fin K → ℚ) (P : Finprob) (L : FinRV (Fin K)) := 
+    ∀ k : Fin K, pmf k = ℙ[ L =ᵣ k // P] 
+
+namespace PMF
 
 
-theorem Prob.law_of_total_probs_cnd
-  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)  : ℙ[B // P] = ℙ[B | C // P] * ℙ[ C // P] + ℙ[B | ¬ᵣC // P] * ℙ[¬ᵣC // P] :=
-        by have h2' : 0 < ℙ[¬ᵣC // P] := by rw [prob_compl_one_minus]; linarith
-           rw [←Prob.conditional_total P B C h1]
-           rw [←Prob.conditional_total P B (¬ᵣC) h2']
-           exact law_of_total_probs P B C
+end PMF
 
-end Probability
+------------------------------ Expectation ----------------------
 
-section Expectations
-
-def List.iprod (ℙ : List ℚ) (X : FinRV ℚ) : ℚ :=
-    match ℙ with
-    | [] => 0
-    | head :: tail =>  head * (X tail.length) + tail.iprod X
+namespace Ex
 
 
 variable (P : Finprob) (X Y Z: FinRV ℚ) (B : FinRV Bool)
@@ -291,46 +258,23 @@ notation "𝔼[" X "//" P "]" => expect P X
 -- expectation for a joint probability space and random variable
 notation "𝔼[" PX "]" => expect PX.1 PX.2
 
+/-- This is a non-normalized expectation -/
+def μ : ℚ := P.ℙ.iprod (X *ᵣ Y) 
 
-
--- conditional expectation
-
-def expect_cnd : ℚ := P.ℙ.iprod X / P.ℙ.iprodb B
+/-- Conditional expectation -/
+def expect_cnd : ℚ := (μ P X (𝕀ᵣ B)) / P.ℙ.iprodb B
 
 notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
 
 -- expectation for a joint probability space and random variable
-notation "𝔼[" PX "]" => expect PX.1 PX.2
 notation "𝔼[" PX "|" B "]" => expect_cnd PX.1 PX.2 B
 
--- conditional expectation: conditioning on a random variable: this defintion creates a probability
--- space and a random variable
+variable {K : ℕ} (L : FinRV (Fin K))
 
-variable {K : ℕ} (D : FinRV (Fin K.succ))  -- a discrete random variable with K+1 values
+-- creates a random variable 
+def expect_cnd_rv : ℕ → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
 
-theorem List.law_of_total_expectations (L : List ℚ) (X : FinRV ℚ) (B : FinRV Bool) :
-  L.iprod X = L.iprod (fun ω => if B ω then X ω else 0) + L.iprod (fun ω => if ¬B ω then X ω else 0) :=
-  by induction L with
-     | nil => simp [List.iprod]
-     | cons head tail =>
-        simp [List.iprod]
-        cases bB: B tail.length
-        · simp_all; ring
-        · simp_all; ring
+notation "𝔼[" X "|ᵣ" L "//" P "]" => expect_cnd_rv P X L
 
-theorem Prob.law_of_total_expectation (P : Finprob) (X : FinRV ℚ) (B : FinRV Bool)
-  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
-  𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
-  by
-    simp [expect, expect_cnd] at ⊢ h1 h2
-    have h1' : P.ℙ.iprodb B ≠ 0 := Ne.symm (ne_of_lt h1)
-    have h2' : P.ℙ.iprodb (¬ᵣB) ≠ 0 := Ne.symm (ne_of_lt h2)
-
-    have h3' : P.ℙ.iprod X = P.ℙ.iprod (fun ω => if B ω then X ω else 0) + P.ℙ.iprod (fun ω => if ¬B ω then X ω else 0) :=
-      List.law_of_total_expectations P.ℙ X B
-    rw [h3']
-    simp_all
-    sorry
-
-end Expectations
+end Ex
 
