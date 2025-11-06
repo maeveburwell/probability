@@ -2,8 +2,7 @@
 The file defines concepts that we need to define induction for probability spaces
 -/
 
-import Probability.Probability.Prelude
-import Probability.Probability.Basic
+import Probability.Probability.Defs
 
 open Findist
 
@@ -58,6 +57,19 @@ end Findist
 namespace Finprob
 
 variable (P : Finprob)
+
+
+def shrink (supp : P.supported) : Finprob :=
+  {ℙ := P.ℙ.shrink, prob := P.prob.shrink supp}
+
+theorem shrink_length (supp : P.supported) : (P.shrink supp).length = P.length - 1 :=
+    by  have h := Finprob.nonempty P
+        simp [List.isEmpty] at h
+        simp! [Finprob.shrink, Finprob.length, List.shrink, LSimplex.shrink]
+
+theorem shrink_length_lt (supp : P.supported) : (P.shrink supp).length < P.length :=
+    by rw [Finprob.shrink_length P supp]
+       exact Nat.sub_one_lt_of_lt (Finprob.length_gt_zero P)
 
 theorem shrink_shorter (supp : P.supported) :
                                  (P.shrink supp).length = P.length - 1 :=

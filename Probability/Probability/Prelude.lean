@@ -9,9 +9,12 @@ import Mathlib.Logic.Function.Defs
 @[simp]
 abbrev Prob (p : ℚ) : Prop := 0 ≤ p ∧ p ≤ 1
 
+
+----------------- Section: Basic Probability -----------------------------------------------
+
 namespace Prob
 
-variable {p x y : ℚ} --creating variables
+variable {p x y : ℚ} 
 
 @[simp]
 theorem of_complement ( hp : Prob p) : Prob (1-p) := by
@@ -39,11 +42,12 @@ theorem upper_bound_snd (hp : Prob p) (h : x ≤ y) : p * x + (1-p) * y ≤ y :=
 
 end Prob
 
+------------------- Section: List operations -----------------------------------------------
 
-section List
+
 namespace List
 
-variable {L : List ℚ}
+variable {L : List ℚ} {c : ℚ}
 
 def scale (L : List ℚ) (c : ℚ) : List ℚ := (L.map fun x↦x*c)
 
@@ -104,13 +108,79 @@ theorem shrink_ge0 (h1 : ∀l ∈ L, Prob l) : ∀l ∈ (L.shrink), 0 ≤ l :=
            have hh : 0 ≤ (1-head)⁻¹ := Prob.complement_inv_nneg h1.1
            exact List.scale_nneg_of_nneg (L:=tail) (c:=(1-head)⁻¹) (fun l a ↦ (h1.2 l a).1) hh
 
+
+/-- Used to define a probability of a random variable -/
+def iprodb (ℙ : List ℚ) (B : ℕ → Bool) : ℚ :=
+    match ℙ with
+    | [] => 0
+    | head :: tail =>  (B tail.length).rec 0 head + tail.iprodb B
+
+
+/-- Used to define an expectation of a random variable -/
+def iprod (ℙ : List ℚ) (X : ℕ → ℚ) : ℚ :=
+    match ℙ with
+    | [] => 0
+    | head :: tail =>  head * (X tail.length) + tail.iprod X
+
+
+variable (B : ℕ → Bool)
+
+theorem scale_innerprod  (x : ℚ) : (L.scale x).iprodb B = x * (L.iprodb B) :=
+  by induction L with
+     | nil => simp_all [List.scale, List.iprodb]
+     | cons head tail =>
+            simp_all [List.iprodb, List.scale]
+            cases B tail.length
+            · simp_all
+            · simp_all
+              ring
+
+theorem decompose_supp (h : L ≠ []) (ne1 : L.head h ≠ 1):
+    L.iprodb B = (B (L.length - 1)).rec 0 (L.head h) + (1-L.head h) * (L.shrink.iprodb B)  :=
+    by conv => lhs; unfold iprodb
+       cases L with
+       | nil => simp at h
+       | cons head tail =>
+        simp [List.shrink]
+        have := tail.scale_innerprod B (1-head)⁻¹
+        simp_all
+        have hnz : 1 - head ≠ 0 :=
+          by by_contra; have : head = 1 := by linarith;
+             contradiction
+        calc
+          tail.iprodb B = 1 * tail.iprodb B := by ring
+          _ = (1 - head) * (1 - head)⁻¹ * tail.iprodb B  :=
+              by rw [Rat.mul_inv_cancel (1-head) hnz]
+          _ = (1 - head) * ((1 - head)⁻¹ * tail.iprodb B ) := by ring
+
+theorem iprod_eq_zero_of_zeros (hz : ∀ p ∈ L, p = 0) : L.iprodb B = 0 :=
+  by induction L with
+     | nil => simp [iprodb]
+     | cons head tail => simp_all [iprodb]; cases B tail.length; simp; simp
+
+-- if all but head are zero, then the inner product is the just the value of head
+theorem iprod_first_of_tail_zero  (hn : L ≠ []) (hz : ∀ p ∈ L.tail, p = 0) :
+   L.iprodb B = (B L.tail.length).rec 0 (L.head hn)  :=
+   by unfold iprodb
+      cases L with
+        | nil =>  contradiction
+        | cons head tail =>
+          simp; simp at hz; 
+          exact iprod_eq_zero_of_zeros B hz
+
+lemma iprodb_true_sum : L.iprodb (fun _ ↦ true) = L.sum :=
+    by induction L
+       · simp only  [iprodb, sum_nil]
+       · simp_all only [iprodb, sum_cons]
+
+
+
+
 end List
-end List
 
 
-section LSimplex
+------------------------------ Section LSimplex --------------------------------------------
 
-variable {p : ℚ}
 
 /-- Self-normalizing list of probabilities  --/
 structure LSimplex (L : List ℚ) : Prop where
@@ -123,7 +193,7 @@ def singleton : LSimplex [1] :=
   ⟨fun p a => by simp_all only [List.mem_cons, List.not_mem_nil, or_false, zero_le_one],
     List.sum_singleton⟩
 
-variable {L : List ℚ}  {c : ℚ}
+variable {p : ℚ} {L : List ℚ}  {c : ℚ}
 variable (S : LSimplex L)
 
 /-- cannot define a simplex on an empty set. -/
@@ -195,7 +265,6 @@ theorem degenerate_tail_zero (degen : S.degenerate) : ∀ p ∈ L.tail, p = 0 :=
      have hu := lez p a
      linarith
 
-
 theorem shrink (S : LSimplex L) (supp : S.supported) : LSimplex (L.shrink) :=
   {nneg := List.shrink_ge0 (LSimplex.mem_prob S),
    normalized :=
@@ -218,5 +287,4 @@ theorem grow_of_shrink_list (supp : S.supported) : L = (L.shrink).grow (S.phead)
 theorem grow_of_shrink (supp : S.supported) :
         S = (S.grow_of_shrink_list supp) ▸ (S.shrink supp).grow S.phead_prob := rfl
 
-end LSimplex
 end LSimplex
