@@ -22,6 +22,7 @@ See <https://formalproofs.github.io/probability>
 * Blueprint: <https://github.com/PatrickMassot/leanblueprint>
 * Lean packages and extensions: <https://reservoir.lean-lang.org/>
 * Notations: <https://github.com/leanprover-community/lean4-mode/blob/master/data/abbreviations.json>
+* Resource for Probability: <https://korivernon.com/documents/MathematicalStatisticsandDataAnalysis3ed.pdf>
 
 
 
