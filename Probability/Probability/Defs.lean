@@ -134,11 +134,14 @@ end Finprob
 
 
 section RandomVariable
+-- TODO: Can we define random variables as Finsupp (finitely supported functions)?
+-- TODO: Or, better, define random variables as a Vector Space, or a Module. 
+-- see, for example:  https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Finiteness/Defs.html#Module.Finite
+
 
 /--  Random variable defined on a finite probability space (bijection to ℕ) -/
-
+@[simp]
 def FinRV (ρ : Type) := ℕ → ρ
-
 
 namespace FinRV
 @[simp]

@@ -288,3 +288,11 @@ theorem grow_of_shrink (supp : S.supported) :
         S = (S.grow_of_shrink_list supp) ▸ (S.shrink supp).grow S.phead_prob := rfl
 
 end LSimplex
+
+
+section FunctionalAnalysis
+
+def Preimage {τ : Type} {n : ℕ} (f : Fin n → τ) : τ → Finset (Fin n) := 
+  fun t : τ ↦ sorry
+
+end FunctionalAnalysis 

@@ -23,28 +23,226 @@ This document omits basic intuitive definitions, such as the comparison or arith
 This section sets up some basic tools for working with probabilities. See \texttt{Probability/Prelude.lean}.
 
 \begin{definition} \label{def:probablity-value}
-  A $p\in \Real$ is a probability value when $p \ge 0 \wedge p \le 1$.
-  \lean{Probability.Prob}
+A $p\in \Real$ is a \emph{probability value} when $p \ge 0 \wedge p \le 1$.
+\lean{Probability.Probability.Prob}
 \end{definition}
 
 The lean file also defines several basic properties for \cref{def:probablity-value} which we do not summarize here.
 
-We also need some properties that help us to manipulate lists. 
 \begin{definition}
-A list $L \colon \mathcal{N} \to \tau$ of type $\tau$ and length $N$ is a function defined for $\mathcal{N} := \left\{ 0, \dots , n-1 \right\}$ of type $\tau$.
-\lean{List} 
+A finite set of natural numbers is defined as $\Nats_n := \left\{ 0, \dots , n-1   \right\}$.
+\lean{Fin} \leanok
 \end{definition}
 
-\begin{definition} \label{def:lsimplex}
-A list $L\colon \mathcal{N} \to \tau$ and length $N$
+\begin{definition}
+A list $\mathbb{L}_n \colon \Nats_n \to \tau$ of type $\tau$ and length $n$ is a function defined for $\Nats_{n} := \left\{ 0, \dots , n-1 \right\}$ of type $\tau$.
+\lean{List} \leanok
 \end{definition}
 
+The following definition generalizes the inverse of a function to non-injective function which do not have an inverse. 
+\begin{definition}[Preimage]
+The \emph{preimage} $f^{-1}\colon \mathcal{Y} \to \mathcal{X}$ of a function $f\colon \mathcal{X} \to \mathcal{Y}$ is defined as
+\begin{equation} \label{eq:preimage-set}
+f^{-1}(y) := \left\{ x \in \mathcal{X} \mid  f(x) = y \right\} .
+\end{equation}
+\lean{Probability.Preimage} \leanok
+\end{definition}
 
 \subsection{Defs}
 
 This section contains definitions of probability spaces, probability operators, and the expectation operator. See \texttt{Probability/Defs.lean}.
+\begin{definition}
+A \emph{finite probability distribution} $\Delta(n)$ for $n\in \Nats$ is defined as
+\[
+\Delta_n := \left\{ p \in \mathbb{L}_n \mid  \sum_{i \in \Nats_n} p_i = 1, p_i \ge 0, \forall i \in \Nats_n \right\}.
+\]
+We call a probability distribution \emph{degenerate} if $p_i = 1$ for some $i$; otherwise the probability distribution is \emph{supported}.
+\lean{Probability.Finprob} \leanok
+\end{definition}
+
+The formal model we use to represent random events and processes is the following.
+\begin{definition}[Complete Probability Space] \label{def:probability-space}
+  A \emph{complete probability space} consists of:
+  \begin{enumerate}
+  \item A sample space $\Omega := \Nats_n$, which is the set of all possible outcomes. 
+  \item An \emph{implicit} event space $\mathcal{F} := 2^{\Omega}$, which we do not define explicitly in Lean. 
+  \item A probability function $\mathbb{P} \in \Delta_N$ that satisfies that
+  \begin{enumerate}
+  \item $\mathbb{P}(\Omega) = 1$
+  \item $\mathbb{P}(A_1 \cup A_2) = \mathbb{P}(A_1) + \mathbb{P}(A_2)$ for all $A_1, A_2\in \mathcal{F}$ such that $A_1 \cap A_2 = \emptyset$.
+  \end{enumerate}
+  \end{enumerate}
+\lean{Probability.Finprob} \leanok
+\end{definition}
+The notation $2^{\Omega}$ in \cref{def:probability-space} represents the power set of $\Omega$.
+
+The set $\mathcal{F}$ is often, but not always, the power set of $\Omega$. One reason it may not be a power set is that it is necessary when $\Omega$ is infinite; see Borel sets. Another reason to define $\mathcal{F}$ that is not a power set is to denote the available information. We will see an example of this later. Unless specified otherwise, we assume that the event set for a finite sample space is its power set and the $\sigma$-algebra of $\Real$ is the Borel set.
+
+It is easy to show that a probability space cannot be emtpy.
+\begin{theorem}
+  
+\end{theorem}
+
+\begin{example} \label{exm:probability-space}
+ Suppose I want to model the behavior of coin flips. I have a coin that is equally likely to come up heads and tails. I flip the coin twice. One possible probability space would be
+  \begin{enumerate}
+  \item $\Omega := \left\{ \mathrm{HH}, \mathrm{HT}, \mathrm{TH}, \mathrm{TT} \right\}$.
+  \item $\mathcal{F} := 2^{\Omega } = \left\{ \emptyset, \Omega, \left\{ \mathrm{HH} \right\}, \left\{ \mathrm{HH}, \mathrm{HT} \right\}, \dots  \right\}$.
+  \item $P(\left\{ \mathrm{HH} \right\}) := \frac{1}{4},  P(\left\{ \mathrm{HH}, \mathrm{HT} \right\}) := \frac{1}{2}$. The probabilities of other sets are derived using the properties in \cref{def:probability-space}.
+  \end{enumerate}
+\end{example}
 
 
+For the sake of completeness, we include also the notion of measurability. However, since we are only concerned with complete probability spaces, all random variables we define will be measurable. 
+\begin{definition} \label{def:preimage-measurable}
+A function $f\colon \mathcal{X} \to \mathcal{Y}$ with $\sigma$-algebras $\mathcal{D} \subseteq 2^{\mathcal{X}}$ and $\mathcal{E} \subseteq 2^{\mathcal{Y}}$ is \emph{measurable} when the \emph{pre-image} of each $E\in \mathcal{E}$ is in $\mathcal{D}$:
+  \[
+    f^{-1}(E) \in \mathcal{D}.
+  \]
+Here, the application to $f^{-1}$ to a set $E \subseteq \mathcal{Y}$ is defined as:
+\begin{equation} \label{eq:preimage-set}
+f^{-1}(E) := \bigcup_{e \in E} f^{-1}(e) .
+\end{equation}
+\end{definition}
+The measurability in the definition of random variables is required for us to reason about their probability distributions.
+
+\begin{definition}[Random Variable]
+A \emph{random variable} is a measurable function $\tilde{x}\colon \Nats \to \mathcal{Y}$ where $\mathcal{Y}$ is a measurable set. Note that the way we define random variables, they are independent of a particular probability space. The measurability requirement is vacuous in probability spaces. 
+\end{definition}
+When manipulating random variables we denote them with a tilde, such as $\tilde{x}, \tilde{s}$. This corresponds to the common practice to use uppercase letters to denote random variables. We drop the tilde when treating the random variable as an ordinary function. 
+
+\begin{remark}
+We define some ad-hoc operations on random variables. However, it would be better to treat them as a vector space. Then probability and expectation can be seen as linear operators on this vector space. 
+\end{remark}
+
+
+We use the operator (function) $\mathbb{P}$ denote the probability of the set of sample space that corresponds to a given condition. The operator is defined as follows.
+\begin{definition}
+  For any probability space, $(\Omega, \mathcal{F}, P)$ and a random variable $\tilde{x}\colon \Omega \to \Real$. Assume that $\Real$ is endowed with some $\sigma$-algebra $\mathcal{E}\subseteq 2^{\Real}$. Then, the operator $\PP$ is defined as:
+\[
+\PP\left[\tilde{x} = x_0\right] := P(x^{-1}(x_0)), \qquad \forall x_0\in \Real, 
+\]
+and, more generally,
+ \[
+   \PP\left[\tilde{x} \in \mathcal{X}\right] := P(x^{-1}(\mathcal{X})), \qquad \forall \mathcal{X} \in \mathcal{E}. 
+ \]
+ Here, the pre-image applied to a set is defined as in \eqref{eq:preimage-set}.
+\end{definition}
+
+
+Consider a random variable $\tilde{b}\colon \Omega \to \left\{ 0,1 \right\}$ defined on the probability space from \cref{exm:probability-space}. 
+\[
+  \P\left[\tilde{b} = 1\right] := P\left(b^{-1}(1)\right) .
+\]
+As before, the set-valued function $b^{-1}\colon \left\{ 0,1 \right\} \to \mathcal{F}$ is the \emph{pre-image} of $b$ as in \cref{qn:tails-definition}.
+
+
+
+We use the operator (function) $\mathbb{P}$ denote the probability of the set of sample space that corresponds to a given condition. The operator is defined as follows.
+\begin{definition}
+  For any probability space, $(\Omega, \mathcal{F}, P)$ and a random variable $\tilde{x}\colon \Omega \to \Real$. Assume that $\Real$ is endowed with some $\sigma$-algebra $\mathcal{E}\subseteq 2^{\Real}$. Then, the operator $\P$ is defined as:
+  \[
+   \P\left[\tilde{x} = x_0\right] := P(x^{-1}(x_0)), \qquad \forall x_0\in \Real, 
+ \]
+ and, more generally,
+ \[
+   \P\left[\tilde{x} \in \mathcal{X}\right] := P(x^{-1}(\mathcal{X})), \qquad \forall \mathcal{X} \in \mathcal{E}. 
+ \]
+ Here, the pre-image applied to a set is defined as in \eqref{eq:preimage-set}.
+\end{definition}
+
+
+Consider a random variable $\tilde{b}\colon \Omega \to \left\{ 0,1 \right\}$ defined on the probability space from \cref{exm:probability-space}. 
+\[
+  \P\left[\tilde{b} = 1\right] := P\left(b^{-1}(1)\right) .
+\]
+As before, the set-valued function $b^{-1}\colon \left\{ 0,1 \right\} \to \mathcal{F}$ is the \emph{pre-image} of $b$ as in \cref{qn:tails-definition}.
+
+
+\emph{Probability distributions} are typically defined for random variables. The distribution of a random variable is characterized by the \emph{cumulative distribution function}~(CDF), defined as follows.
+\begin{definition}[CDF]
+  The \emph{cumulative distribution function} $F_{\tilde{x}}\colon \Real \to [0,1]$ of a real-valued random variable $\tilde{x}\colon \Omega \to \Real$ is defined as
+  \[
+   F_{\tilde{x}}(x) := \P\left[\tilde{x} \le x\right], \qquad \forall x\in \Real. 
+  \]
+\end{definition}
+
+The CDF is always non-decreasing and right-continuous.
+
+Some random variables also have a \emph{probability density function}~(PDF), and discrete random variables have a \emph{probability mass function}~(PMF). In this class, we will be primarily dealing with discrete random variables.
+\begin{definition}[PMF]
+The \emph{probability mass function} $p_{\tilde{x}}\colon \mathcal{E} \to [0,1]$ for a discrete random variable $\tilde{x}\colon \Omega  \to  \mathcal{E}$ with a finite $\mathcal{E}$ is defined as
+  \[
+    p_{\tilde{x}}(e) := \P\left[\tilde{x} = e\right], \qquad \forall e\in \mathcal{E} .
+ \]
+\end{definition}
+
+
+\begin{definition} \label{def:joint-probability}
+The \emph{joint probability} of two random variables $\tilde{x}\colon \Omega \to \mathcal{X}$ and $\tilde{y} \colon \Omega \to \mathcal{Y}$ is defined as
+\[
+ \P\left[\tilde{x} = x, \tilde{y} = y\right] := \P\left[\tilde{x} = x \wedge \tilde{y} = y\right] , \forall  x\in \mathcal{X}, y\in \mathcal{Y}.
+\]
+One can also define a joint PMF for two discrete random variables $p_{\tilde{x}, \tilde{y}}(x,y)$ for $x\in \mathcal{X}$ and $y\in \mathcal{Y}$ as
+\[
+ p_{\tilde{x}, \tilde{y}}(x,y) = \P\left[\tilde{x} = x, \tilde{y} = y\right]. 
+\]
+\end{definition}
+
+
+\begin{definition}[Independent RV]
+  Events $A,B \in \mathcal{F}$ are independent when
+  \[
+   P(A \cap B) = P(A) \cdot P(B).
+  \]
+  Random variables $\tilde{x}\colon \Omega \to \mathcal{X}$ and $\tilde{y}\colon \Omega \to \mathcal{Y}$ are \emph{independent} when
+  \[
+    F_{\tilde{x}, \tilde{y}}(x,y) = F_{\tilde{x}}(x) \cdot F_{\tilde{y}}(y),
+    \forall x\in \mathcal{X}, y\in \mathcal{Y}.
+  \]
+\end{definition}
+Discrete random variables $\tilde{x}$ and $\tilde{y}$ are independent if and only if
+\[
+  \P\left[\tilde{x} = x, \tilde{y} = y\right] = \P\left[\tilde{x} = x\right] \cdot \P\left[\tilde{y} = y\right], \forall x\in \mathcal{X}, y\in \mathcal{Y}.
+\]
+
+
+The expectation of a random variable is its mean.
+
+\begin{definition}[Expected Value] \label{def:expectation}
+Suppose that $\tilde{x}\colon \Omega \to \Real $ is a random variable and that $x(\Omega) := \left\{ x(\omega) \mid  \omega \in \Omega  \right\}$ is finite. Then
+\[ 
+ \E\left[\tilde{x}\right] := \sum_{x\in \tilde{x}(\Omega)}  x\cdot \P\left[\tilde{x} = x\right].
+\]
+\end{definition}
+In general, expectation is defined using the Lebesgue integral:
+\[
+ \E\left[\tilde{x}\right] := \int_{\Omega} \tilde{x} \, dP,
+\]
+but that is beyond the formalism that we cover in this class. 
+ 
+
+\begin{theorem}[Law of the unconscious statistician] \label{thm:unconscious}
+  For any discrete $\tilde{x}\colon \Omega \to \Real$ and $g\colon \Real \to \Real$:
+  \[
+    \E\left[g(\tilde{x})\right] = \sum_{x\in \mathcal{X}} g(x) \cdot  \P\left[\tilde{x} = x\right].
+  \]
+\end{theorem}
+
+Some of the most important properties of expectations are as follows.
+\begin{theorem}
+  Assume $\tilde{x},\tilde{y}\colon \Omega \to \Real$ and $c\in \Real $. Then:
+  \begin{align*}
+    \E\left[x\cdot \tilde{x}\right] &= x \cdot  \E\left[\tilde{x}\right]\\
+    \E\left[\tilde{x} + \tilde{y}\right] &= \E\left[\tilde{x}\right] + \E\left[\tilde{y}\right]\\
+    \E\left[\tilde{x} \cdot \tilde{y}\right] &= \E\left[\tilde{x}\right] \cdot \E\left[\tilde{y}\right] \quad \text{for independent } \tilde{x}, \tilde{y}.
+  \end{align*}
+\end{theorem}
+
+\begin{definition}
+A \emph{random variable} defined on a finite probability space $P$ is a mapping $\tilde{x}\colon \Omega \to \Real$.
+\lean{FinRV} \leanok
+\end{definition}
 
 \subsection{Induction}
 
@@ -62,23 +260,12 @@ A \emph{finite probability measure} $p\colon \Omega \to \Real_+$ on a finite set
 \lean{Probability.Finprob} \leanok
 \end{definition}
 
-\begin{definition}
-The set of \emph{finite probability measures} $\Delta(\Omega)$ for a finite $\Omega$ is defined as
-\[
-\Delta(\Omega) := \left\{ p\colon \Omega \to \Real_+ \mid  \sum_{\omega \in \Omega } p(\omega) = 1 \right\}.
-\]
-%\lean{Delta} \leanok
-\end{definition}
 
 \begin{definition} \label{def:probability-space}
 A \emph{finite probability space} is $P = (\Omega, p)$, where $\Omega$ is a finite set referred to as the \emph{sample set}, $p\in \Delta(\Omega)$, and the $\sigma$-algebra is $2^{\Omega}$.
 %\lean{Finprob} \leanok
 \end{definition}
 
-\begin{definition}
-A \emph{random variable} defined on a finite probability space $P$ is a mapping $\tilde{x}\colon \Omega \to \Real$.
-%\lean{Finrv} \leanok
-\end{definition}
 
 For the remainder of \cref{sec:prob-spac-expect}, we assume that $P = (\Omega, p)$ is a \emph{finite probability space}. All random variables are defined on the space $P$ unless specified otherwise.
 
@@ -108,7 +295,7 @@ An \emph{indicator} function $\I \colon \mathcal{B} \to \left\{ 0, 1 \right\}$ i
 0 &\text{if } b = \operatorname{false}.
 \end{cases}
 \]
-%\lean{Finprob.indicator} \leanok
+\lean{Probability.Probability.indicator} \leanok
 \end{definition}
 
 \begin{definition} \label{def:probability}
@@ -1109,5 +1296,5 @@ A \emph{Markov policy Bellman operator} $L_k^{\pi}\colon \mathcal{V} \to \mathca
 %%% coding: utf-8
 %%% mode: LaTeX
 %%% TeX-master: "print"
-%%% TeX-engine: xetex
+%%% TeX-engine: luatex
 %%% End:
