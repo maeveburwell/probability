@@ -5,12 +5,13 @@ import Mathlib.Tactic
 
 import Mathlib.Logic.Function.Defs
 
+
 /-- states that p is a valid probability value -/
 @[simp]
 abbrev Prob (p : ℚ) : Prop := 0 ≤ p ∧ p ≤ 1
 
-
 ----------------- Section: Basic Probability -----------------------------------------------
+
 
 namespace Prob
 
@@ -173,11 +174,7 @@ lemma iprodb_true_sum : L.iprodb (fun _ ↦ true) = L.sum :=
        · simp only  [iprodb, sum_nil]
        · simp_all only [iprodb, sum_cons]
 
-
-
-
 end List
-
 
 ------------------------------ Section LSimplex --------------------------------------------
 
@@ -199,7 +196,7 @@ variable (S : LSimplex L)
 /-- cannot define a simplex on an empty set. -/
 @[simp]
 theorem nonempty (S : LSimplex L) : L ≠ [] :=
-        fun a => by have := S.normalized; simp_all
+        fun a ↦ by have := S.normalized; simp_all
 
 @[simp]
 abbrev npt : LSimplex L → L ≠ [] := LSimplex.nonempty
@@ -292,7 +289,5 @@ end LSimplex
 
 section FunctionalAnalysis
 
-def Preimage {τ : Type} {n : ℕ} (f : Fin n → τ) : τ → Finset (Fin n) := 
-  fun t : τ ↦ sorry
 
 end FunctionalAnalysis 

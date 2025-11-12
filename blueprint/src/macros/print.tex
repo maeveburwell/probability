@@ -9,8 +9,10 @@
 % sense only for the web version, such as dependency graph
 % macros.
 
+\usepackage[framemethod=tikz]{mdframed}
 
-\newcommand{\lean}[1]{\textcolor{green}{(\emph{LEAN}: \texttt{#1})}}
+
+\newcommand{\lean}[1]{\textcolor{blue}{(\emph{LEAN}: \texttt{#1})}}
 \newcommand{\discussion}[1]{}
 \newcommand{\leanok}{}
 \newcommand{\mathlibok}{}
@@ -30,5 +32,12 @@
  {\clist_map_inline:nn{#1}{\vphantom{\ref{##1}}}%
   \ignorespaces}
 \ExplSyntaxOff
+
+
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{definition}
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{theorem}
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{lemma}
+\surroundwithmdframed[style=theoremstyle,backgroundcolor=gray!15]{proposition}
+
 
 
