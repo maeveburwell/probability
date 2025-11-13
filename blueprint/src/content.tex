@@ -415,15 +415,15 @@ A \emph{Markov decision process} $M := (S, A, P, r)$ consists of:
 
 \subsection{Histories}
 
-We implicitly assume in the remainder of the section an MDP $M = (\mathcal{S}, \mathcal{A}, p, r)$.
+We implicitly assume in the remainder of the section an MDP $M = (S, A, P, r)$.
 \begin{definition} \label{def:Hist}
 A \emph{history} $h$ in a set of histories $\mathcal{H}$ is a sequence of states and actions defined for $M$ recursively as
 \[
-  h := \langle s \rangle, \quad
+  h := \langle s_0 \rangle, \quad
   \why{or} \quad
-  h := \langle h', s, a \rangle,
+  h := \langle h', a, s \rangle,
 \]
-where $s \in \mathcal{S}$, $a\in \mathcal{A}$, and $h'\in \mathcal{H}$.
+where $s_0, s \in \Fin(S)$, $a \in \Fin(A)$, and $h'\in \mathcal{H}$.
 %\lean{MDPs.Hist} \leanok
 \end{definition}
 
