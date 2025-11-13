@@ -1,3 +1,11 @@
 .history/
 .idea/
 .lake/
+
+*.aux
+*.fls
+*.fdb_latexmk
+*.log
+*.synctex.gz
+*.out
+print.pdf
