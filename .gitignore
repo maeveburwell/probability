@@ -2,6 +2,8 @@
 .idea/
 .lake/
 
+.DS_Store
+
 *.aux
 *.fls
 *.fdb_latexmk
