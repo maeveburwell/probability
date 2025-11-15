@@ -580,22 +580,30 @@ The following proof is simpler but may require some more advanced properties.
 
 \subsection{Markov Decision Process}
 
+\newcommand{\Fin}{\operatorname{Fin}}
+
 \begin{definition} \label{def:MDP}
-A \emph{Markov decision process} $M := (\mathcal{S}, \mathcal{A}, P, r)$ consists of a finite nonempty set of states $\mathcal{S}$, a finite nonempty set of actions $\mathcal{A}$, transition function $P\colon \mathcal{S} \times \mathcal{A} \to  \Delta(\mathcal{S})$, and a reward function $r \colon \mathcal{S} \times \mathcal{A} \times \mathcal{S} \to \Real$.
+A \emph{Markov decision process} $M := (S, A, P, r)$ consists of:
+\begin{itemize}
+  \item a positive integer $S \in \Nats_{>0}$ representing the number of states, with index set $\Fin(S) = \{0,1, \dots, S-1\}$
+  \item a positive integer $A \in \Nats_{>0}$ representing the number of actions, with index set $\Fin(A) = \{0,1, \dots, A-1\}$
+  \item a transition function $P \colon \Fin(S) \times \Fin(A) \to \Delta(\Fin(S))$, mapping each state–action pair to finite probability distribution over next states
+  \item a reward function $r \colon \Fin(S) \times \Fin(A) \times \Fin(S) \to \Real$, mapping each transition \((s,a,s')\) to a real number
+\end{itemize}
 %\lean{MDPs.MDP} \leanok
 \end{definition}
 
 \subsection{Histories}
 
-We implicitly assume in the remainder of the section an MDP $M = (\mathcal{S}, \mathcal{A}, p, r)$.
+We implicitly assume in the remainder of the section an MDP $M = (S, A, P, r)$.
 \begin{definition} \label{def:Hist}
 A \emph{history} $h$ in a set of histories $\mathcal{H}$ is a sequence of states and actions defined for $M$ recursively as
 \[
-  h := \langle s \rangle, \quad
+  h := \langle s_0 \rangle, \quad
   \why{or} \quad
-  h := \langle h', s, a \rangle,
+  h := \langle h', a, s \rangle,
 \]
-where $s \in \mathcal{S}$, $a\in \mathcal{A}$, and $h'\in \mathcal{H}$.
+where $s_0, s \in \Fin(S)$, $a \in \Fin(A)$, and $h'\in \mathcal{H}$.
 %\lean{MDPs.Hist} \leanok
 \end{definition}
 
