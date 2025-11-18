@@ -198,12 +198,17 @@ theorem LOTUS {g : Fin K → ℚ} (h : PMF pmf P L):
 
 -- this proof will rely on the extensional property of function (functions are the same if they 
 -- return the same value for the same inputs; for all inputs)
-theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := sorry
+theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := 
+  by sorry
+
 
 theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] := sorry
 
 -- STEP 2: 
-theorem exp_prod_μ (i : Fin K) : 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] = μ P X (𝕀ᵣ (L =ᵣ i)) := sorry
+theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P] 
+                                  = μ P X (𝕀ᵣ B) := 
+    by unfold expect_cnd
+       sorry
 
 -- STEP 3: 
 -- proves that μ distributes over the random variables 
@@ -226,7 +231,8 @@ example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin
 theorem law_total_exp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = 𝔼[ X // P] := 
   calc
     𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
-    _ =  ∑ i : Fin K, μ P X (𝕀ᵣ (L =ᵣ i)) := by apply Fintype.sum_congr; exact exp_prod_μ 
+    _ =  ∑ i : Fin K, μ P X (𝕀ᵣ (L =ᵣ i)) := by apply Fintype.sum_congr; 
+                                                exact fun a => exp_prod_μ (L K)
     _ =  μ P X (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
     _ =  μ P X (fun ω ↦  1) :=  by conv => lhs; congr; rfl; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
