@@ -13,9 +13,9 @@ import Mathlib.Data.Fintype.BigOperators
   - Arithmetic manipulations of random variables
   - The law of total probabilities
   - The law of total expectations
--/  
+-/
 
-namespace Finprob 
+namespace Finprob
 
 variable (P : Finprob) (B : FinRV Bool)
 
@@ -68,11 +68,11 @@ theorem ge_zero : ℙ[ B // P ] ≥ 0 := (P.in_prob B).left
 
 theorem le_one : ℙ[ B // P ] ≤ 1 := (P.in_prob B).right
 
-end Finprob 
+end Finprob
 
 ------------------------------ List ---------------------------
 
-namespace List 
+namespace List
 
 variable (B C : FinRV Bool)
 
@@ -111,7 +111,7 @@ end List
 
 
 ------------------------------ Probablity ---------------------------
- 
+
 namespace Pr
 
 variable (P : Finprob) (B : FinRV Bool) (C : FinRV Bool)
@@ -126,12 +126,12 @@ theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by have := prob_compl_sums_to_one P B
        linarith
 
-theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[ B ∧ᵣ C // P] + ℙ[ B ∧ᵣ ¬ᵣC //P] := 
+theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[ B ∧ᵣ C // P] + ℙ[ B ∧ᵣ ¬ᵣC //P] :=
   P.ℙ.law_of_total_probs B C
 
 theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B ∧ᵣ C // P] =  ℙ[ B | C // P] * ℙ[ C // P] :=
   by simp [probability_cnd] at ⊢ h
-     have : P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹ = 1 := 
+     have : P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹ = 1 :=
             Rat.mul_inv_cancel (P.ℙ.iprodb C) (Ne.symm (ne_of_lt h))
      calc
         P.ℙ.iprodb (B ∧ᵣC) = P.ℙ.iprodb (B ∧ᵣC) * 1 := by ring
@@ -140,7 +140,7 @@ theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B ∧ᵣ C // P] =  ℙ[ B
 
 
 
-theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)  
+theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
 : ℙ[B // P] = ℙ[B | C // P] * ℙ[ C // P] + ℙ[B | ¬ᵣC // P] * ℙ[¬ᵣC // P] :=
         by have h2' : 0 < ℙ[¬ᵣC // P] := by rw [prob_compl_one_minus]; linarith
            rw [←conditional_total P B C h1]
@@ -160,9 +160,12 @@ namespace PMF
 
 variable {K : ℕ}  {L : FinRV (Fin K)}
 variable {pmf : Fin K → ℚ}
-variable {P : Finprob} 
+variable {P : Finprob}
 
-theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K := sorry
+theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K :=
+  match K with
+  | Nat.zero => Fin.elim0 (L 0)
+  | Nat.succ n => Nat.succ_pos n
 
 end PMF
 
@@ -170,13 +173,12 @@ end PMF
 
 namespace Ex
 
-variable {P : Finprob} 
+variable {P : Finprob}
 variable {K : ℕ} {X : FinRV ℚ} {B : FinRV Bool} {L : FinRV (Fin K)}
 
 variable {pmf : Fin K → ℚ}
 
-
-theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) : 
+theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
     𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
   by
     simp [expect, expect_cnd] at ⊢ h1 h2
@@ -196,7 +198,7 @@ theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
 theorem LOTUS {g : Fin K → ℚ} (h : PMF pmf P L): 
     𝔼[ g ∘ L // P ] = ∑ i : Fin K, (pmf i) * (g i) := sorry
 
--- this proof will rely on the extensional property of function (functions are the same if they 
+-- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
 theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := 
   by sorry
@@ -222,8 +224,8 @@ theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P]
        · simp_all only [isUnit_iff_ne_zero, ne_eq, not_false_eq_true, 
                          IsUnit.div_mul_cancel]
 
--- STEP 3: 
--- proves that μ distributes over the random variables 
+-- STEP 3:
+-- proves that μ distributes over the random variables
 theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
  
 theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := sorry
@@ -231,7 +233,7 @@ theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := so
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = μ P X (fun ω ↦ 1 ) := sorry 
 
 
--- TODO: need to sum all probabilities 
+-- TODO: need to sum all probabilities
 
 
 example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin m, f i = ∑ i : Fin m, g i := 
