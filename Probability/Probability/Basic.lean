@@ -205,10 +205,17 @@ theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) /
 theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] := sorry
 
 -- STEP 2: 
+
+theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : μ ℙ X (𝕀ᵣ B) = 0 := sorry
+
 theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P] 
                                   = μ P X (𝕀ᵣ B) := 
     by unfold expect_cnd
-       sorry
+       by_cases h: ℙ[B//P] = 0
+       · rw [μ_eq_zero_of_cond_empty h]
+         ring 
+       · simp_all only [isUnit_iff_ne_zero, ne_eq, not_false_eq_true, 
+                         IsUnit.div_mul_cancel]
 
 -- STEP 3: 
 -- proves that μ distributes over the random variables 
