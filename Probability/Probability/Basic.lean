@@ -192,7 +192,7 @@ theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
 
 ---- STEP 1:
 
--- the law of the unconscious statistician (or similar)
+-- LOTUS: the law of the unconscious statistician (or similar)
 theorem LOTUS {g : Fin K → ℚ} (h : PMF pmf P L): 
     𝔼[ g ∘ L // P ] = ∑ i : Fin K, (pmf i) * (g i) := sorry
 
