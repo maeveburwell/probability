@@ -159,14 +159,9 @@ variable {pmf : Fin K → ℚ}
 variable {P : Finprob}
 
 theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K :=
-  by
-    classical
-    cases K with
-    | zero =>
-        -- eliminate the impossible `Fin 0` value to solve any goal
-        exact Fin.elim0 (L 0)
-    | succ k =>
-        exact Nat.succ_pos _
+  match K with
+  | Nat.zero => Fin.elim0 (L 0)
+  | Nat.succ n => Nat.succ_pos n
 
 end PMF
 
@@ -178,7 +173,6 @@ variable {P : Finprob}
 variable {K : ℕ} {X : FinRV ℚ} {B : FinRV Bool} {L : FinRV (Fin K)}
 
 variable {pmf : Fin K → ℚ}
-
 
 theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
     𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
