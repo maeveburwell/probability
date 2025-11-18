@@ -206,6 +206,11 @@ theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L 
 
 -- STEP 2: 
 
+theorem ind_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : 
+        ∀ ω : (Fin P.length), (𝕀ᵣ B) ω = 0 := 
+        by sorry
+
+
 theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : μ ℙ X (𝕀ᵣ B) = 0 := sorry
 
 theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P] 
