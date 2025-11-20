@@ -199,9 +199,9 @@ theorem fin_sum_g: ∀ ω : ℕ, ∑ i, (g i) * (𝕀ᵣ (L =ᵣ i)) ω = g (L �
   intro ω
   unfold 𝕀ᵣ FinRV.eq 𝕀 indicator 
   generalize hk : L ω = k
-  let f i := g i * Bool.rec 0 1 (decide (k = i)) 
-  have (i : Fin K) : i ≠ k → f i = 0 := by intro h; unfold f; sorry
-  have (i : Fin K ) : i = k → f i = g k := by sorry 
+  let f i := g i * (decide (k = i)).rec 0 1  
+  have (i : Fin K) : k ≠ i → f i = 0 := by intro h; simp_all [f] 
+  have (i : Fin K ) : k = i → f i = g k := by intro h; simp_all [f] 
   sorry  
 
   
