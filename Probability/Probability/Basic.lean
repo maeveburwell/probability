@@ -162,7 +162,7 @@ variable {K : ℕ}  {L : FinRV (Fin K)}
 variable {pmf : Fin K → ℚ}
 variable {P : Finprob}
 
-theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K :=
+theorem pmf_rv_k_ge_1 (L : FinRV (Fin K)) : 0 < K :=
   match K with
   | Nat.zero => Fin.elim0 (L 0)
   | Nat.succ n => Nat.succ_pos n
