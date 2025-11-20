@@ -7,7 +7,6 @@ import Mathlib.Data.Fintype.BigOperators
 /-!
   # Basic properties for probability spaces and expectations
 
-
   The main results:
   - Correspondence between expectations and probabilities (indicator functions)
   - Arithmetic manipulations of random variables
@@ -26,7 +25,7 @@ theorem decompose_supp (supp : P.supported) :
       by simp [Finprob.phead, Finprob.shrink]
          exact P.ℙ.decompose_supp B P.nonempty_P (P.phead_supp_ne_one supp)
 
-theorem decompose_degen (degen : P.degenerate) : ℙ[ B // P ] = (B P.ωhead).rec 0 P.phead :=
+theorem decompose_degen (degen : P.degenerate) : ℙ[B//P] = (B P.ωhead).rec 0 P.phead :=
   by have tz := P.prob.degenerate_tail_zero degen
      simp [Pr.probability, ωhead]
      have almost := P.ℙ.iprod_first_of_tail_zero B P.nonempty_P tz
@@ -34,7 +33,7 @@ theorem decompose_degen (degen : P.degenerate) : ℙ[ B // P ] = (B P.ωhead).re
      exact almost
 
 -- TODO: is there a way to simplify this result to not use induction?
-theorem in_prob (P : Finprob) : Prob ℙ[ B // P ] :=
+theorem in_prob (P : Finprob) : Prob ℙ[B // P] :=
     by have hip := P.phead_prob
        by_cases h : P.supported
        · rw [P.decompose_supp B h]
@@ -43,9 +42,11 @@ theorem in_prob (P : Finprob) : Prob ℙ[ B // P ] :=
          cases B P.ωhead
          · simp only;
            constructor;
-           . have prd_zero : 0 ≤ (1 - P.phead) * ℙ[B//P.shrink h] := Rat.mul_nonneg P.phead_prob.of_complement.1 ih.1
+           . have prd_zero : 0 ≤ (1 - P.phead) * ℙ[B//P.shrink h] := 
+                Rat.mul_nonneg P.phead_prob.of_complement.1 ih.1
              simp_all only [phead, Pr.probability, zero_add]
-           · have prd_one : (1 - P.phead) * ℙ[B//P.shrink h] ≤ 1 := mul_le_one₀ P.phead_prob.of_complement.2 ih.1 ih.2
+           · have prd_one : (1 - P.phead) * ℙ[B//P.shrink h] ≤ 1 := 
+                mul_le_one₀ P.phead_prob.of_complement.2 ih.1 ih.2
              simp_all only [phead, Pr.probability, zero_add]
          · simp only;
            constructor;
@@ -66,7 +67,7 @@ theorem in_prob (P : Finprob) : Prob ℙ[ B // P ] :=
 
 theorem ge_zero : ℙ[ B // P ] ≥ 0 := (P.in_prob B).left
 
-theorem le_one : ℙ[ B // P ] ≤ 1 := (P.in_prob B).right
+theorem le_one : ℙ[B // P] ≤ 1 := (P.in_prob B).right
 
 end Finprob
 
@@ -84,7 +85,6 @@ lemma list_compl_sums_to_one (L : List ℚ) : L.iprodb B + L.iprodb (B.not) = L.
         cases (B tail.length)
         · simp; linarith
         · simp; linarith
-
 
 
 lemma law_of_total_probs (L : List ℚ)  : L.iprodb B = L.iprodb (B ∧ᵣ C) + L.iprodb (B ∧ᵣ (¬ᵣC) ) :=
@@ -115,7 +115,6 @@ end List
 namespace Pr
 
 variable (P : Finprob) (B : FinRV Bool) (C : FinRV Bool)
-
 
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 :=
   calc
@@ -178,31 +177,32 @@ variable {K : ℕ} {X : FinRV ℚ} {B : FinRV Bool} {L : FinRV (Fin K)}
 
 variable {pmf : Fin K → ℚ}
 
-theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
-    𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
-  by
-    simp [expect, expect_cnd] at ⊢ h1 h2
-    have h1' : P.ℙ.iprodb B ≠ 0 := Ne.symm (ne_of_lt h1)
-    have h2' : P.ℙ.iprodb (¬ᵣB) ≠ 0 := Ne.symm (ne_of_lt h2)
-    have h3' : P.ℙ.iprod X = P.ℙ.iprod (fun ω => if B ω then X ω else 0) + P.ℙ.iprod (fun ω => if ¬B ω then X ω else 0) :=
-      P.ℙ.law_of_total_expectations X B
-    rw [h3']
-    simp_all
-    sorry
+example (f g : Fin K → ℚ) (h : f = g) : ∑ i : Fin K, f i = ∑ i : Fin K, g i := by
+  let ff := f
+  have h2 : ff = f := by unfold ff; rfl 
+  rw [←h2]
+  rw [←h] 
+  
+
 
 -- TODO: The following derivations should be our focus
 
 ---- STEP 1:
 variable  (g : Fin K → ℚ)
 
-theorem fin_sum_g: ∀ ω : ℕ, ∑ i, (g i) * (𝕀ᵣ (L =ᵣ i)) ω = g (L ω) := by 
+theorem fin_sum_g: ∀ ω : ℕ, ∑ i : Fin K, (g i) * (𝕀ᵣ (L =ᵣ i)) ω = g (L ω) := by 
   intro ω
   unfold 𝕀ᵣ FinRV.eq 𝕀 indicator 
   generalize hk : L ω = k
   let f i := g i * (decide (k = i)).rec 0 1  
-  have (i : Fin K) : k ≠ i → f i = 0 := by intro h; simp_all [f] 
-  have (i : Fin K ) : k = i → f i = g k := by intro h; simp_all [f] 
-  sorry  
+  have h1 (i : Fin K) : k ≠ i → f i = 0 := by intro h; simp_all [f] 
+  have h2 (i : Fin K ) : k = i → f i = g k := by intro h; simp_all [f] 
+  have hh : f = (fun i ↦ g i * (decide (k = i)).rec 0 1) :=  by simp [f]
+  rw [←hh]
+  rw [←h2 k rfl]
+  apply Finset.sum_eq_single_of_mem 
+  · simp 
+  · exact fun b a a_1 => h1 b (id (Ne.symm a_1))
 
   
   --by_cases L ω = 
