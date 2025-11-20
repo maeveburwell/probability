@@ -22,11 +22,11 @@ variable (P : Finprob) (B : FinRV Bool)
 /-- If supported then can be decomposed to the immediate probability and the
 remaining probability -/
 theorem decompose_supp (supp : P.supported) :
-    ℙ[ B // P ] = (B P.ωhead).rec 0 P.phead + (1-P.phead) * ℙ[ B // P.shrink supp ] :=
+    ℙ[B // P] = (B P.ωhead).rec 0 P.phead + (1-P.phead) * ℙ[ B // P.shrink supp ] :=
       by simp [Finprob.phead, Finprob.shrink]
          exact P.ℙ.decompose_supp B P.nonempty_P (P.phead_supp_ne_one supp)
 
-theorem decompose_degen (degen : P.degenerate) : ℙ[ B // P ] = (B P.ωhead).rec 0 P.phead  :=
+theorem decompose_degen (degen : P.degenerate) : ℙ[ B // P ] = (B P.ωhead).rec 0 P.phead :=
   by have tz := P.prob.degenerate_tail_zero degen
      simp [Pr.probability, ωhead]
      have almost := P.ℙ.iprod_first_of_tail_zero B P.nonempty_P tz
@@ -193,30 +193,34 @@ theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
 -- TODO: The following derivations should be our focus
 
 ---- STEP 1:
+variable  (g : Fin K → ℚ)
+
+theorem fin_sum_g: ∀ ω : ℕ, ∑ i, (g i) * (𝕀ᵣ (L =ᵣ i)) ω = g (L ω) := by 
+  intro ω
+  unfold 𝕀ᵣ FinRV.eq 𝕀 indicator 
+  generalize hk : L ω = k
+  let f i := g i * Bool.rec 0 1 (decide (k = i)) 
+  have (i : Fin K) : i ≠ k → f i = 0 := by intro h; unfold f; sorry
+  have (i : Fin K ) : i = k → f i = g k := by sorry 
+  sorry  
+
+  
+  --by_cases L ω = 
+
+theorem prob_eq_exp_ind : ℙ[ B // P ] = 𝔼[ 𝕀 ∘ B // P] := sorry 
+
 theorem idktheorem (P : Finprob) (L : FinRV (Fin K)) (g : Fin K → ℚ) :
     P.ℙ.iprod (g ∘ L) = ∑ i : Fin K, g i * ℙ[L =ᵣ i // P] := sorry
 
--- the law of the unconscious statistician (or similar)
+-- LOTUS: the law of the unconscious statistician (or similar)
 theorem LOTUS {g : Fin K → ℚ} (h : PMF pmf P L):
         𝔼[ g ∘ L // P ] = ∑ i : Fin K, (pmf i) * (g i) :=
-  by
-    simp [expect]
-    have h1 : ∀ i : Fin K, ℙ[L =ᵣ i // P] = pmf i :=
-      by
-        intro i
-        exact (h i).symm
-    calc
-      P.ℙ.iprod (g ∘ L) = ∑ i, g i * ℙ[L =ᵣ i // P] := idktheorem (P) (L) (g)
-      _ = ∑ i, g i * pmf i :=
-        by
-          apply Finset.sum_congr rfl
-          intro i
-          simp [h1 i]
-      _ = ∑ i, pmf i * g i :=
-        by
-          apply Finset.sum_congr rfl
-          intro i hi
-          ring
+  by unfold expect
+     rw [idktheorem P L g]
+     apply Fintype.sum_congr 
+     intro i
+     rw [h i]
+     ring 
 
 -- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
@@ -248,7 +252,9 @@ theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P]
 -- proves that μ distributes over the random variables
 theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
 
-theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := sorry
+theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := 
+    by sorry -- apply fin_sum_g (fun _ ↦ 1)
+       
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = μ P X (fun ω ↦ 1 ) := sorry
 
