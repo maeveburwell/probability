@@ -204,9 +204,6 @@ theorem fin_sum_g: ∀ ω : ℕ, ∑ i : Fin K, (g i) * (𝕀ᵣ (L =ᵣ i)) ω 
   · simp 
   · exact fun b a a_1 => h1 b (id (Ne.symm a_1))
 
-  
-  --by_cases L ω = 
-
 theorem prob_eq_exp_ind : ℙ[ B // P ] = 𝔼[ 𝕀 ∘ B // P] := sorry 
 
 theorem idktheorem (P : Finprob) (L : FinRV (Fin K)) (g : Fin K → ℚ) :
@@ -253,8 +250,8 @@ theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P]
 theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
 
 theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := 
-    by sorry -- apply fin_sum_g (fun _ ↦ 1)
-       
+    by have := fin_sum_g (fun _ ↦ 1) (L := L)
+       simp_all 
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = μ P X (fun ω ↦ 1 ) := sorry
 
