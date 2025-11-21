@@ -154,7 +154,6 @@ theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
 #synth (OfNat Bool 1)
 #check One.toOfNat1
 
-#check (1 : Fin n → Bool)
 
 theorem true_one : ℙ[ 1 // P] = 1 :=
     by unfold probability 
@@ -170,7 +169,7 @@ end Pr
 ------------------------------ PMF ---------------------------
 
 /-- Proof that p is a the PMF of X on probability space P -/
-def PMF {K : ℕ} (pmf : Fin K → ℚ) (P : Finprob) (L : FinRV (Fin K)) := 
+def PMF {K : ℕ} (pmf : Fin K → ℚ) (P : Findist n) (L : FinRV n (Fin K)) := 
     ∀ k : Fin K, pmf k = ℙ[ L =ᵣ k // P] 
 
 namespace PMF
