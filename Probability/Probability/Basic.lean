@@ -1,4 +1,4 @@
-import Probability.Probability.Induction
+--import Probability.Probability.Induction
 
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
@@ -16,14 +16,7 @@ import Mathlib.Data.Fintype.BigOperators
 
 namespace Finprob
 
-variable (P : Finprob) (B : FinRV Bool)
-
-/-- If supported then can be decomposed to the immediate probability and the
-remaining probability -/
-theorem decompose_supp (supp : P.supported) :
-    ℙ[B // P] = (B P.ωhead).rec 0 P.phead + (1-P.phead) * ℙ[ B // P.shrink supp ] :=
-      by simp [Finprob.phead, Finprob.shrink]
-         exact P.ℙ.decompose_supp B P.nonempty_P (P.phead_supp_ne_one supp)
+variable {n : ℕ} (P : Findist n) (B : FinRV n Bool)
 
 theorem decompose_degen (degen : P.degenerate) : ℙ[B//P] = (B P.ωhead).rec 0 P.phead :=
   by have tz := P.prob.degenerate_tail_zero degen

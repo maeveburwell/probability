@@ -9,7 +9,6 @@ section Findist
 
 variable {n : ℕ}
 
-
 structure Findist (n : ℕ) : Type where 
     p : Fin n → ℚ
     prob : 1 ⬝ᵥ p = 1
@@ -56,13 +55,21 @@ variable {n : ℕ} {ρ : Type}
 namespace FinRV
 
 -- for convenience define operations on bools 
+@[simp]
 instance instBoolMul : Mul Bool where mul a b := Bool.and a b 
+@[simp]
 instance instBoolAdd: Add Bool  where add a b := Bool.or a b 
-instance instBoolOne : One Bool where one := true
+@[simp]
 instance instBoolZero : Zero Bool where zero := false 
-
+@[simp]
+instance instBoolOne : One Bool where one := true
 
 variable {A B  : Bool}
+
+@[simp]
+theorem one_eq_true : (1:Bool) = true := rfl 
+@[simp]
+theorem zero_eq_false : (0:Bool) = false := rfl 
 
 @[simp]
 theorem bool_sum_or : A + B = Bool.or A B := rfl 
@@ -139,18 +146,21 @@ def probability_cnd : ℚ := ℙ[B * C // P] / ℙ[ C // P ]
 
 #loogle "Pi.single" 
 
-theorem one_of_true : 𝕀 ∘ (0 : Fin n → Bool) = (1 : Fin n → ℚ)  := 
-  by ext;
+theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  := 
+  by ext
      simp [𝕀, indicator]
-     sorry 
+      
 
+#synth (OfNat Bool 1)
+#check One.toOfNat1
 
 #check (1 : Fin n → Bool)
 
-theorem true_one : ℙ[ fun _ ↦ true // P] = 1 :=
+theorem true_one : ℙ[ 1 // P] = 1 :=
     by unfold probability 
        rw[one_of_true]
-       sorry 
+       rw [dotProduct_comm]
+       exact P.prob
 
 ---- conditional probability
 notation "ℙ[" B "|" C "//" P "]" => probability_cnd P B C
@@ -173,31 +183,31 @@ end PMF
 namespace Ex
 
 
-variable (P : Finprob) (X Y Z: FinRV ℚ) (B : FinRV Bool)
+variable {n : ℕ} (P : Findist n) (X Y Z: FinRV n ℚ) (B : FinRV n Bool)
 
-def expect : ℚ := P.ℙ.iprod X
+def expect : ℚ := P.p ⬝ᵥ X
 
 notation "𝔼[" X "//" P "]" => expect P X
 
 -- expectation for a joint probability space and random variable
 notation "𝔼[" PX "]" => expect PX.1 PX.2
 
-theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P] 
-:= sorry
+--theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P] 
+--:= sorry
 
 
 /-- Conditional expectation -/
-def expect_cnd : ℚ := 𝔼[ X *ᵣ (𝕀ᵣ B) // P] / ℙ[ B // P]
+def expect_cnd : ℚ := 𝔼[ X * (𝕀 ∘ B) // P] / ℙ[ B // P]
 
 notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
 
 -- expectation for a joint probability space and random variable
 notation "𝔼[" PX "|" B "]" => expect_cnd PX.1 PX.2 B
 
-variable {K : ℕ} (L : FinRV (Fin K))
+variable {K : ℕ} (L : FinRV n (Fin K))
 
 -- creates a random variable 
-def expect_cnd_rv : ℕ → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
+def expect_cnd_rv : Fin n → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
 
 notation "𝔼[" X "|ᵣ" L "//" P "]" => expect_cnd_rv P X L
 
