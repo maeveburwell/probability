@@ -1,6 +1,10 @@
 import Probability.Probability.Prelude
 
---------------------------- Findist ---------------------------------------------------------------<F2>
+
+import Mathlib.Data.Matrix.Mul  -- dot product definitions and results
+import Mathlib.Algebra.Notation.Pi.Defs -- operations on functions
+
+--------------------------- Findist ---------------------------------------------------------------
 
 /-- Finite probability distribution on a set-like list (non-duplicates)  -/
 structure Findist (N : ℕ)  : Type where
@@ -66,6 +70,24 @@ lemma List.unique_head_notin_tail (L : List τ) (ne : L ≠ []) (nodup : L.Nodup
      · simp at ne
      · simp [List.head, List.tail]
        simp_all only [ne_eq, reduceCtorEq, not_false_eq_true, List.nodup_cons]
+
+
+--------------------------- Findist2 -------------------------------------------------------------------
+
+-- This is an alternative definition of finite probability distributions
+
+section Findist2
+
+variable {n : ℕ}
+
+structure Findist2 (n : ℕ) : Type where 
+    p : Fin n → ℚ
+    prob : 1 ⬝ᵥ p = 1
+    nneg : ∀ i, p i ≥ 0 
+
+
+end Findist2
+----------------------------- ** Finprob ** ------------------------------------------------------------
 
 namespace Finprob
 
@@ -135,11 +157,6 @@ theorem len_ge_one : P.length ≥ 1 :=
 end Finprob
 
 section RandomVariable
--- TODO: Can we define random variables as Finsupp (finitely supported functions) or Fin -> τ?
--- TODO: Or, better, define random variables as a Vector Space, or a Module. 
--- see, for example:  https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Finiteness/Defs.html#Module.Finite
--- see also: https://github.com/leanprover-community/mathlib4/blob/8666bd82efec40b8b3a5abca02dc9b24bbdf2652/Mathlib/Data/Fin/VecNotation.lean
-
 
 /--  Random variable defined on a finite probability space (bijection to ℕ) -/
 @[simp]
@@ -221,6 +238,38 @@ abbrev 𝕀ᵣ (B : FinRV Bool) : FinRV ℚ := fun ω ↦ 𝕀 (B ω)
 
 end RandomVariable
 
+------------------------------ FinRV2 ---------------------------
+
+-- Here we define random variables as finitely supported vectors
+
+-- TODO: Or, better, define random variables as a Vector Space, or a Module. 
+-- see, for example:  https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Finiteness/Defs.html#Module.Finite
+-- see also: https://github.com/leanprover-community/mathlib4/blob/8666bd82efec40b8b3a5abca02dc9b24bbdf2652/Mathlib/Data/Fin/VecNotation.lean
+
+/-- A finite random variable  -/
+abbrev FinRV2 (n : ℕ) (ρ : Type) := Fin n → ρ
+
+/- construct a random variable -/ 
+-- def rvOf {n : ℕ} {ρ : Type} (f : Fin n → ρ) := f
+
+namespace FinRV2 
+
+variable {n : ℕ} {ρ : Type}
+
+-- for convenience define operations on bools 
+
+instance : Mul Bool where 
+  mul a b := Bool.and a b 
+instance : Add Bool  where 
+  add a b := Bool.or a b 
+
+-- variable (f g : Fin n → ℚ)
+
+-- #check f • g 
+-- #synth Add (Fin n → ℚ) 
+-- #check Pi.instAdd
+  
+end FinRV2 
 
 ------------------------------ Probability ---------------------------
 
@@ -279,10 +328,10 @@ theorem exp_eq_correct : 𝔼[X // P ] = ∑ v ∈ ((List.finRange P.length).map
 
 
 /-- This is a non-normalized conditional expectation. The term μ is analogous to μ in measure theory  -/
-def μ : ℚ := P.ℙ.iprod (X *ᵣ Y) 
+def μ : ℚ := 𝔼[ X *ᵣ Y // P]
 
 /-- Conditional expectation -/
-def expect_cnd : ℚ := (μ P X (𝕀ᵣ B)) / ℙ[ B // P]
+def expect_cnd : ℚ := 𝔼[ X *ᵣ (𝕀ᵣ B) // P] / ℙ[ B // P]
 
 notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
 

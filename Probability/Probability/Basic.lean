@@ -182,7 +182,9 @@ example (f g : Fin K → ℚ) (h : f = g) : ∑ i : Fin K, f i = ∑ i : Fin K, 
   have h2 : ff = f := by unfold ff; rfl 
   rw [←h2]
   rw [←h] 
-  
+
+
+theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := sorry 
 
 
 -- TODO: The following derivations should be our focus
@@ -204,7 +206,6 @@ theorem fin_sum_g: ∀ ω : ℕ, ∑ i : Fin K, (g i) * (𝕀ᵣ (L =ᵣ i)) ω 
   · simp 
   · exact fun b a a_1 => h1 b (id (Ne.symm a_1))
 
-theorem prob_eq_exp_ind : ℙ[ B // P ] = 𝔼[ 𝕀 ∘ B // P] := sorry 
 
 theorem idktheorem (P : Finprob) (L : FinRV (Fin K)) (g : Fin K → ℚ) :
     P.ℙ.iprod (g ∘ L) = ∑ i : Fin K, g i * ℙ[L =ᵣ i // P] := sorry
@@ -234,26 +235,26 @@ theorem ind_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) :
         by sorry
 
 
-theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : μ ℙ X (𝕀ᵣ B) = 0 := sorry
+theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : 𝔼[X *ᵣ (𝕀ᵣ B) // P] = 0 := sorry
 
-theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P]
-                                  = μ P X (𝕀ᵣ B) :=
+theorem exp_prod_μ (i : Fin K) : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X *ᵣ (𝕀ᵣ B) // P] :=
     by unfold expect_cnd
        by_cases h: ℙ[B//P] = 0
        · rw [μ_eq_zero_of_cond_empty h]
-         ring
+         ring_nf
        · simp_all only [isUnit_iff_ne_zero, ne_eq, not_false_eq_true,
                          IsUnit.div_mul_cancel]
 
 -- STEP 3:
 -- proves that μ distributes over the random variables
-theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
+theorem μ_dist (h : Fin K → FinRV ℚ) : 
+    ∑ i : Fin K, 𝔼[ X *ᵣ (h i) // P] = 𝔼[ X *ᵣ (fun ω ↦ ∑ i : Fin K, (h i) ω) // P] := sorry
 
 theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := 
     by have := fin_sum_g (fun _ ↦ 1) (L := L)
        simp_all 
 
-theorem exp_eq_exp_cond_true : 𝔼[X // P] = μ P X (fun ω ↦ 1 ) := sorry
+theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X *ᵣ (fun ω ↦ 1 ) // P] := sorry
 
 
 -- TODO: need to sum all probabilities
@@ -268,10 +269,11 @@ example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin
 theorem law_total_exp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = 𝔼[ X // P] :=
   calc
     𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
-    _ =  ∑ i : Fin K, μ P X (𝕀ᵣ (L =ᵣ i)) := by apply Fintype.sum_congr;
-                                                exact fun a => exp_prod_μ (L K)
-    _ =  μ P X (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
-    _ =  μ P X (fun ω ↦  1) :=  by conv => lhs; congr; rfl; rfl; intro ω; exact fin_sum ω
+    _ =  ∑ i : Fin K, 𝔼[X *ᵣ (𝕀ᵣ (L =ᵣ i)) // P] := by apply Fintype.sum_congr;
+                                                       exact fun a => exp_prod_μ (L K)
+    _ = 𝔼[X *ᵣ (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) // P] :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
+    _ = 𝔼[X *ᵣ (fun ω ↦  1) // P] := by 
+          unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
 
 end Ex
