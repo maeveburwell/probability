@@ -203,9 +203,9 @@ theorem fin_sum_g: ∀ ω : ℕ, ∑ i : Fin K, (g i) * (𝕀ᵣ (L =ᵣ i)) ω 
   rw [←hh]
   rw [←h2 k rfl]
   apply Finset.sum_eq_single_of_mem 
-  · simp 
-  · exact fun b a a_1 => h1 b (id (Ne.symm a_1))
-
+  · simp only [Finset.mem_univ]
+  · intro b _ hneq 
+    exact h1 b hneq.symm
 
 theorem idktheorem (P : Finprob) (L : FinRV (Fin K)) (g : Fin K → ℚ) :
     P.ℙ.iprod (g ∘ L) = ∑ i : Fin K, g i * ℙ[L =ᵣ i // P] := sorry
@@ -251,7 +251,7 @@ theorem μ_dist (h : Fin K → FinRV ℚ) :
     ∑ i : Fin K, 𝔼[ X *ᵣ (h i) // P] = 𝔼[ X *ᵣ (fun ω ↦ ∑ i : Fin K, (h i) ω) // P] := sorry
 
 theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := 
-    by have := fin_sum_g (fun _ ↦ 1) (L := L)
+    by have := fin_sum_g 1 (L := L)
        simp_all 
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X *ᵣ (fun ω ↦ 1 ) // P] := sorry
@@ -260,7 +260,8 @@ theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X *ᵣ (fun ω ↦ 1 ) // P] 
 -- TODO: need to sum all probabilities
 
 
-example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin m, f i = ∑ i : Fin m, g i :=
+example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : 
+    ∑ i : Fin m, f i = ∑ i : Fin m, g i :=
     by apply Finset.sum_congr
        · simp
        · simp_all
