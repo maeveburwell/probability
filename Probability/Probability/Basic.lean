@@ -119,11 +119,6 @@ example (f g : Fin K → ℚ) (h : f = g) : ∑ i : Fin K, f i = ∑ i : Fin K, 
 
 theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := sorry
 
-
-def RVMult (X Y : FinRV n ℚ) : FinRV n ℚ :=
-  fun ω => X ω * Y ω
-infixl:70 " *ᵣ " => RVMult
-
 -- TODO: The following derivations should be our focus
 
 ---- STEP 1:
@@ -173,9 +168,9 @@ theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L 
 --theorem ind_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : ∀ ω : (Fin P.length), (𝕀ᵣ B) ω = 0 := sorry
 
 
-theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : 𝔼[X *ᵣ (𝕀ᵣ B) // P] = 0 := sorry
+theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : 𝔼[X * (𝕀ᵣ B) // P] = 0 := sorry
 
-theorem exp_prod_μ (i : Fin K) : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X *ᵣ (𝕀ᵣ B) // P] :=
+theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀ᵣ B) // P] :=
   sorry
     -- by unfold expect_cnd
     --    by_cases h: ℙ[B//P] = 0
@@ -189,13 +184,13 @@ theorem exp_prod_μ (i : Fin K) : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X *ᵣ (
 
 
 theorem μ_dist (h : Fin K → FinRV n ℚ) :
-    ∑ i : Fin K, 𝔼[ X *ᵣ (h i) // P] = 𝔼[ X *ᵣ (fun ω ↦ ∑ i : Fin K, (h i) ω) // P] := sorry
+    ∑ i : Fin K, 𝔼[ X * (h i) // P] = 𝔼[ X * (fun ω ↦ ∑ i : Fin K, (h i) ω) // P] := sorry
 
 theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 :=
     by have := fin_sum_g 1 (L := L)
        simp_all
 
-theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X *ᵣ (fun ω ↦ 1 ) // P] := sorry
+theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := sorry
 
 
 -- TODO: need to sum all probabilities
@@ -211,11 +206,12 @@ example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) :
 theorem law_total_exp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = 𝔼[ X // P] :=
   calc
     𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
-    _ =  ∑ i : Fin K, 𝔼[X *ᵣ (𝕀ᵣ (L =ᵣ i)) // P] := by
+    _ =  ∑ i : Fin K, 𝔼[X * (𝕀ᵣ (L =ᵣ i)) // P] := by
           apply Finset.sum_congr
-          exact fun a => exp_prod_μ (L K)
-    _ = 𝔼[X *ᵣ (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) // P] :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
-    _ = 𝔼[X *ᵣ (fun ω ↦  1) // P] := by
+          · rfl 
+          · exact fun a _ ↦ exp_prod_μ 
+    _ = 𝔼[X * (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) // P] :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
+    _ = 𝔼[X * (fun ω ↦  1) // P] := by
           unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
 
