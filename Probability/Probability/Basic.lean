@@ -7,7 +7,6 @@ import Mathlib.Data.Fintype.BigOperators
 /-! 
   # Basic properties for probability spaces and expectations
 
-
   The main results:
   - Correspondence between expectations and probabilities (indicator functions)
   - Arithmetic manipulations of random variables
@@ -204,7 +203,13 @@ theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) /
   by sorry
 
 
-theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] := sorry
+theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := by
+  let pmf i := ℙ[ L =ᵣ i // P]
+  have h_pmf : PMF pmf P L := fun i ↦ rfl
+  rw [condexp_pmf, LOTUS h_pmf]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [mul_comm]
 
 -- STEP 2: 
 
@@ -215,8 +220,7 @@ theorem ind_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) :
 
 theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : μ ℙ X (𝕀ᵣ B) = 0 := sorry
 
-theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P] 
-                                  = μ P X (𝕀ᵣ B) := 
+theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P] = μ P X (𝕀ᵣ B) := 
     by unfold expect_cnd
        by_cases h: ℙ[B//P] = 0
        · rw [μ_eq_zero_of_cond_empty h]
@@ -227,6 +231,9 @@ theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P]
 -- STEP 3:
 -- proves that μ distributes over the random variables
 theorem μ_dist (h : Fin K → FinRV ℚ) : ∑ i : Fin K, μ P X (h i) = μ P X (fun ω ↦ ∑ i : Fin K, (h i) ω) := sorry
+
+
+-- TODO: need to sum all probabilities
  
 theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := sorry
 
