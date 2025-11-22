@@ -155,14 +155,22 @@ theorem expect_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin 
 /-- Decompose a random variable to a sum of constant variables with indicators  -/
 theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) := 
   by ext ω
-     simp 
+     simp
 
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
     𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := by 
     rw [fin_sum_simple]
     rw [expect_linear]
-    sorry 
-    -- TODO: just need the expectation of a constant function and then we are done!!!!
+    apply Fintype.sum_congr
+    intro a 
+    rw [exp_prod_const_fun] 
+    rw [prob_eq_exp_ind]
+    sorry  
+      
+      
+
+    
+-- TODO: just need the expectation of a constant function and then we are done!!!!
 
 -- LOTUS: the law of the unconscious statistician (or similar)
 theorem LOTUS {g : Fin k → ℚ} (h : PMF pmf P L):
@@ -215,9 +223,6 @@ theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:�
        simp_all only [Pi.one_apply, Function.comp_apply, FinRV.eq, one_mul, implies_true]
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := sorry
-
-
--- TODO: need to sum all probabilities
 
 
 example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) :
