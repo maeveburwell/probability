@@ -2,6 +2,7 @@ import Probability.Probability.Prelude
 
 import Mathlib.Data.Matrix.Mul  -- dot product definitions and results
 import Mathlib.Algebra.Notation.Pi.Defs -- operations on functions
+import Mathlib.Algebra.Module.PointwisePi -- for smul_pi
 
 --------------------------- Findist ---------------------------------------------------------------
 
@@ -47,11 +48,22 @@ end Findist
 
 --------------------------- Random Variable -------------------------------------------------------------------
 
--- Here we define random variables as finitely supported vectors
+/-!
+Random variables are defined as function. The operations on random variables can be performed 
+using the standard notation:
 
--- TODO: Or, better, define random variables as a Vector Space, or a Module.
--- see, for example:  https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Finiteness/Defs.html#Module.Finite
--- see also: https://github.com/leanprover-community/mathlib4/blob/8666bd82efec40b8b3a5abca02dc9b24bbdf2652/Mathlib/Data/Fin/VecNotation.lean
+X + Y is elementwise addition
+X * Y is elementwise (Hadamard product)
+f ∘ X is composition
+c • X is scalar multiplication
+
+
+L =ᵣ i is a boolean indicator random variable
+L =ᵢ i is a ℚ indicator random variable 
+L ≤ᵣ i is a bool indicator random variable 
+
+-/
+
 
 section RandomVariable
 
@@ -77,7 +89,7 @@ instance instBoolOne : One Bool where one := true
 @[simp] lemma bool_mul_ff : (false * false : Bool) = false := rfl
 
 
-variable {A B  : Bool}
+variable {A B : Bool}
 
 @[simp]
 theorem one_eq_true : (1:Bool) = true := rfl
@@ -104,6 +116,13 @@ def eq [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
 
 infix:50 "=ᵣ" => FinRV.eq
 
+/-- indicator version of equality -/
+@[simp]
+def eqi [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n ℚ :=
+  (fun ω ↦ if Y ω = y then 1 else 0)
+
+infix:50 "=ᵢ" => FinRV.eqi
+
 @[simp]
 def leq [LE ρ] [DecidableLE ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   (fun ω ↦ Y ω ≤ y)
@@ -127,12 +146,26 @@ def preimage (f : FinRV n ρ) : ρ → Set (Fin n) :=
 end FinRV
 
 /-- Boolean indicator function -/
-def indicator {τ : Type} [OfNat τ 0] [OfNat τ 1] (cond : Bool) : τ  := cond.rec 0 1
+def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
 
-abbrev 𝕀 [OfNat τ 0] [OfNat τ 1] : Bool → τ := indicator
+abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
+
+-- TODO: add the equivalence between 𝕀 ∘ (L =ᵣ i) and L =ᵢ i
+
+variable {k : ℕ} {L : FinRV n (Fin k)}
+
+theorem indi_eq_indr : ∀i : Fin k, (𝕀 ∘ (L =ᵣ i)) = (L =ᵢ i) := by 
+  intro i 
+  unfold FinRV.eq FinRV.eqi 𝕀 indicator 
+  ext ω 
+  by_cases h: L ω = i 
+  · simp [h]
+  · simp [h]
+
 
 /-- Indicator is 0 or 1 -/
-theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀∘cond) ω = 0) := by
+theorem ind_zero_one (cond : ρ → Bool) :  ∀ ω, (𝕀∘cond) ω = 1 ∨ (𝕀∘cond) ω = 0 := by
+    intro ω
     by_cases h : cond ω
     · left; simp only [Function.comp_apply, h, indicator]
     · right; simp only [Function.comp_apply, h, indicator]
@@ -141,7 +174,6 @@ end RandomVariable
 
 ------------------------------ Probability ---------------------------
 
-namespace Pr
 
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
@@ -156,15 +188,11 @@ notation "ℙ[" B "//" P "]" => probability P B
 /-- Conditional probability of B -/
 def probability_cnd : ℚ := ℙ[B * C // P] / ℙ[ C // P ]
 
+namespace Pr
 
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
   by ext
      simp [𝕀, indicator]
-
-
---#synth (OfNat Bool 1)
---#check One.toOfNat1
-
 
 theorem true_one : ℙ[ 1 // P] = 1 :=
     by unfold probability
@@ -203,7 +231,10 @@ notation "𝔼[" X "//" P "]" => expect P X
 notation "𝔼[" PX "]" => expect PX.1 PX.2
 
 --theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P]
---:= sorry
+
+@[simp]
+theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := 
+    by simp only [expect, probability]
 
 
 /-- Conditional expectation -/
@@ -214,11 +245,30 @@ notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
 -- expectation for a joint probability space and random variable
 notation "𝔼[" PX "|" B "]" => expect_cnd PX.1 PX.2 B
 
-variable {K : ℕ} (L : FinRV n (Fin K))
+variable {k : ℕ} (L : FinRV n (Fin k))
 
 -- creates a random variable
 def expect_cnd_rv : Fin n → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
 
 notation "𝔼[" X "|ᵣ" L "//" P "]" => expect_cnd_rv P X L
+
+--- some basic properties 
+
+theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect] 
+
+variable {c : ℚ}
+
+theorem exp_prod_const : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [expect, dotProduct_smul, smul_eq_mul]
+
+lemma constant_mul_eq_smul : (fun ω ↦ c * X ω) = c • X := rfl 
+
+theorem exp_prod_const_fun : 𝔼[(λ _ ↦ c) * X // P] = c * 𝔼[X // P] := 
+  by simp only [expect, Pi.mul_def, constant_mul_eq_smul, dotProduct_smul, smul_eq_mul]
+
+
+theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘ (L =ᵣ i) // P] := by 
+  intro i 
+  rw [indi_eq_indr]
+
 
 end Ex

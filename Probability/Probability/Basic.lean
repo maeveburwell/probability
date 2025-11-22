@@ -44,7 +44,7 @@ lemma refold_probability : P.p ⬝ᵥ (𝕀 ∘ B) = ℙ[B // P] := rfl
 
 theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[B * C // P] + ℙ[B * (¬ᵣC) // P] :=
   by
-    unfold Pr.probability
+    unfold probability
     have h : ∀ i : Fin n, (𝕀 (B i)) = (𝕀 (B i * C i)) + (𝕀 (B i * (¬ᵣ C) i)) :=
       by
         intro i
@@ -78,6 +78,7 @@ theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
 
 variable {k : ℕ}  {L : FinRV n (Fin k)}
 
+-- TODO: we will prove this from the law for expectations
 theorem law_of_total_probs : ∑ i : Fin k, ℙ[B * (L =ᵣ i) // P] = ℙ[B // P] := sorry
 
 end Pr
@@ -87,8 +88,7 @@ end Pr
 namespace PMF
 
 variable {n : ℕ} {k : ℕ}  {L : FinRV n (Fin k)}
-variable {pmf : Fin k → ℚ}
-variable {P : Findist n}
+variable {pmf : Fin k → ℚ} {P : Findist n}
 
 theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < k :=
   match k with  
@@ -113,14 +113,21 @@ example (f g : Fin k → ℚ) (h : f = g) : ∑ i, f i = ∑ i, g i := by
   rw [←h]
 
 
-theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := sorry
-
 -- TODO: The following derivations should be our focus
 
 ---- STEP 1:
-variable  (g : Fin k → ℚ)
 
---abbrev 𝕀ᵣ (B : FinRV n Bool) : FinRV n ℚ := fun ω => 𝕀 (B ω)
+/-- Pi.single is an indicator for the random variable -/
+theorem indicator_eq_single : ∀ ω : Fin n, (fun i ↦ (L =ᵢ i) ω) = Pi.single (L ω) (1:ℚ) := 
+  by intro ω
+     simp [Pi.single]
+     ext i 
+     simp [Function.update]
+     by_cases h : L ω = i 
+     · simp [h]
+     · simp [h]; exact fun a ↦ h a.symm 
+
+variable  (g : Fin k → ℚ)
 
 theorem fin_sum_g: ∀ ω, ∑ i, (g i) * (𝕀 ∘ (L =ᵣ i)) ω = g (L ω) := by
   intro ω
@@ -138,8 +145,30 @@ theorem fin_sum_g: ∀ ω, ∑ i, (g i) * (𝕀 ∘ (L =ᵣ i)) ω = g (L ω) :=
   · intro b _ hneq
     exact h1 b hneq.symm
 
+variable {ρ : Type} [AddCommMonoid ρ]
+
+/-- Linearity of expectation --/
+theorem expect_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
+  by unfold expect
+     exact dotProduct_sum P.p Finset.univ Xs
+
+/-- Decompose a random variable to a sum of constant variables with indicators  -/
+theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) := 
+  by ext ω
+     simp
+
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
-    𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := sorry
+    𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := by 
+    rw [fin_sum_simple]
+    rw [expect_linear]
+    apply Fintype.sum_congr
+    intro a 
+    rw [exp_prod_const_fun] 
+    rw [prob_eq_exp_ind]
+    rw [exp_indi_eq_exp_indr]
+      
+    
+-- TODO: just need the expectation of a constant function and then we are done!!!!
 
 -- LOTUS: the law of the unconscious statistician (or similar)
 theorem LOTUS {g : Fin k → ℚ} (h : PMF pmf P L):
@@ -192,9 +221,6 @@ theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:�
        simp_all only [Pi.one_apply, Function.comp_apply, FinRV.eq, one_mul, implies_true]
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := sorry
-
-
--- TODO: need to sum all probabilities
 
 
 example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) :
