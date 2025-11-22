@@ -44,7 +44,7 @@ lemma refold_probability : P.p ⬝ᵥ (𝕀 ∘ B) = ℙ[B // P] := rfl
 
 theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[B * C // P] + ℙ[B * (¬ᵣC) // P] :=
   by
-    unfold Pr.probability
+    unfold probability
     have h : ∀ i : Fin n, (𝕀 (B i)) = (𝕀 (B i * C i)) + (𝕀 (B i * (¬ᵣ C) i)) :=
       by
         intro i
@@ -117,9 +117,9 @@ example (f g : Fin k → ℚ) (h : f = g) : ∑ i, f i = ∑ i, g i := by
 ---- STEP 1:
 
 /-- Pi.single is an indicator for the random variable -/
-theorem indicator_eq_single : ∀ ω : Fin n, (fun i ↦ (𝕀 ∘ (L =ᵣ i)) ω) = Pi.single (L ω) (1:ℚ) := 
+theorem indicator_eq_single : ∀ ω : Fin n, (fun i ↦ (L =ᵢ i) ω) = Pi.single (L ω) (1:ℚ) := 
   by intro ω
-     simp [𝕀, indicator, Pi.single]
+     simp [Pi.single]
      ext i 
      simp [Function.update]
      by_cases h : L ω = i 
@@ -151,6 +151,10 @@ theorem expect_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin 
   by unfold expect
      exact dotProduct_sum P.p Finset.univ Xs
 
+
+theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) := 
+  by ext ω
+     simp 
 
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
     𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := sorry

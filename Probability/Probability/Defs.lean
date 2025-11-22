@@ -104,6 +104,13 @@ def eq [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
 
 infix:50 "=ᵣ" => FinRV.eq
 
+/-- indicator version of equality -/
+@[simp]
+def eqi [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n ℚ :=
+  (fun ω ↦ if Y ω = y then 1 else 0)
+
+infix:50 "=ᵢ" => FinRV.eqi
+
 @[simp]
 def leq [LE ρ] [DecidableLE ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   (fun ω ↦ Y ω ≤ y)
