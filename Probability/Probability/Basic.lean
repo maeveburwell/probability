@@ -156,7 +156,13 @@ theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) /
   by sorry
 
 
-theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] := sorry
+theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := by
+  let pmf i := ℙ[ L =ᵣ i // P]
+  have h_pmf : PMF pmf P L := fun i ↦ rfl
+  rw [condexp_pmf, LOTUS h_pmf]
+  apply Finset.sum_congr rfl
+  intro i _
+  rw [mul_comm]
 
 -- STEP 2:
 
@@ -175,14 +181,15 @@ theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) //
 
 -- STEP 3:
 -- proves that μ distributes over the random variables
+theorem μ_dist (h : Fin k → FinRV n ℚ) : ∑ i : Fin k, 𝔼[X * (h i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, (h i) ω) // P] := sorry
 
 
-theorem μ_dist (h : Fin k → FinRV n ℚ) :
-    ∑ i : Fin k, 𝔼[ X * (h i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, (h i) ω) // P] := sorry
+-- TODO: need to sum all probabilities
+ 
 
 theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:ℚ) :=
     by have := fin_sum_g 1 (L := L)
-       simp_all
+       simp_all only [Pi.one_apply, Function.comp_apply, FinRV.eq, one_mul, implies_true]
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := sorry
 
