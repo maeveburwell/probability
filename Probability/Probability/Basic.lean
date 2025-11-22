@@ -87,8 +87,7 @@ end Pr
 namespace PMF
 
 variable {n : ℕ} {k : ℕ}  {L : FinRV n (Fin k)}
-variable {pmf : Fin k → ℚ}
-variable {P : Findist n}
+variable {pmf : Fin k → ℚ} {P : Findist n}
 
 theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < k :=
   match k with  
@@ -113,14 +112,21 @@ example (f g : Fin k → ℚ) (h : f = g) : ∑ i, f i = ∑ i, g i := by
   rw [←h]
 
 
-theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := sorry
-
 -- TODO: The following derivations should be our focus
 
 ---- STEP 1:
-variable  (g : Fin k → ℚ)
 
---abbrev 𝕀ᵣ (B : FinRV n Bool) : FinRV n ℚ := fun ω => 𝕀 (B ω)
+/-- Pi.single is an indicator for the random variable -/
+theorem indicator_eq_single : ∀ ω : Fin n, (fun i ↦ (𝕀 ∘ (L =ᵣ i)) ω) = Pi.single (L ω) (1:ℚ) := 
+  by intro ω
+     simp [𝕀, indicator, Pi.single]
+     ext i 
+     simp [Function.update]
+     by_cases h : L ω = i 
+     · simp [h]
+     · simp [h]; exact fun a ↦ h a.symm 
+
+variable  (g : Fin k → ℚ)
 
 theorem fin_sum_g: ∀ ω, ∑ i, (g i) * (𝕀 ∘ (L =ᵣ i)) ω = g (L ω) := by
   intro ω
@@ -137,6 +143,14 @@ theorem fin_sum_g: ∀ ω, ∑ i, (g i) * (𝕀 ∘ (L =ᵣ i)) ω = g (L ω) :=
   · simp only [Finset.mem_univ]
   · intro b _ hneq
     exact h1 b hneq.symm
+
+variable {ρ : Type} [AddCommMonoid ρ]
+
+/-- Linearity of expectation --/
+theorem expect_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
+  by unfold expect
+     exact dotProduct_sum P.p Finset.univ Xs
+
 
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
     𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := sorry

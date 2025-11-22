@@ -77,7 +77,7 @@ instance instBoolOne : One Bool where one := true
 @[simp] lemma bool_mul_ff : (false * false : Bool) = false := rfl
 
 
-variable {A B  : Bool}
+variable {A B : Bool}
 
 @[simp]
 theorem one_eq_true : (1:Bool) = true := rfl
@@ -127,12 +127,13 @@ def preimage (f : FinRV n ρ) : ρ → Set (Fin n) :=
 end FinRV
 
 /-- Boolean indicator function -/
-def indicator {τ : Type} [OfNat τ 0] [OfNat τ 1] (cond : Bool) : τ  := cond.rec 0 1
+def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
 
-abbrev 𝕀 [OfNat τ 0] [OfNat τ 1] : Bool → τ := indicator
+abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
 
 /-- Indicator is 0 or 1 -/
-theorem ind_zero_one (cond : τ → Bool) : ( (𝕀∘cond) ω = 1) ∨ ((𝕀∘cond) ω = 0) := by
+theorem ind_zero_one (cond : ρ → Bool) :  ∀ ω, (𝕀∘cond) ω = 1 ∨ (𝕀∘cond) ω = 0 := by
+    intro ω
     by_cases h : cond ω
     · left; simp only [Function.comp_apply, h, indicator]
     · right; simp only [Function.comp_apply, h, indicator]
@@ -141,7 +142,6 @@ end RandomVariable
 
 ------------------------------ Probability ---------------------------
 
-namespace Pr
 
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
@@ -156,6 +156,7 @@ notation "ℙ[" B "//" P "]" => probability P B
 /-- Conditional probability of B -/
 def probability_cnd : ℚ := ℙ[B * C // P] / ℙ[ C // P ]
 
+namespace Pr
 
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
   by ext
@@ -203,7 +204,9 @@ notation "𝔼[" X "//" P "]" => expect P X
 notation "𝔼[" PX "]" => expect PX.1 PX.2
 
 --theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P]
---:= sorry
+
+theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := 
+    by simp only [expect, probability]
 
 
 /-- Conditional expectation -/
