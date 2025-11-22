@@ -1,13 +1,11 @@
 import Probability.Probability.Induction
 
-/-!
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators
 
 /-! 
   # Basic properties for probability spaces and expectations
-
 
   The main results:
   - Correspondence between expectations and probabilities (indicator functions)
@@ -163,7 +161,10 @@ variable {K : ℕ}  {L : FinRV (Fin K)}
 variable {pmf : Fin K → ℚ}
 variable {P : Finprob}
 
-theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K := sorry
+theorem pmf_rv_k_ge_1 (L : FinRV (Fin K)) : 0 < K :=
+  match K with
+  | Nat.zero => Fin.elim0 (L 0)
+  | Nat.succ n => Nat.succ_pos n
 
 end PMF
 
@@ -175,7 +176,6 @@ variable {P : Finprob}
 variable {K : ℕ} {X : FinRV ℚ} {B : FinRV Bool} {L : FinRV (Fin K)}
 
 variable {pmf : Fin K → ℚ}
-
 
 theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
     𝔼[X // P] = 𝔼[X | B // P] * ℙ[B // P] + 𝔼[X | ¬ᵣB // P] * ℙ[¬ᵣB // P] :=
@@ -193,35 +193,40 @@ theorem law_total_exp_bool  (h1 : 0 < ℙ[B // P]) (h2 : 0 < ℙ[¬ᵣB // P]) :
 
 ---- STEP 1:
 
--- the law of the unconscious statistician (or similar)
-theorem unconc_stat {g : Fin K → ℚ} (h : PMF pmf P L):
+-- LOTUS: the law of the unconscious statistician (or similar)
 theorem LOTUS {g : Fin K → ℚ} (h : PMF pmf P L): 
     𝔼[ g ∘ L // P ] = ∑ i : Fin K, (pmf i) * (g i) := sorry
 
 -- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
-theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := sorry
+theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L := 
+  by sorry
+
 
 theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := by
-  let g := fun i ↦ 𝔼[ X | (L =ᵣ i) // P]
-  let pmf := fun i ↦ ℙ[ L =ᵣ i // P]
-
-  have h_pmf : PMF pmf P L := by
-    intro i; rfl
-
-  rw [condexp_pmf]
-  rw [unconc_stat h_pmf]
-
+  let pmf i := ℙ[ L =ᵣ i // P]
+  have h_pmf : PMF pmf P L := fun i ↦ rfl
+  rw [condexp_pmf, LOTUS h_pmf]
   apply Finset.sum_congr rfl
   intro i _
   rw [mul_comm]
 
--- STEP 2:
-theorem exp_prod_μ (i : Fin K) : 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] = μ P X (𝕀ᵣ B) := sorry
-theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] := sorry
-
 -- STEP 2: 
-theorem exp_prod_μ (i : Fin K) : 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P] = μ P X (𝕀ᵣ (L =ᵣ i)) := sorry
+
+theorem ind_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : 
+        ∀ ω : (Fin P.length), (𝕀ᵣ B) ω = 0 := 
+        by sorry
+
+
+theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : μ ℙ X (𝕀ᵣ B) = 0 := sorry
+
+theorem exp_prod_μ (i : Fin K) : 𝔼[ X | B // P] * ℙ[ B // P] = μ P X (𝕀ᵣ B) := 
+    by unfold expect_cnd
+       by_cases h: ℙ[B//P] = 0
+       · rw [μ_eq_zero_of_cond_empty h]
+         ring 
+       · simp_all only [isUnit_iff_ne_zero, ne_eq, not_false_eq_true, 
+                         IsUnit.div_mul_cancel]
 
 -- STEP 3:
 -- proves that μ distributes over the random variables
@@ -235,7 +240,7 @@ theorem fin_sum : ∀ ω : ℕ, ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω = 1 := so
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = μ P X (fun ω ↦ 1 ) := sorry 
 
 
--- TODO: need to sum all probabilities 
+-- TODO: need to sum all probabilities
 
 
 example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin m, f i = ∑ i : Fin m, g i := 
@@ -247,7 +252,8 @@ example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) : ∑ i : Fin
 theorem law_total_exp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = 𝔼[ X // P] := 
   calc
     𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i : Fin K, 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
-    _ =  ∑ i : Fin K, μ P X (𝕀ᵣ (L =ᵣ i)) := by apply Fintype.sum_congr; exact exp_prod_μ 
+    _ =  ∑ i : Fin K, μ P X (𝕀ᵣ (L =ᵣ i)) := by apply Fintype.sum_congr; 
+                                                exact fun a => exp_prod_μ (L K)
     _ =  μ P X (fun ω ↦  ∑ i : Fin K, (𝕀ᵣ (L =ᵣ i)) ω) :=  μ_dist fun i => 𝕀ᵣ (L=ᵣi)
     _ =  μ P X (fun ω ↦  1) :=  by conv => lhs; congr; rfl; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm

@@ -282,7 +282,7 @@ theorem exp_eq_correct : 𝔼[X // P ] = ∑ v ∈ ((List.finRange P.length).map
 def μ : ℚ := P.ℙ.iprod (X *ᵣ Y) 
 
 /-- Conditional expectation -/
-def expect_cnd : ℚ := (μ P X (𝕀ᵣ B)) / P.ℙ.iprodb B
+def expect_cnd : ℚ := (μ P X (𝕀ᵣ B)) / ℙ[ B // P]
 
 notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
 
