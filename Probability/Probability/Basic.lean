@@ -165,10 +165,8 @@ theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
     intro a 
     rw [exp_prod_const_fun] 
     rw [prob_eq_exp_ind]
-    sorry  
+    rw [exp_indi_eq_exp_indr]
       
-      
-
     
 -- TODO: just need the expectation of a constant function and then we are done!!!!
 

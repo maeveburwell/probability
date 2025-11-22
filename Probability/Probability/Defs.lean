@@ -152,7 +152,7 @@ abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
 
 -- TODO: add the equivalence between 𝕀 ∘ (L =ᵣ i) and L =ᵢ i
 
-variable {k : ℕ} {L : FinRV k ℚ}
+variable {k : ℕ} {L : FinRV n (Fin k)}
 
 theorem indi_eq_indr : ∀i : Fin k, (𝕀 ∘ (L =ᵣ i)) = (L =ᵢ i) := by 
   intro i 
@@ -245,7 +245,7 @@ notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
 -- expectation for a joint probability space and random variable
 notation "𝔼[" PX "|" B "]" => expect_cnd PX.1 PX.2 B
 
-variable {K : ℕ} (L : FinRV n (Fin K))
+variable {k : ℕ} (L : FinRV n (Fin k))
 
 -- creates a random variable
 def expect_cnd_rv : Fin n → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
@@ -266,6 +266,9 @@ theorem exp_prod_const_fun : 𝔼[(λ _ ↦ c) * X // P] = c * 𝔼[X // P] :=
   by simp only [expect, Pi.mul_def, constant_mul_eq_smul, dotProduct_smul, smul_eq_mul]
 
 
---theorem exp_indi_eq_exp_indr : ∀i : Fin k, 
+theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘ (L =ᵣ i) // P] := by 
+  intro i 
+  rw [indi_eq_indr]
+
 
 end Ex
