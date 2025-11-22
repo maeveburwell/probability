@@ -19,19 +19,30 @@ namespace Findist
 abbrev Delta : ℕ → Type := Findist
 abbrev Δ : ℕ → Type := Delta
 
-variable {n : ℕ} (P : Findist n)
 
 def singleton : Findist 1 :=
-    {p := ![1],
+    {p    := ![1],
      prob := by simp [Matrix.vecHead],
      nneg := by simp}
 
+
+@[simp]
+def length (_ : Findist n) := n 
+
+variable {n : ℕ} 
+
+theorem nonempty (P : Findist n) : P.length > 0 := 
+  by cases n 
+     · have := P.prob; simp_all only [Matrix.dotProduct_of_isEmpty, zero_ne_one]
+     · simp only [length, gt_iff_lt, lt_add_iff_pos_left, add_pos_iff, zero_lt_one, or_true]
+
+
 end Findist
 
-#synth (OfNat (ℕ → ℕ) 1)
-#check One.toOfNat1
-#synth One (ℕ → ℕ)
-#check Pi.instOne
+--#synth (OfNat (ℕ → ℕ) 1)
+--#check One.toOfNat1
+--#synth One (ℕ → ℕ)
+--#check Pi.instOne
 end Findist
 
 --------------------------- Random Variable -------------------------------------------------------------------
@@ -55,13 +66,9 @@ variable {n : ℕ} {ρ : Type}
 namespace FinRV
 
 -- for convenience define operations on bools
-@[simp]
 instance instBoolMul : Mul Bool where mul a b := Bool.and a b
-@[simp]
 instance instBoolAdd: Add Bool  where add a b := Bool.or a b
-@[simp]
 instance instBoolZero : Zero Bool where zero := false
-@[simp]
 instance instBoolOne : One Bool where one := true
 
 @[simp] lemma bool_mul_tt : (true * true : Bool) = true := rfl
@@ -90,7 +97,6 @@ def not (B : FinRV n Bool) : FinRV n Bool :=
   fun ω ↦ (B ω).not
 
 prefix:40 "¬ᵣ" => FinRV.not
-
 
 @[simp]
 def eq [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=

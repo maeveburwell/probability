@@ -93,13 +93,10 @@ variable {K : ℕ}  {L : FinRV n (Fin K)}
 variable {pmf : Fin K → ℚ}
 variable {P : Findist n}
 
--- em: is the theorem below true? ma: Hmm, I think it is no longer true; I wonder why it was true in the 
--- first place before
 theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < K :=
-  by cases' K with  z nz  
-     · unfold PMF at h 
-       sorry 
-     · exact Nat.zero_lt_succ z
+  match K with  
+  | Nat.zero =>   Fin.pos <| L ⟨0,P.nonempty⟩
+  | Nat.succ k₂ => Nat.zero_lt_succ k₂
 
 end PMF
 
