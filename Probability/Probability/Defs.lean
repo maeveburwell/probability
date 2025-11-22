@@ -138,6 +138,8 @@ def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
 
 abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
 
+-- TODO: add the equivalence between 𝕀 ∘ (L =ᵣ i) and L =ᵢ i
+
 /-- Indicator is 0 or 1 -/
 theorem ind_zero_one (cond : ρ → Bool) :  ∀ ω, (𝕀∘cond) ω = 1 ∨ (𝕀∘cond) ω = 0 := by
     intro ω

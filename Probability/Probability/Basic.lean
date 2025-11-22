@@ -78,6 +78,7 @@ theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
 
 variable {k : ℕ}  {L : FinRV n (Fin k)}
 
+-- TODO: we will prove this from the law for expectations
 theorem law_of_total_probs : ∑ i : Fin k, ℙ[B * (L =ᵣ i) // P] = ℙ[B // P] := sorry
 
 end Pr
@@ -151,13 +152,17 @@ theorem expect_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin 
   by unfold expect
      exact dotProduct_sum P.p Finset.univ Xs
 
-
+/-- Decompose a random variable to a sum of constant variables with indicators  -/
 theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) := 
   by ext ω
      simp 
 
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
-    𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := sorry
+    𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := by 
+    rw [fin_sum_simple]
+    rw [expect_linear]
+    sorry 
+    -- TODO: just need the expectation of a constant function and then we are done!!!!
 
 -- LOTUS: the law of the unconscious statistician (or similar)
 theorem LOTUS {g : Fin k → ℚ} (h : PMF pmf P L):
