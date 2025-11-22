@@ -156,15 +156,14 @@ notation "ℙ[" B "//" P "]" => probability P B
 /-- Conditional probability of B -/
 def probability_cnd : ℚ := ℙ[B * C // P] / ℙ[ C // P ]
 
-#loogle "Pi.single"
 
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
   by ext
      simp [𝕀, indicator]
 
 
-#synth (OfNat Bool 1)
-#check One.toOfNat1
+--#synth (OfNat Bool 1)
+--#check One.toOfNat1
 
 
 theorem true_one : ℙ[ 1 // P] = 1 :=
