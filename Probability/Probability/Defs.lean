@@ -3,6 +3,7 @@ import Probability.Probability.Prelude
 import Mathlib.Data.Matrix.Mul  -- dot product definitions and results
 import Mathlib.Algebra.Notation.Pi.Defs -- operations on functions
 import Mathlib.Algebra.Module.PointwisePi -- for smul_pi
+import Mathlib.LinearAlgebra.Matrix.DotProduct -- for monotonicity 
 
 --------------------------- Findist ---------------------------------------------------------------
 
@@ -13,7 +14,7 @@ variable {n : ℕ}
 structure Findist (n : ℕ) : Type where
     p : Fin n → ℚ
     prob : 1 ⬝ᵥ p = 1
-    nneg : ∀ i, p i ≥ 0
+    nneg : 0 ≤ p 
 
 namespace Findist
 
@@ -24,7 +25,7 @@ abbrev Δ : ℕ → Type := Delta
 def singleton : Findist 1 :=
     {p    := ![1],
      prob := by simp [Matrix.vecHead],
-     nneg := by simp}
+     nneg := by simp [Pi.zero_def, Pi.le_def] }
 
 
 @[simp]
@@ -170,6 +171,15 @@ theorem ind_zero_one (cond : ρ → Bool) :  ∀ ω, (𝕀∘cond) ω = 1 ∨ (�
     · left; simp only [Function.comp_apply, h, indicator]
     · right; simp only [Function.comp_apply, h, indicator]
 
+
+theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
+  by ext
+     simp [𝕀, indicator]
+
+variable {X : FinRV n ℚ} 
+
+theorem rv_le_abs : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
+
 end RandomVariable
 
 ------------------------------ Probability ---------------------------
@@ -188,22 +198,32 @@ notation "ℙ[" B "//" P "]" => probability P B
 /-- Conditional probability of B -/
 def probability_cnd : ℚ := ℙ[B * C // P] / ℙ[ C // P ]
 
-namespace Pr
 
-theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
-  by ext
-     simp [𝕀, indicator]
+---- conditional probability
+notation "ℙ[" B "|" C "//" P "]" => probability_cnd P B C
 
-theorem true_one : ℙ[ 1 // P] = 1 :=
+
+theorem prob_one_of_true : ℙ[1 // P] = 1 :=
     by unfold probability
        rw[one_of_true]
        rw [dotProduct_comm]
        exact P.prob
 
----- conditional probability
-notation "ℙ[" B "|" C "//" P "]" => probability_cnd P B C
+example {a b : ℚ} (h : 0 ≤ a) (h2 : 0 ≤ b) : 0 ≤ a * b :=  Rat.mul_nonneg h h2
 
-end Pr
+
+theorem prod_zero_of_prob_zero : ℙ[B // P] = 0 → (P.p * (𝕀∘B) = 0) := by 
+    intro h 
+    ext i
+    unfold probability at h 
+    have hnn1 := P.nneg
+    have hnn2 : 0 ≤ 𝕀 ∘ B := by simp 
+    unfold dotProduct at h 
+    have : ∀i, 0 ≤ P.p i * (𝕀 ∘ B) i := by intro i; apply Rat.mul_nonneg; exact hnn1 i;  sorry 
+    sorry 
+
+  
+
 
 ------------------------------ PMF ---------------------------
 
@@ -265,10 +285,27 @@ lemma constant_mul_eq_smul : (fun ω ↦ c * X ω) = c • X := rfl
 theorem exp_prod_const_fun : 𝔼[(λ _ ↦ c) * X // P] = c * 𝔼[X // P] := 
   by simp only [expect, Pi.mul_def, constant_mul_eq_smul, dotProduct_smul, smul_eq_mul]
 
-
 theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘ (L =ᵣ i) // P] := by 
   intro i 
   rw [indi_eq_indr]
 
+theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
+
+variable {x y z : Fin n → ℚ}
+
+theorem dotProd_hadProd_rotate : x ⬝ᵥ (y * z) = z ⬝ᵥ (x * y) := by 
+  unfold dotProduct 
+  apply Fintype.sum_congr
+  intro i 
+  simp
+  ring 
+
+theorem dotProd_hadProd_comm : x ⬝ᵥ (y * z) = x ⬝ᵥ (z * y) := by 
+  unfold dotProduct
+  apply Fintype.sum_congr 
+  intro i 
+  simp 
+  left 
+  ring 
 
 end Ex

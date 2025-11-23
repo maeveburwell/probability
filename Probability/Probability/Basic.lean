@@ -27,7 +27,7 @@ theorem le_one : ℙ[B // P] ≤ 1 := (P.in_prob B).right
 
 end Findist
 
------------------------------- Probablity ---------------------------
+------------------------------ Probability ---------------------------
 
 namespace Pr
 
@@ -200,13 +200,12 @@ theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : ∀ X, 𝔼[X * (𝕀 �
 example (a : ℚ) : a * 0 = 0 := Rat.mul_zero a 
 
 theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) // P] :=
-    by unfold expect_cnd
+    by unfold expect_cnd 
        by_cases h: ℙ[B//P] = 0
        · rw [h, Rat.mul_zero]
-         sorry  
-       · sorry 
-         --simp_all only [isUnit_iff_ne_zero, ne_eq, not_false_eq_true,
-         --                 IsUnit.div_mul_cancel]
+         rw [prob_eq_exp_ind] at h 
+         sorry 
+       · simp_all 
 
 -- STEP 3:
 -- proves that μ distributes over the random variables
