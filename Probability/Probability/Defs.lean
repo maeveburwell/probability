@@ -164,12 +164,21 @@ theorem indi_eq_indr : ∀i : Fin k, (𝕀 ∘ (L =ᵣ i)) = (L =ᵢ i) := by
   · simp [h]
 
 
+variable {B : FinRV n Bool} 
 /-- Indicator is 0 or 1 -/
-theorem ind_zero_one (cond : ρ → Bool) :  ∀ ω, (𝕀∘cond) ω = 1 ∨ (𝕀∘cond) ω = 0 := by
+theorem ind_zero_one  :  ∀ ω, (𝕀∘B) ω = 1 ∨ (𝕀∘B) ω = 0 := by
     intro ω
-    by_cases h : cond ω
+    by_cases h : B ω
     · left; simp only [Function.comp_apply, h, indicator]
     · right; simp only [Function.comp_apply, h, indicator]
+
+/-- Indicator is 0 or 1 -/
+theorem ind_nneg  :  (0 : FinRV n ℚ) ≤ 𝕀∘B := by 
+    intro ω
+    simp [𝕀, indicator]
+    by_cases h : B ω
+    · simp [h] 
+    · simp [h]   
 
 
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
@@ -211,19 +220,11 @@ theorem prob_one_of_true : ℙ[1 // P] = 1 :=
 
 example {a b : ℚ} (h : 0 ≤ a) (h2 : 0 ≤ b) : 0 ≤ a * b :=  Rat.mul_nonneg h h2
 
+variable {P : Findist n} {B : FinRV n Bool} 
 
 theorem prod_zero_of_prob_zero : ℙ[B // P] = 0 → (P.p * (𝕀∘B) = 0) := by 
-    intro h 
-    ext i
-    unfold probability at h 
-    have hnn1 := P.nneg
-    have hnn2 : 0 ≤ 𝕀 ∘ B := by simp 
-    unfold dotProduct at h 
-    have : ∀i, 0 ≤ P.p i * (𝕀 ∘ B) i := by intro i; apply Rat.mul_nonneg; exact hnn1 i;  sorry 
-    sorry 
-
+    intro h; exact prod_eq_zero_of_nneg_dp_zero P.nneg ind_nneg h 
   
-
 
 ------------------------------ PMF ---------------------------
 
@@ -290,22 +291,5 @@ theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘
   rw [indi_eq_indr]
 
 theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
-
-variable {x y z : Fin n → ℚ}
-
-theorem dotProd_hadProd_rotate : x ⬝ᵥ (y * z) = z ⬝ᵥ (x * y) := by 
-  unfold dotProduct 
-  apply Fintype.sum_congr
-  intro i 
-  simp
-  ring 
-
-theorem dotProd_hadProd_comm : x ⬝ᵥ (y * z) = x ⬝ᵥ (z * y) := by 
-  unfold dotProduct
-  apply Fintype.sum_congr 
-  intro i 
-  simp 
-  left 
-  ring 
 
 end Ex

@@ -195,16 +195,15 @@ theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L 
 
 -- STEP 2:
 
-theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : ∀ X, 𝔼[X * (𝕀 ∘ B) // P] = 0 := sorry
-
 example (a : ℚ) : a * 0 = 0 := Rat.mul_zero a 
 
 theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) // P] :=
     by unfold expect_cnd 
        by_cases h: ℙ[B//P] = 0
        · rw [h, Rat.mul_zero]
-         rw [prob_eq_exp_ind] at h 
-         sorry 
+         unfold expect 
+         rw [dotProd_hadProd_comm, dotProd_hadProd_rotate, prod_zero_of_prob_zero h]
+         exact (dotProduct_zero X).symm 
        · simp_all 
 
 -- STEP 3:
@@ -240,5 +239,7 @@ theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
     _ = 𝔼[X * (fun ω ↦  1) // P] := by
           unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
+
+
 
 end Ex
