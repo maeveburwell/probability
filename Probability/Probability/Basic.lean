@@ -78,7 +78,7 @@ theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
 
 variable {k : ℕ}  {L : FinRV n (Fin k)}
 
--- TODO: we will prove this from the law for expectations
+-- TODO: we can  prove this from the law for expectations
 theorem law_of_total_probs : ∑ i : Fin k, ℙ[B * (L =ᵣ i) // P] = ℙ[B // P] := sorry
 
 end Pr
@@ -208,10 +208,11 @@ theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) //
 
 -- STEP 3:
 -- proves that μ distributes over the random variables
-theorem μ_dist (h : Fin k → FinRV n ℚ) : ∑ i : Fin k, 𝔼[X * (h i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, (h i) ω) // P] := sorry
+theorem μ_dist (h : Fin k → FinRV n ℚ) : ∑ i : Fin k, 𝔼[X * (h i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, (h i) ω) // P] := by
+    --let f i := (X i) * (h i)
+    sorry  
 
 
--- TODO: need to sum all probabilities
  
 
 theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:ℚ) :=
@@ -235,7 +236,7 @@ theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
           apply Finset.sum_congr
           · rfl 
           · exact fun a _ ↦ exp_prod_μ 
-    _ = 𝔼[X * (fun ω ↦  ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω) // P] :=  μ_dist fun i => 𝕀 ∘ (L=ᵣi)
+    _ = 𝔼[X * (fun ω ↦  ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω) // P] := μ_dist (fun i ↦ 𝕀 ∘ (L=ᵣi))
     _ = 𝔼[X * (fun ω ↦  1) // P] := by
           unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
