@@ -48,3 +48,36 @@ section FunctionalAnalysis
 
 
 end FunctionalAnalysis 
+
+section dotProduct
+
+variable {x y z : Fin n → ℚ}
+
+theorem dotProd_hadProd_rotate : x ⬝ᵥ (y * z) = z ⬝ᵥ (x * y) := by 
+  unfold dotProduct 
+  apply Fintype.sum_congr 
+  intro i 
+  simp
+  ring 
+
+theorem dotProd_hadProd_comm : x ⬝ᵥ (y * z) = x ⬝ᵥ (z * y) := by 
+  unfold dotProduct
+  apply Fintype.sum_congr 
+  intro i 
+  simp 
+  left 
+  ring 
+
+theorem dotProduct_eq_one_had : x ⬝ᵥ y = 1 ⬝ᵥ (x * y) := by simp [dotProduct]
+
+example (hx : 0 ≤ x) (hy : 0 ≤ y) : 0 ≤ x * y := Left.mul_nonneg hx hy
+
+theorem prod_eq_zero_of_nneg_dp_zero (hx : 0 ≤ x) (hy : 0 ≤ y) : x ⬝ᵥ y = 0 → x * y = 0 := by 
+  intro h 
+  rw [dotProduct_eq_one_had] at h 
+  have := Left.mul_nonneg hx hy
+  simp_all [dotProduct]
+  exact (Fintype.sum_eq_zero_iff_of_nonneg this).mp h
+
+end dotProduct
+
