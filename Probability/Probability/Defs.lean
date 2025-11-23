@@ -53,16 +53,19 @@ end Findist
 Random variables are defined as function. The operations on random variables can be performed 
 using the standard notation:
 
-X + Y is elementwise addition
-X * Y is elementwise (Hadamard product)
-f ∘ X is composition
-c • X is scalar multiplication
+- X + Y is elementwise addition
+- X * Y is elementwise product (Hadamard product)
+- f ∘ X is composition
+- c • X is scalar multiplication
 
 
-L =ᵣ i is a boolean indicator random variable
-L =ᵢ i is a ℚ indicator random variable 
-L ≤ᵣ i is a bool indicator random variable 
+- L =ᵣ i is a boolean indicator random variable
+- L =ᵢ i is a ℚ indicator random variable 
+- L ≤ᵣ i is a bool indicator random variable 
 
+Main results 
+
+- Hadamard product is linear:  Y * (∑ i, Xs i) = ∑ i, Y * (Xs i) 
 -/
 
 
@@ -181,14 +184,17 @@ theorem ind_nneg  :  (0 : FinRV n ℚ) ≤ 𝕀∘B := by
     · simp [h]   
 
 
-theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ)  :=
-  by ext
-     simp [𝕀, indicator]
+theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ) := by ext; simp [𝕀, indicator]
 
-variable {X : FinRV n ℚ} 
+variable {X Y: FinRV n ℚ} 
 
 theorem rv_le_abs : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
 
+theorem rv_prod_sum_linear {Xs : Fin k → FinRV n ℚ} : ∑ i, Y * (Xs i) = Y * (∑ i, Xs i) := 
+    by ext ω 
+       simp 
+       rw [Finset.mul_sum] 
+        
 end RandomVariable
 
 ------------------------------ Probability ---------------------------
@@ -200,6 +206,9 @@ variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 def probability : ℚ :=  P.p ⬝ᵥ (𝕀 ∘ B)
 
 notation "ℙ[" B "//" P "]" => probability P B
+
+-- helps to refold is when needed 
+lemma probability_def : P.p ⬝ᵥ (𝕀 ∘ B) = ℙ[B // P] := rfl
 
 -- TODO: the sorry in the definition has to do with the decidability of the membership
 --theorem prob_iprod_eq_def : ℙ[B // P] = P.measure (B.preimage true) sorry := sorry
