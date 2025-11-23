@@ -193,7 +193,14 @@ theorem ind_le_one : 𝕀∘B ≤ (1 : FinRV n ℚ) :=
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ) := by ext; simp [𝕀, indicator]
 
 theorem one_of_bool_or_not : B + (¬ᵣ B) = (1 : FinRV n Bool) := by ext ω; unfold FinRV.not; simp 
-    
+
+theorem one_of_ind_bool_or_not : (𝕀∘B) + (𝕀∘(¬ᵣ B)) = (1 : FinRV n ℚ) := 
+    by ext ω
+       unfold FinRV.not 𝕀 indicator not 
+       by_cases h : B ω
+       · simp [h]
+       · simp [h]  
+
 variable {X Y: FinRV n ℚ} 
 
 theorem rv_le_abs : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
@@ -296,6 +303,11 @@ end Ex
 section Expectation_properties 
 variable {P : Findist n} {X Y Z: FinRV n ℚ} {B : FinRV n Bool}
 
+theorem exp_congr : (X = Y) → 𝔼[X // P] = 𝔼[Y // P] := 
+  by intro h 
+     unfold Ex.expect dotProduct 
+     apply Fintype.sum_congr
+     simp_all 
 
 theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [Ex.expect] 
 
@@ -311,6 +323,10 @@ theorem exp_const : 𝔼[(fun _ ↦ c) // P] = c :=
        simp only [dotProduct_smul, smul_eq_mul]
        rw [dotProduct_comm, P.prob]
        simp 
+
+theorem exp_one : 𝔼[ 1 // P] = 1 := 
+    by calc 𝔼[ 1 // P] = 𝔼[ (fun _ ↦ 1) // P] := rfl 
+       _ = 1 := exp_const    
 
 theorem exp_prod_const : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [Ex.expect, dotProduct_smul, smul_eq_mul]
 

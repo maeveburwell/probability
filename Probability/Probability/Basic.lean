@@ -40,14 +40,19 @@ end Findist
 
 namespace Pr
 
-variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool) 
+variable {n : ℕ} {P : Findist n} {B C : FinRV n Bool}
+
 
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
-    by unfold probability 
-       sorry 
+    by rw [Ex.prob_eq_exp_ind, Ex.prob_eq_exp_ind]
+       rw [←exp_dists_add]
+       rw [one_of_ind_bool_or_not]
+       exact exp_one 
+
+       
 
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
-    by have := prob_compl_sums_to_one P B
+    by have := prob_compl_sums_to_one (P:=P) (B:=B)
        linarith
 
 
