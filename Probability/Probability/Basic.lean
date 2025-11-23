@@ -16,14 +16,18 @@ import Mathlib.Data.Fintype.BigOperators
 
 namespace Findist
 
-variable {n : ℕ} (P : Findist n) (B : FinRV n Bool)
+variable {n : ℕ} {P : Findist n} {B : FinRV n Bool}
 
--- TODO: is there a way to simplify this result to not use induction?
-theorem in_prob (P : Findist n) : Prob ℙ[B // P] := sorry
 
-theorem ge_zero : ℙ[ B // P ] ≥ 0 := (P.in_prob B).left
+theorem ge_zero : 0 ≤ ℙ[ B // P ] := 
+    by rw [Ex.prob_eq_exp_ind]
+       have h : (0 : FinRV n ℚ) ≤ 𝕀∘B := ind_nneg 
+       exact Ex.exp_monotone h 
+       
 
-theorem le_one : ℙ[B // P] ≤ 1 := (P.in_prob B).right
+theorem le_one : ℙ[B // P] ≤ 1 := sorry 
+
+theorem in_prob (P : Findist n) : Prob ℙ[B // P] := ⟨ge_zero, le_one⟩
 
 end Findist
 
@@ -33,14 +37,17 @@ namespace Pr
 
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool) 
 
-theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := sorry
+theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
+    by unfold probability 
+       sorry 
 
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by have := prob_compl_sums_to_one P B
        linarith
 
 
--- TODO: I think that we can show this from the law of total expectations
+-- TODO: I think that we can show the following results from the law of total expectations
+
 --TODO: theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[B * C // P] + ℙ[B * (¬ᵣC) // P] :=
 /-  by
     unfold probability

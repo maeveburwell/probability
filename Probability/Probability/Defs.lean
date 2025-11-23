@@ -176,16 +176,24 @@ theorem ind_zero_one  :  ∀ ω, (𝕀∘B) ω = 1 ∨ (𝕀∘B) ω = 0 := by
     · right; simp only [Function.comp_apply, h, indicator]
 
 /-- Indicator is 0 or 1 -/
-theorem ind_nneg  :  (0 : FinRV n ℚ) ≤ 𝕀∘B := by 
+theorem ind_nneg : (0 : FinRV n ℚ) ≤ 𝕀∘B := by 
     intro ω
     simp [𝕀, indicator]
     by_cases h : B ω
     · simp [h] 
     · simp [h]   
 
+theorem ind_le_one : 𝕀∘B ≤ (1 : FinRV n ℚ) := 
+    by unfold 𝕀 indicator
+       intro ω
+       by_cases h : B ω
+       · simp [h]
+       · simp [h]  
 
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ) := by ext; simp [𝕀, indicator]
 
+theorem one_of_bool_or_not : B + (¬ᵣ B) = (1 : FinRV n Bool) := by ext ω; unfold FinRV.not; simp 
+    
 variable {X Y: FinRV n ℚ} 
 
 theorem rv_le_abs : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
@@ -282,20 +290,34 @@ def expect_cnd_rv : Fin n → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
 
 notation "𝔼[" X "|ᵣ" L "//" P "]" => expect_cnd_rv P X L
 
+end Ex
 --- some basic properties 
 
-theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect] 
+section Expectation_properties 
+variable {P : Findist n} {X Y Z: FinRV n ℚ} {B : FinRV n Bool}
 
-theorem exp_mul_comm : 𝔼[X * Y // P] = 𝔼[Y * X // P] := by unfold expect; exact dotProd_hadProd_comm
 
-variable {c : ℚ}
+theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [Ex.expect] 
 
-theorem exp_prod_const : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [expect, dotProduct_smul, smul_eq_mul]
+theorem exp_mul_comm : 𝔼[X * Y // P] = 𝔼[Y * X // P] := by unfold Ex.expect; exact dotProd_hadProd_comm
+
+variable {c : ℚ} {p : Fin n → ℚ}
+
+theorem const_fun_to_one : (fun _ ↦ c : FinRV n ℚ)  = c • 1 := by ext; simp; 
+
+theorem exp_const : 𝔼[(fun _ ↦ c) // P] = c := 
+    by unfold Ex.expect
+       rw [const_fun_to_one] 
+       simp only [dotProduct_smul, smul_eq_mul]
+       rw [dotProduct_comm, P.prob]
+       simp 
+
+theorem exp_prod_const : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [Ex.expect, dotProduct_smul, smul_eq_mul]
 
 lemma constant_mul_eq_smul : (fun ω ↦ c * X ω) = c • X := rfl 
 
 theorem exp_prod_const_fun : 𝔼[(λ _ ↦ c) * X // P] = c * 𝔼[X // P] := 
-  by simp only [expect, Pi.mul_def, constant_mul_eq_smul, dotProduct_smul, smul_eq_mul]
+  by simp only [Ex.expect, Pi.mul_def, constant_mul_eq_smul, dotProduct_smul, smul_eq_mul]
 
 theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘ (L =ᵣ i) // P] := by 
   intro i 
@@ -303,4 +325,4 @@ theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘
 
 theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
 
-end Ex
+end Expectation_properties 
