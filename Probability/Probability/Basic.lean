@@ -22,10 +22,15 @@ variable {n : ℕ} {P : Findist n} {B : FinRV n Bool}
 theorem ge_zero : 0 ≤ ℙ[ B // P ] := 
     by rw [Ex.prob_eq_exp_ind]
        have h : (0 : FinRV n ℚ) ≤ 𝕀∘B := ind_nneg 
-       exact Ex.exp_monotone h 
+       calc 0 = 𝔼[0 // P] := exp_const.symm 
+            _ ≤ 𝔼[𝕀 ∘ B//P] := exp_monotone h
        
 
-theorem le_one : ℙ[B // P] ≤ 1 := sorry 
+theorem le_one : ℙ[B // P] ≤ 1 := 
+    by rw [Ex.prob_eq_exp_ind]
+       have h : 𝕀∘B ≤ (1 : FinRV n ℚ) := ind_le_one
+       calc 𝔼[𝕀 ∘ B//P] ≤ 𝔼[1 // P] := exp_monotone h 
+            _ = 1 := exp_const 
 
 theorem in_prob (P : Findist n) : Prob ℙ[B // P] := ⟨ge_zero, le_one⟩
 
