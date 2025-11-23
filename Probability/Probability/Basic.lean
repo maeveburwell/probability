@@ -218,7 +218,7 @@ theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:�
     by have := fin_sum_g 1 (L := L)
        simp_all only [Pi.one_apply, Function.comp_apply, FinRV.eq, one_mul, implies_true]
 
-theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := sorry
+theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := by simp [expect, Pi.mul_def]
 
 
 example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) :
@@ -239,7 +239,6 @@ theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
     _ = 𝔼[X * (fun ω ↦  1) // P] := by
           unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
-
 
 
 end Ex

@@ -277,6 +277,8 @@ notation "𝔼[" X "|ᵣ" L "//" P "]" => expect_cnd_rv P X L
 
 theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect] 
 
+theorem exp_mul_comm : 𝔼[X * Y // P] = 𝔼[Y * X // P] := by unfold expect; exact dotProd_hadProd_comm
+
 variable {c : ℚ}
 
 theorem exp_prod_const : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [expect, dotProduct_smul, smul_eq_mul]
