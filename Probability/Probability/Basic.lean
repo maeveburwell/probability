@@ -16,34 +16,50 @@ import Mathlib.Data.Fintype.BigOperators
 
 namespace Findist
 
-variable {n : ℕ} (P : Findist n) (B : FinRV n Bool)
+variable {n : ℕ} {P : Findist n} {B : FinRV n Bool}
 
--- TODO: is there a way to simplify this result to not use induction?
-theorem in_prob (P : Findist n) : Prob ℙ[B // P] := sorry
 
-theorem ge_zero : ℙ[ B // P ] ≥ 0 := (P.in_prob B).left
+theorem ge_zero : 0 ≤ ℙ[ B // P ] := 
+    by rw [Ex.prob_eq_exp_ind]
+       have h : (0 : FinRV n ℚ) ≤ 𝕀∘B := ind_nneg 
+       calc 0 = 𝔼[0 // P] := exp_const.symm 
+            _ ≤ 𝔼[𝕀 ∘ B//P] := exp_monotone h
+       
 
-theorem le_one : ℙ[B // P] ≤ 1 := (P.in_prob B).right
+theorem le_one : ℙ[B // P] ≤ 1 := 
+    by rw [Ex.prob_eq_exp_ind]
+       have h : 𝕀∘B ≤ (1 : FinRV n ℚ) := ind_le_one
+       calc 𝔼[𝕀 ∘ B//P] ≤ 𝔼[1 // P] := exp_monotone h 
+            _ = 1 := exp_const 
+
+theorem in_prob (P : Findist n) : Prob ℙ[B // P] := ⟨ge_zero, le_one⟩
 
 end Findist
 
------------------------------- Probablity ---------------------------
+------------------------------ Probability ---------------------------
 
 namespace Pr
 
-variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool) 
+variable {n : ℕ} {P : Findist n} {B C : FinRV n Bool}
 
-theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := sorry
+
+theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
+    by rw [Ex.prob_eq_exp_ind, Ex.prob_eq_exp_ind]
+       rw [←exp_dists_add]
+       rw [one_of_ind_bool_or_not]
+       exact exp_one 
+
+       
 
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
-    by have := prob_compl_sums_to_one P B
+    by have := prob_compl_sums_to_one (P:=P) (B:=B)
        linarith
 
-@[simp]
-lemma refold_probability : P.p ⬝ᵥ (𝕀 ∘ B) = ℙ[B // P] := rfl
 
-theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[B * C // P] + ℙ[B * (¬ᵣC) // P] :=
-  by
+-- TODO: I think that we can show the following results from the law of total expectations
+
+--TODO: theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[B * C // P] + ℙ[B * (¬ᵣC) // P] :=
+/-  by
     unfold probability
     have h : ∀ i : Fin n, (𝕀 (B i)) = (𝕀 (B i * C i)) + (𝕀 (B i * (¬ᵣ C) i)) :=
       by
@@ -56,10 +72,9 @@ theorem law_of_total_probs_bool : ℙ[B // P] = ℙ[B * C // P] + ℙ[B * (¬ᵣ
           · simp [hB, hC, FinRV.not, indicator]
           · simp [hB, hC, FinRV.not, indicator]
     sorry ---I tried to do this proof but got stuck, feel free to delete my work
+-/
 
-
-theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B * C // P] =  ℙ[B | C // P] * ℙ[C // P] :=
-  sorry
+--TODO: theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B * C // P] =  ℙ[B | C // P] * ℙ[C // P] :=
   -- by simp [probability_cnd] at ⊢ h
   --    have : P.ℙ.iprodb C * (P.ℙ.iprodb C)⁻¹ = 1 :=
   --           Rat.mul_inv_cancel (P.ℙ.iprodb C) (Ne.symm (ne_of_lt h))
@@ -69,17 +84,17 @@ theorem conditional_total (h : 0 < ℙ[C // P]) : ℙ[B * C // P] =  ℙ[B | C /
   --       _ = P.ℙ.iprodb (B ∧ᵣ C) / P.ℙ.iprodb C * P.ℙ.iprodb C := by ring
 
 
-theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
-: ℙ[B // P] = ℙ[B | C // P] * ℙ[ C // P] + ℙ[B | ¬ᵣC // P] * ℙ[¬ᵣC // P] :=
-        by have h2' : 0 < ℙ[¬ᵣC // P] := by rw [prob_compl_one_minus]; linarith
-           rw [←conditional_total P B C h1]
-           rw [←conditional_total P B (¬ᵣC) h2']
-           exact law_of_total_probs_bool P B C
+--TODO: theorem law_total_prbs_cnd  (h1 : 0 < ℙ[C // P]) (h2 : ℙ[C // P] < 1)
+--: ℙ[B // P] = ℙ[B | C // P] * ℙ[ C // P] + ℙ[B | ¬ᵣC // P] * ℙ[¬ᵣC // P] :=
+--        by have h2' : 0 < ℙ[¬ᵣC // P] := by rw [prob_compl_one_minus]; linarith
+--           rw [←conditional_total P B C h1]
+--           rw [←conditional_total P B (¬ᵣC) h2']
+--           exact law_of_total_probs_bool P B C
 
 variable {k : ℕ}  {L : FinRV n (Fin k)}
 
--- TODO: we will prove this from the law for expectations
-theorem law_of_total_probs : ∑ i : Fin k, ℙ[B * (L =ᵣ i) // P] = ℙ[B // P] := sorry
+-- TODO: we can  prove this from the law for expectations
+-- TODO: theorem law_of_total_probs : ∑ i : Fin k, ℙ[B * (L =ᵣ i) // P] = ℙ[B // P] := sorry
 
 end Pr
 
@@ -148,7 +163,7 @@ theorem fin_sum_g: ∀ ω, ∑ i, (g i) * (𝕀 ∘ (L =ᵣ i)) ω = g (L ω) :=
 variable {ρ : Type} [AddCommMonoid ρ]
 
 /-- Linearity of expectation --/
-theorem expect_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
+theorem exp_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
   by unfold expect
      exact dotProduct_sum P.p Finset.univ Xs
 
@@ -160,7 +175,7 @@ theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) :=
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
     𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := by 
     rw [fin_sum_simple]
-    rw [expect_linear]
+    rw [exp_linear]
     apply Fintype.sum_congr
     intro a 
     rw [exp_prod_const_fun] 
@@ -182,7 +197,9 @@ theorem LOTUS {g : Fin k → ℚ} (h : PMF pmf P L):
 -- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
 theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L :=
-  by sorry
+  by unfold expect_cnd_rv
+     ext ω; simp 
+
 
 
 theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := by
@@ -195,32 +212,34 @@ theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L 
 
 -- STEP 2:
 
-theorem μ_eq_zero_of_cond_empty (h : ℙ[B // P] = 0) : ∀ X, 𝔼[X * (𝕀 ∘ B) // P] = 0 := sorry
-
 example (a : ℚ) : a * 0 = 0 := Rat.mul_zero a 
 
 theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) // P] :=
-    by unfold expect_cnd
+    by unfold expect_cnd 
        by_cases h: ℙ[B//P] = 0
        · rw [h, Rat.mul_zero]
-         sorry  
-       · sorry 
-         --simp_all only [isUnit_iff_ne_zero, ne_eq, not_false_eq_true,
-         --                 IsUnit.div_mul_cancel]
+         unfold expect 
+         rw [dotProd_hadProd_comm, dotProd_hadProd_rotate, prod_zero_of_prob_zero h]
+         exact (dotProduct_zero X).symm 
+       · simp_all 
 
 -- STEP 3:
+
+example (Xs : Fin k → FinRV n ℚ) : (fun ω ↦ ∑ i, Xs i ω)  = ∑ i, Xs i := by exact Eq.symm (Finset.sum_fn Finset.univ Xs)
+
 -- proves that μ distributes over the random variables
-theorem μ_dist (h : Fin k → FinRV n ℚ) : ∑ i : Fin k, 𝔼[X * (h i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, (h i) ω) // P] := sorry
+theorem μ_dist (Xs : Fin k → FinRV n ℚ) : ∑ i : Fin k, 𝔼[X * (Xs i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, Xs i ω) // P] := by
+    rw [←Finset.sum_fn Finset.univ Xs]
+    rw [←rv_prod_sum_linear]
+    rw [exp_linear]
 
-
--- TODO: need to sum all probabilities
  
 
 theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:ℚ) :=
     by have := fin_sum_g 1 (L := L)
        simp_all only [Pi.one_apply, Function.comp_apply, FinRV.eq, one_mul, implies_true]
 
-theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun ω ↦ 1 ) // P] := sorry
+theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun _ ↦ 1 ) // P] := by simp [expect, Pi.mul_def]
 
 
 example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) :
@@ -237,9 +256,10 @@ theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
           apply Finset.sum_congr
           · rfl 
           · exact fun a _ ↦ exp_prod_μ 
-    _ = 𝔼[X * (fun ω ↦  ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω) // P] :=  μ_dist fun i => 𝕀 ∘ (L=ᵣi)
+    _ = 𝔼[X * (fun ω ↦  ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω) // P] := μ_dist (fun i ↦ 𝕀 ∘ (L=ᵣi))
     _ = 𝔼[X * (fun ω ↦  1) // P] := by
           unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω
     _ = 𝔼[X // P]  := exp_eq_exp_cond_true.symm
+
 
 end Ex
