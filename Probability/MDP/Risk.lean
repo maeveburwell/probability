@@ -25,20 +25,22 @@ notation "VaR[" α "," X "//" P "]" => VaR P X α
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
-  have hcdf : ∀ t : ℚ, cdf P X t ≤ cdf P Y t := by
+  have hcdf : ∀ t : ℚ, cdf P Y t ≤ cdf P X t := by
     intro t
-    have h_ind : (𝕀 ∘ (Y ≤ᵣ t)) ≤ (𝕀 ∘ (X ≤ᵣ t)) := by
-      intro ω
-      have h1 : Y ω ≤ t → X ω ≤ t := by
-        intro hY
-        exact le_trans (hXY ω) hY
-      by_cases hY : Y ω ≤ t
-      · have hX : X ω ≤ t := by exact h1 hY
-        simp [𝕀, indicator, FinRV.leq, hY, hX]
-      · simp [𝕀, indicator, FinRV.leq, hY]
     simp [cdf]
+    apply exp_monotone
+    intro ω
+    have h1 : Y ω ≤ t → X ω ≤ t := by
+      intro hY
+      exact le_trans (hXY ω) hY
+    by_cases hY : Y ω ≤ t
+    · have hX : X ω ≤ t := by exact h1 hY
+      simp [𝕀, indicator, FinRV.leq, hY, hX]
+    · simp [𝕀, indicator, FinRV.leq, hY]
+      by_cases hx2 : X ω ≤ t
+      · simp [hx2]
+      · simp [hx2] ---these lines seem really unnecessary but idk how to fix it
 
-    sorry
   sorry
 
 theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
@@ -75,5 +77,4 @@ notation "CVaR[" α "," X "//" P "]" => CVaR P X α
 -- convexity
 -- CVaR ≥ VaR: CVaR[α, X // P] ≥ VaR[α, X // P]
 
---test
 end Risk
