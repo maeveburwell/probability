@@ -24,7 +24,21 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
 notation "VaR[" α "," X "//" P "]" => VaR P X α
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
-  (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := sorry
+  (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
+  have hcdf : ∀ t : ℚ, cdf P X t ≤ cdf P Y t := by
+    intro t
+    have h_ind : (𝕀 ∘ (Y ≤ᵣ t)) ≤ (𝕀 ∘ (X ≤ᵣ t)) := by
+      intro ω
+      have h1 : Y ω ≤ t → X ω ≤ t := by
+        intro hY
+        exact le_trans (hXY ω) hY
+      by_cases hY : Y ω ≤ t
+      · have hX : X ω ≤ t := by exact h1 hY
+        simp [𝕀, indicator, FinRV.leq, hY, hX]
+      · simp [𝕀, indicator, FinRV.leq, hY]
+
+    sorry
+  sorry
 
 theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
   VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
