@@ -23,11 +23,14 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
 
 notation "VaR[" α "," X "//" P "]" => VaR P X α
 
---TODO: prove...
---monotonicity: X ≤ Y → VaR[α, X // P] ≤ VaR[α, Y // P]
---translation: VaR[α, X + const // P] = VaR[α, X // P] + const
---positive homog: VaR[α, c • X // P] = c * VaR[α, X // P]  for c > 0
+theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
+  (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := sorry
 
+theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
+  VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
+
+theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
+  (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
 
 
 /-- Tail indicator: 1 if X(ω) > t, else 0. -/
