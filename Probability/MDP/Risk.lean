@@ -36,6 +36,7 @@ theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
       · have hX : X ω ≤ t := by exact h1 hY
         simp [𝕀, indicator, FinRV.leq, hY, hX]
       · simp [𝕀, indicator, FinRV.leq, hY]
+    simp [cdf]
 
     sorry
   sorry
