@@ -121,23 +121,14 @@ variable {k : ℕ} {X : FinRV n ℚ} {B : FinRV n Bool} {L : FinRV n (Fin k)}
 
 variable {pmf : Fin k → ℚ}
 
-example (f g : Fin k → ℚ) (h : f = g) : ∑ i, f i = ∑ i, g i := by
-  let ff := f
-  have h2 : ff = f := by unfold ff; rfl
-  rw [←h2]
-  rw [←h]
-
-
 -- TODO: The following derivations should be our focus
 
 ---- STEP 1:
 
-/-- Pi.single is an indicator for the random variable -/
-theorem indicator_eq_single : ∀ ω : Fin n, (fun i ↦ (L =ᵢ i) ω) = Pi.single (L ω) (1:ℚ) := 
-  by intro ω
-     simp [Pi.single]
-     ext i 
-     simp [Function.update]
+/-- iIndicator for the random variable -/
+theorem indicator_eq_single : ∀ ω, (λ i ↦ (L =ᵢ i) ω) = Pi.single (L ω) (1:ℚ) := 
+  by intro ω; ext i 
+     unfold  Pi.single Function.update
      by_cases h : L ω = i 
      · simp [h]
      · simp [h]; exact fun a ↦ h a.symm 
@@ -162,20 +153,16 @@ theorem fin_sum_g: ∀ ω, ∑ i, (g i) * (𝕀 ∘ (L =ᵣ i)) ω = g (L ω) :=
 
 variable {ρ : Type} [AddCommMonoid ρ]
 
-/-- Linearity of expectation --/
-theorem exp_linear {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
-  by unfold expect
-     exact dotProduct_sum P.p Finset.univ Xs
 
 /-- Decompose a random variable to a sum of constant variables with indicators  -/
-theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) := 
-  by ext ω
-     simp
+theorem fin_sum_simple : (g ∘ L) = ∑ i, (fun _ ↦ g i) * (L =ᵢ i) := by ext ω; simp
+
+theorem rv_decompose : X = ∑ i, X * (L =ᵢ i) := by ext ω; simp
 
 theorem idktheorem (P : Findist n) (L : FinRV n (Fin k)) (g : Fin k → ℚ) :
     𝔼[g ∘ L // P] = ∑ i : Fin k, g i * ℙ[L =ᵣ i // P] := by 
     rw [fin_sum_simple]
-    rw [exp_linear]
+    rw [exp_additive]
     apply Fintype.sum_congr
     intro a 
     rw [exp_prod_const_fun] 
@@ -194,13 +181,17 @@ theorem LOTUS {g : Fin k → ℚ} (h : PMF pmf P L):
      rw [h i]
      ring
 
+-- LOTUS: the law of the unconscious statistician (or similar)
+theorem LOTUS2 {g : Fin k → ℚ} : 𝔼[g ∘ L // P ] = ∑ i, ℙ[L =ᵣ i // P] * (g i) :=
+  by rw [fin_sum_simple, exp_additive]
+     sorry 
+     
+
 -- this proof will rely on the extensional property of function (functions are the same if they
 -- return the same value for the same inputs; for all inputs)
 theorem condexp_pmf : 𝔼[ X |ᵣ L  // P] =  (fun i ↦ 𝔼[ X | (L =ᵣ i) // P]) ∘ L :=
   by unfold expect_cnd_rv
      ext ω; simp 
-
-
 
 theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L =ᵣ i // P] * ℙ[ L =ᵣ i // P]   := by
   let pmf i := ℙ[ L =ᵣ i // P]
@@ -212,17 +203,6 @@ theorem expexp : 𝔼[ 𝔼[ X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L 
 
 -- STEP 2:
 
-example (a : ℚ) : a * 0 = 0 := Rat.mul_zero a 
-
-theorem exp_prod_μ  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) // P] :=
-    by unfold expect_cnd 
-       by_cases h: ℙ[B//P] = 0
-       · rw [h, Rat.mul_zero]
-         unfold expect 
-         rw [dotProd_hadProd_comm, dotProd_hadProd_rotate, prod_zero_of_prob_zero h]
-         exact (dotProduct_zero X).symm 
-       · simp_all 
-
 -- STEP 3:
 
 example (Xs : Fin k → FinRV n ℚ) : (fun ω ↦ ∑ i, Xs i ω)  = ∑ i, Xs i := by exact Eq.symm (Finset.sum_fn Finset.univ Xs)
@@ -230,8 +210,8 @@ example (Xs : Fin k → FinRV n ℚ) : (fun ω ↦ ∑ i, Xs i ω)  = ∑ i, Xs 
 -- proves that μ distributes over the random variables
 theorem μ_dist (Xs : Fin k → FinRV n ℚ) : ∑ i : Fin k, 𝔼[X * (Xs i) // P] = 𝔼[X * (fun ω ↦ ∑ i : Fin k, Xs i ω) // P] := by
     rw [←Finset.sum_fn Finset.univ Xs]
-    rw [←rv_prod_sum_linear]
-    rw [exp_linear]
+    rw [←rv_prod_sum_additive]
+    rw [exp_additive]
 
  
 
@@ -241,21 +221,11 @@ theorem fin_sum : ∀ ω : Fin n, ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω = (1:�
 
 theorem exp_eq_exp_cond_true : 𝔼[X // P] = 𝔼[X * (fun _ ↦ 1 ) // P] := by simp [expect, Pi.mul_def]
 
-
-example {f g : ℕ → ℚ} {m : ℕ} (h : ∀ n : ℕ, f n = g n) :
-    ∑ i : Fin m, f i = ∑ i : Fin m, g i :=
-    by apply Finset.sum_congr
-       · simp
-       · simp_all
-
 -- STEP 4: We now use the results above to prove the law of total expectations
 theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
   calc
-    𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i : Fin k, 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
-    _ =  ∑ i : Fin k, 𝔼[X * (𝕀 ∘ (L =ᵣ i)) // P] := by
-          apply Finset.sum_congr
-          · rfl 
-          · exact fun a _ ↦ exp_prod_μ 
+    𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i , 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := expexp
+    _ =  ∑ i : Fin k, 𝔼[X * (𝕀 ∘ (L =ᵣ i)) // P] := by apply Fintype.sum_congr; exact fun a  ↦ exp_cond_eq_def
     _ = 𝔼[X * (fun ω ↦  ∑ i : Fin k, (𝕀 ∘ (L =ᵣ i)) ω) // P] := μ_dist (fun i ↦ 𝕀 ∘ (L=ᵣi))
     _ = 𝔼[X * (fun ω ↦  1) // P] := by
           unfold expect; conv => lhs; congr; rfl; congr; rfl; intro ω; exact fin_sum ω

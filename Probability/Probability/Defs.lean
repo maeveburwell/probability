@@ -211,10 +211,11 @@ variable {X Y: FinRV n ℚ}
 
 theorem rv_le_abs : X ≤ abs ∘ X := by intro i; simp [le_abs_self (X i)]
 
-theorem rv_prod_sum_linear {Xs : Fin k → FinRV n ℚ} : ∑ i, Y * (Xs i) = Y * (∑ i, Xs i) :=
+theorem rv_prod_sum_additive {Xs : Fin k → FinRV n ℚ} : ∑ i, Y * (Xs i) = Y * (∑ i, Xs i) :=
     by ext ω
        simp
        rw [Finset.mul_sum]
+
 
 end RandomVariable
 
@@ -334,7 +335,16 @@ theorem exp_one : 𝔼[ 1 // P] = 1 :=
     by calc 𝔼[ 1 // P] = 𝔼[ (fun _ ↦ 1) // P] := rfl
        _ = 1 := exp_const
 
-theorem exp_prod_const : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [Ex.expect, dotProduct_smul, smul_eq_mul]
+
+theorem exp_cond_eq_def  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) // P] :=
+    by unfold Ex.expect_cnd 
+       by_cases h: ℙ[B//P] = 0
+       · rw [h, Rat.mul_zero]
+         unfold Ex.expect 
+         rw [dotProd_hadProd_comm, dotProd_hadProd_rotate, prod_zero_of_prob_zero h]
+         exact (dotProduct_zero X).symm 
+       · simp_all 
+
 
 lemma constant_mul_eq_smul : (fun ω ↦ c * X ω) = c • X := rfl
 
@@ -345,6 +355,21 @@ theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘
   intro i
   rw [indi_eq_indr]
 
+/-- Expectation is homogeneous under product -/
+theorem exp_homogenous : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [Ex.expect, dotProduct_smul, smul_eq_mul]
+
+/-- Additivity of expectation --/
+theorem exp_additive {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
+  by unfold Ex.expect
+     exact dotProduct_sum P.p Finset.univ Xs
+
+/-- Expectation is monotone  -/
 theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
+
+variable {k : ℕ} {g : Fin k → ℚ} {L : FinRV n (Fin k)} 
+
+/-- Expectaion of a conditional constant  -/
+theorem exp_cond_const : ∀ i, 𝔼[g ∘ L | L =ᵣ i // P] = g i := by sorry
+
 
 end Expectation_properties
