@@ -147,7 +147,7 @@ theorem le_of_le_eq (D : FinRV n ℕ) (m : ℕ) : ((D ≤ᵣ m) + (D =ᵣ m.succ
   unfold FinRV.leq FinRV.eq instHAdd Add.add Pi.instAdd
   simp [instBoolAdd]
   have := Nat.lt_trichotomy (D x) (m+1)
-  grind
+  grind only [cases Or]
 
 /-- Defines a preimage of an RV. This is a set with a decidable membership. -/
 def preimage (f : FinRV n ρ) : ρ → Set (Fin n) :=
@@ -160,17 +160,11 @@ def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
 
 abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
 
--- TODO: add the equivalence between 𝕀 ∘ (L =ᵣ i) and L =ᵢ i
 
 variable {k : ℕ} {L : FinRV n (Fin k)}
 
 theorem indi_eq_indr : ∀i : Fin k, (𝕀 ∘ (L =ᵣ i)) = (L =ᵢ i) := by
-  intro i
-  unfold FinRV.eq FinRV.eqi 𝕀 indicator
-  ext ω
-  by_cases h: L ω = i
-  · simp [h]
-  · simp [h]
+  intro i; unfold FinRV.eq FinRV.eqi 𝕀 indicator; ext ω; by_cases h: L ω = i; repeat simp [h]
 
 
 variable {B : FinRV n Bool}
@@ -183,18 +177,16 @@ theorem ind_zero_one  :  ∀ ω, (𝕀∘B) ω = 1 ∨ (𝕀∘B) ω = 0 := by
 
 /-- Indicator is 0 or 1 -/
 theorem ind_nneg : (0 : FinRV n ℚ) ≤ 𝕀∘B := by
-    intro ω
-    simp [𝕀, indicator]
-    by_cases h : B ω
-    · simp [h]
-    · simp [h]
+    intro ω; unfold 𝕀 indicator; by_cases h : B ω; repeat simp [h]
 
 theorem ind_le_one : 𝕀∘B ≤ (1 : FinRV n ℚ) :=
-    by unfold 𝕀 indicator
-       intro ω
-       by_cases h : B ω
-       · simp [h]
-       · simp [h]
+    by unfold 𝕀 indicator; intro ω; by_cases h : B ω; repeat simp [h]
+
+variable {c : ℚ} {X : FinRV n ℚ}
+
+theorem rv_const_fun_to_one : (fun _ ↦ c : FinRV n ℚ)  = c • 1 := by ext; simp;
+
+theorem rv_decompose (X : FinRV n ℚ) (L : FinRV n (Fin k)) : X = ∑ i, X * (L =ᵢ i) := by ext ω; simp
 
 theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ) := by ext; simp [𝕀, indicator]
 
@@ -216,6 +208,12 @@ theorem rv_prod_sum_additive {Xs : Fin k → FinRV n ℚ} : ∑ i, Y * (Xs i) = 
        simp
        rw [Finset.mul_sum]
 
+variable {g : Fin k → ℚ}
+
+theorem rv_prod_const : ∀i, (g ∘ L) * (L =ᵢ i) = (g i) • (L =ᵢ i) := 
+    by intro i; ext ω; 
+       by_cases h : L ω = i 
+       repeat simp [h] 
 
 end RandomVariable
 
@@ -270,6 +268,17 @@ end PMF
 
 ------------------------------ Expectation ----------------------
 
+/-!
+Definitions and main properties of the expectation operator
+
+
+Main results
+  - Monotonicity of expectations 
+  - Correspondence between expectations and probabilities (indicator functions)
+  - Decomposition with a discrete random variables, used in the proofs of LOTUS and TLE
+-/
+
+
 namespace Ex
 
 
@@ -285,9 +294,7 @@ notation "𝔼[" PX "]" => expect PX.1 PX.2
 --theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P]
 
 @[simp]
-theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] :=
-    by simp only [expect, probability]
-
+theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := by simp only [expect, probability]
 
 /-- Conditional expectation -/
 def expect_cnd : ℚ := 𝔼[ X * (𝕀 ∘ B) // P] / ℙ[ B // P]
@@ -316,25 +323,19 @@ theorem exp_congr : (X = Y) → 𝔼[X // P] = 𝔼[Y // P] :=
      apply Fintype.sum_congr
      simp_all
 
-theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [Ex.expect]
 
-theorem exp_mul_comm : 𝔼[X * Y // P] = 𝔼[Y * X // P] := by unfold Ex.expect; exact dotProd_hadProd_comm
+theorem exp_mul_comm : 𝔼[X * Y // P] = 𝔼[Y * X // P] := exp_congr (CommMonoid.mul_comm X Y)
 
 variable {c : ℚ} {p : Fin n → ℚ}
 
-theorem const_fun_to_one : (fun _ ↦ c : FinRV n ℚ)  = c • 1 := by ext; simp;
-
 theorem exp_const : 𝔼[(fun _ ↦ c) // P] = c :=
     by unfold Ex.expect
-       rw [const_fun_to_one]
+       rw [rv_const_fun_to_one]
        simp only [dotProduct_smul, smul_eq_mul]
        rw [dotProduct_comm, P.prob]
        simp
 
-theorem exp_one : 𝔼[ 1 // P] = 1 :=
-    by calc 𝔼[ 1 // P] = 𝔼[ (fun _ ↦ 1) // P] := rfl
-       _ = 1 := exp_const
-
+theorem exp_one : 𝔼[ 1 // P] = 1  := exp_const
 
 theorem exp_cond_eq_def  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B) // P] :=
     by unfold Ex.expect_cnd 
@@ -352,24 +353,36 @@ theorem exp_prod_const_fun : 𝔼[(λ _ ↦ c) * X // P] = c * 𝔼[X // P] :=
   by simp only [Ex.expect, Pi.mul_def, constant_mul_eq_smul, dotProduct_smul, smul_eq_mul]
 
 theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘ (L =ᵣ i) // P] := by
-  intro i
-  rw [indi_eq_indr]
+  intro i; rw [indi_eq_indr]
 
 /-- Expectation is homogeneous under product -/
 theorem exp_homogenous : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [Ex.expect, dotProduct_smul, smul_eq_mul]
 
+theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [Ex.expect]
+
 /-- Additivity of expectation --/
 theorem exp_additive {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
-  by unfold Ex.expect
-     exact dotProduct_sum P.p Finset.univ Xs
+  by unfold Ex.expect; exact dotProduct_sum P.p Finset.univ Xs
 
 /-- Expectation is monotone  -/
 theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
 
+---- ** conditional expectation -----
+
 variable {k : ℕ} {g : Fin k → ℚ} {L : FinRV n (Fin k)} 
 
-/-- Expectaion of a conditional constant  -/
-theorem exp_cond_const : ∀ i, 𝔼[g ∘ L | L =ᵣ i // P] = g i := by sorry
+theorem exp_decompose : 𝔼[X // P] = ∑ i, 𝔼[X * (L =ᵢ i) // P] := 
+  by nth_rewrite 1 [rv_decompose X L]
+     rewrite [exp_additive]
+     simp 
 
+
+/-- Expectation of a conditional constant. Only when probability is positive.  -/
+theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L =ᵣ i // P] = g i := 
+    by intro i h 
+       unfold Ex.expect_cnd
+       rw [indi_eq_indr, rv_prod_const i, exp_homogenous]
+       rw [←indi_eq_indr, ←Ex.prob_eq_exp_ind]
+       simp only [h, ne_eq, isUnit_iff_ne_zero, not_false_eq_true, IsUnit.mul_div_cancel_right]
 
 end Expectation_properties
