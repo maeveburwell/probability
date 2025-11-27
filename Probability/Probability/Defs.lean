@@ -92,21 +92,12 @@ instance instBoolOne : One Bool where one := true
 @[simp] lemma bool_mul_ft : (false * true : Bool) = false := rfl
 @[simp] lemma bool_mul_ff : (false * false : Bool) = false := rfl
 
-
 variable {A B : Bool}
 
-@[simp]
-theorem one_eq_true : (1:Bool) = true := rfl
-@[simp]
-theorem zero_eq_false : (0:Bool) = false := rfl
-
-@[simp]
-theorem bool_sum_or : A + B = Bool.or A B := rfl
-
-theorem bool_prod_and : A * B = Bool.and A B := rfl
-
--- #synth Add (Fin n → ℚ)
--- #check Pi.instAdd
+@[simp] theorem one_eq_true : (1:Bool) = true := rfl
+@[simp] theorem zero_eq_false : (0:Bool) = false := rfl
+@[simp] theorem bool_sum_or : A + B = Bool.or A B := rfl
+@[simp] theorem bool_prod_and : A * B = Bool.and A B := rfl
 
 @[simp]
 def not (B : FinRV n Bool) : FinRV n Bool :=

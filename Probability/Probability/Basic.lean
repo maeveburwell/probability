@@ -8,7 +8,6 @@ import Mathlib.Data.Fintype.BigOperators
   # Basic properties for probability spaces and expectations
 
   The main results:
-  - Correspondence between expectations and probabilities (indicator functions)
   - Arithmetic manipulations of random variables
   - The law of total probabilities
   - The law of total expectations
@@ -39,19 +38,13 @@ namespace Pr
 
 variable {n : ℕ} {P : Findist n} {B C : FinRV n Bool}
 
-
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
-    by rw [Ex.prob_eq_exp_ind, Ex.prob_eq_exp_ind]
-       rw [←exp_dists_add]
-       rw [one_of_ind_bool_or_not]
+    by rw [Ex.prob_eq_exp_ind, Ex.prob_eq_exp_ind, ←exp_dists_add, one_of_ind_bool_or_not]
        exact exp_one 
 
-       
 
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
-    by have := prob_compl_sums_to_one (P:=P) (B:=B)
-       linarith
-
+    by rw [←prob_compl_sums_to_one (P:=P) (B:=B)]; ring 
 
 
 ------------------------------ Expectation ---------------------------
@@ -77,22 +70,21 @@ variable {k : ℕ} {X : FinRV n ℚ} {B : FinRV n Bool} {L : FinRV n (Fin k)}
 variable  (g : Fin k → ℚ)
 
 /-- LOTUS: the law of the unconscious statistician (or similar) -/
-theorem LOTUS2 (g : Fin k → ℚ) : 𝔼[g ∘ L // P ] = ∑ i, ℙ[L =ᵣ i // P] * (g i) :=
+theorem LOTUS (g : Fin k → ℚ) : 𝔼[g ∘ L // P ] = ∑ i, ℙ[L =ᵣ i // P] * (g i) :=
   by rewrite [exp_decompose (X := g ∘ L) (L := L) ]
      apply Fintype.sum_congr
      intro i
      rewrite [←indi_eq_indr]
      rewrite [←exp_cond_eq_def (X := g ∘ L) ]
-     by_cases h : ℙ[L =ᵣ i // P] = 0 
+     by_cases! h : ℙ[L =ᵣ i // P] = 0 
      · rw [h];  simp only [mul_zero, zero_mul]
-     · push_neg at h 
-       rw [exp_cond_const i h ]
+     · rw [exp_cond_const i h ]
        ring 
 
 theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
   let g i := 𝔼[X | L =ᵣ i // P]
   calc
-    𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i , ℙ[ L =ᵣ i // P] * 𝔼[ X | L =ᵣ i // P ] := LOTUS2 g
+    𝔼[𝔼[X |ᵣ L // P] // P ] = ∑ i , ℙ[ L =ᵣ i // P] * 𝔼[ X | L =ᵣ i // P ] := LOTUS g
     _ =  ∑ i , 𝔼[ X | L =ᵣ i // P ] * ℙ[ L =ᵣ i // P] := by apply Fintype.sum_congr; intro i; ring 
     _ =  ∑ i : Fin k, 𝔼[X * (𝕀 ∘ (L =ᵣ i)) // P] := by apply Fintype.sum_congr; exact fun a  ↦ exp_cond_eq_def
     _ =  ∑ i : Fin k, 𝔼[X * (L =ᵢ i) // P] := by apply Fintype.sum_congr; intro i; apply exp_congr; rw[indi_eq_indr] 
@@ -140,7 +132,16 @@ end Ex
 
 variable {k : ℕ}  {L : FinRV n (Fin k)}
 
--- TODO: we can  prove this from the law for expectations
--- TODO: theorem law_of_total_probs : ∑ i : Fin k, ℙ[B * (L =ᵣ i) // P] = ℙ[B // P] := sorry
+
+/-- The law of total probabilities -/
+theorem law_of_total_probs : ℙ[B // P] =  ∑ i, ℙ[B * (L =ᵣ i) // P]  := 
+  by rewrite [Ex.prob_eq_exp_ind, rv_decompose (𝕀∘B) L, exp_additive]
+     apply Fintype.sum_congr
+     intro i 
+     rewrite [Ex.prob_eq_exp_ind] 
+     apply exp_congr
+     ext ω
+     by_cases h1 : L ω = i 
+     repeat by_cases h2 : B ω; repeat simp [h1, h2, 𝕀, indicator ]
 
 end Pr
