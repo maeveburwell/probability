@@ -37,6 +37,19 @@ structure MDP : Type where
   /-- reward function s, a, s' -/
   r : Fin S → Fin A → Fin S → ℝ
 
+variable (M : MDP)
+
+def MDP.maxS : Fin M.S := ⟨M.S-1, by simp [M.S_ne]⟩
+def MDP.maxA : Fin M.A := ⟨M.A-1, by simp [M.A_ne]⟩
+
+example :  ∀ x ∈ Finset.range n, x < n := fun x y ↦ Finset.mem_range.mp y 
+
+/-- Set of all states -/
+def MDP.setS : Finset (Fin M.S) := Finset.attachFin (Finset.range M.S) (fun _ h ↦ Finset.mem_range.mp h)
+/-- Set of all actions -/
+def MDP.setA : Finset (Fin M.A) := Finset.attachFin (Finset.range M.A) (fun _ h ↦ Finset.mem_range.mp h)
+
+
 end Definitions
 
 variable {M : MDP}
@@ -80,11 +93,72 @@ def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
         else hp.prefix k
 
 
-def tuple2hist : Hist M × (Fin M.A) × (Fin M.S) → HistNE M
+def MDP.tuple2hist : Hist M × (Fin M.A) × (Fin M.S) → HistNE M
   | ⟨h, as⟩ => ⟨h.append as, Nat.le.intro rfl⟩
 
-def hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S) 
+def MDP.hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S) 
   | ⟨Hist.foll h a s, _ ⟩ => ⟨h, a, s⟩
+
+open Function 
+
+-- mapping between tuples and histories are injective
+
+lemma linv_hist2tuple_tuple2hist : LeftInverse M.hist2tuple M.tuple2hist := fun _ ↦ rfl
+lemma inj_tuple2hist_l1 : Injective M.tuple2hist  := LeftInverse.injective linv_hist2tuple_tuple2hist
+lemma inj_tuple2hist : Injective (Subtype.val ∘ M.tuple2hist)  := Injective.comp (Subtype.val_injective) inj_tuple2hist_l1
+
+def emb_tuple2hist_l1 : Hist M × (Fin M.A) × (Fin M.S) ↪ HistNE M := ⟨M.tuple2hist, inj_tuple2hist_l1⟩
+def emb_tuple2hist : Hist M × (Fin M.A) × (Fin M.S) ↪ Hist M  := ⟨λ x ↦  M.tuple2hist x, inj_tuple2hist⟩
+
+--- state
+def state2hist (s : Fin M.S) : Hist M := Hist.init s
+def hist2state : Hist M → (Fin M.S) 
+    | Hist.init s => s 
+    | Hist.foll _ _ s => s
+    
+lemma linv_hist2state_state2hist : LeftInverse (hist2state (M:=M)) state2hist := fun _ => rfl
+lemma inj_state2hist : Injective (state2hist (M:=M)) := 
+                     LeftInverse.injective linv_hist2state_state2hist
+                     
+def state2hist_emb : (Fin M.S) ↪ Hist M := ⟨state2hist, inj_state2hist⟩
+
+-- TODO: we probably do not need this function 
+/-- Checks if the first hist is the prefix of the second hist. -/
+def isprefix : Hist M → Hist M → Bool 
+    | Hist.init s₁, Hist.init s₂ => s₁ = s₂
+    | Hist.init s₁, Hist.foll hp _ _ => isprefix (Hist.init s₁) hp 
+    | Hist.foll _ _ _, Hist.init _ => False
+    | Hist.foll h₁ a₁ s₁', Hist.foll  h₂ a₂ s₂' => 
+        if h₁.length > h₂.length then
+            False
+        else if h₁.length < h₂.length then
+            let pre := Hist.foll h₁ a₁ s₁' 
+            isprefix pre h₂
+        else
+            (a₁ = a₂) ∧ (s₁' = s₂') ∧ (isprefix h₁ h₂)
+
+/-- All histories that follow h for t decisions -/
+def Histories (h : Hist M) : ℕ → Finset (Hist M) 
+    | Nat.zero => {h}
+    | Nat.succ t => ((Histories h t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
+
+abbrev ℋ : Hist M → ℕ → Finset (Hist M) := Histories
+
+theorem hist_lenth_eq_horizon (h : Hist M) (t : ℕ): ∀ h' ∈ (ℋ h t), h'.length = h.length + t := sorry
+
+/-- All histories of a given length  -/
+def HistoriesHorizon : ℕ → Finset (Hist M)
+  | Nat.zero => M.setS.map state2hist_emb 
+  | Nat.succ t => ((HistoriesHorizon t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
+
+
+#synth SProd (Finset ℕ) (Finset ℕ) (Finset (ℕ × ℕ))
+#check Fintype
+
+abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
+
+--theorem Histories
+
 
 
 end Histories
