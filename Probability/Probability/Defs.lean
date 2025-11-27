@@ -11,32 +11,36 @@ section Findist
 
 variable {n : ℕ}
 
+/-- Finite probability distribution -/
 structure Findist (n : ℕ) : Type where
-    p : Fin n → ℚ
+    /-- Probaiblity measure -/
+    p : Fin n → ℚ   
     prob : 1 ⬝ᵥ p = 1
     nneg : 0 ≤ p
 
+
 namespace Findist
 
+/-- Finite probability distribution  -/
 abbrev Delta : ℕ → Type := Findist
+
+/-- Finite probability distribution  -/
 abbrev Δ : ℕ → Type := Delta
 
 
+/-- Single probability distribution -/
 def singleton : Findist 1 :=
     {p    := ![1],
      prob := by simp [Matrix.vecHead],
      nneg := by simp [Pi.zero_def, Pi.le_def] }
 
 
-@[simp]
-def length (_ : Findist n) := n
-
 variable {n : ℕ}
 
-theorem nonempty (P : Findist n) : P.length > 0 :=
+theorem nonempty (P : Findist n) : n > 0 :=
   by cases n
      · have := P.prob; simp_all only [Matrix.dotProduct_of_isEmpty, zero_ne_one]
-     · simp only [length, gt_iff_lt, lt_add_iff_pos_left, add_pos_iff, zero_lt_one, or_true]
+     · simp only [gt_iff_lt, lt_add_iff_pos_left, add_pos_iff, zero_lt_one, or_true]
 
 
 end Findist
@@ -87,11 +91,6 @@ instance instBoolAdd: Add Bool  where add a b := Bool.or a b
 instance instBoolZero : Zero Bool where zero := false
 instance instBoolOne : One Bool where one := true
 
-@[simp] lemma bool_mul_tt : (true * true : Bool) = true := rfl
-@[simp] lemma bool_mul_tf : (true * false : Bool) = false := rfl
-@[simp] lemma bool_mul_ft : (false * true : Bool) = false := rfl
-@[simp] lemma bool_mul_ff : (false * false : Bool) = false := rfl
-
 variable {A B : Bool}
 
 @[simp] theorem one_eq_true : (1:Bool) = true := rfl
@@ -99,40 +98,43 @@ variable {A B : Bool}
 @[simp] theorem bool_sum_or : A + B = Bool.or A B := rfl
 @[simp] theorem bool_prod_and : A * B = Bool.and A B := rfl
 
-@[simp]
-def not (B : FinRV n Bool) : FinRV n Bool :=
+
+/-- Negates a random variable -/
+@[simp] def not (B : FinRV n Bool) : FinRV n Bool :=
   fun ω ↦ (B ω).not
 
+/-- Negates a random variable -/
 prefix:40 "¬ᵣ" => FinRV.not
 
-@[simp]
-def eq [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
+/-- Boolean random variable representing an quality condition -/
+@[simp] def eq [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   (fun ω ↦ decide (Y ω = y) )
 
+/-- Boolean random variable representing an quality condition -/
 infix:50 "=ᵣ" => FinRV.eq
 
-/-- indicator version of equality -/
-@[simp]
-def eqi [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n ℚ :=
+/-- 0/1 random variable representing an quality condition -/
+@[simp] def eqi [DecidableEq ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n ℚ :=
   (fun ω ↦ if Y ω = y then 1 else 0)
 
+/-- 0/1 random variable representing an quality condition -/
 infix:50 "=ᵢ" => FinRV.eqi
 
-@[simp]
-def leq [LE ρ] [DecidableLE ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
+/-- Boolean random variable represening Y ≤ y inequality -/
+@[simp] def leq [LE ρ] [DecidableLE ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   (fun ω ↦ Y ω ≤ y)
 
+/-- Boolean random variable represening Y ≤ y inequality -/
 infix:50 "≤ᵣ" => FinRV.leq
 
-@[simp]
-def gt [LT ρ] [DecidableLT ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
+/-- Boolean random variable represening Y > y inequality -/
+@[simp] def gt [LT ρ] [DecidableLT ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   fun ω ↦ Y ω > y
 
+/-- Boolean random variable represening Y > y inequality -/
 infix:50 ">ᵣ" => FinRV.gt
 
-example (m n : ℕ) : (m < n) ∨ (m = n) ∨ (m > n) :=  Nat.lt_trichotomy m n
-
-/-- Shows equivalence when extending the random variable to another element. -/
+/-- Equivalence when extending the random variable to another element. -/
 theorem le_of_le_eq (D : FinRV n ℕ) (m : ℕ) : ((D ≤ᵣ m) + (D =ᵣ m.succ)) = (D ≤ᵣ m.succ) := by
   funext x --extensionality principle for functions
   unfold FinRV.leq FinRV.eq instHAdd Add.add Pi.instAdd
@@ -149,6 +151,7 @@ end FinRV
 /-- Boolean indicator function -/
 def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
 
+/-- Boolean indicator function -/
 abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
 
 
@@ -213,16 +216,16 @@ variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 /-- Probability of B -/
 def probability : ℚ :=  P.p ⬝ᵥ (𝕀 ∘ B)
 
+/-- Probability of B -/
 notation "ℙ[" B "//" P "]" => probability P B
 
 -- helps to refold is when needed
 lemma probability_def : P.p ⬝ᵥ (𝕀 ∘ B) = ℙ[B // P] := rfl
 
-/-- Conditional probability of B -/
+/-- Conditional probability of B on C -/
 def probability_cnd : ℚ := ℙ[B * C // P] / ℙ[ C // P ]
 
-
----- conditional probability
+/-- Conditional probability of B on C -/
 notation "ℙ[" B "|" C "//" P "]" => probability_cnd P B C
 
 
@@ -275,33 +278,30 @@ Main results
 
 variable {n : ℕ} (P : Findist n) (X Y Z: FinRV n ℚ) (B : FinRV n Bool)
 
+/-- Standard expectation operator -/
 def expect : ℚ := P.p ⬝ᵥ X
 
+/-- Standard expectation operator -/
 notation "𝔼[" X "//" P "]" => expect P X
-
--- expectation for a joint probability space and random variable
-notation "𝔼[" PX "]" => expect PX.1 PX.2
 
 --theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P]
 
 @[simp]
 theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := by simp only [expect, probability]
 
-/-- Conditional expectation -/
+/-- Conditional expectation operator -/
 def expect_cnd : ℚ := 𝔼[ X * (𝕀 ∘ B) // P] / ℙ[ B // P]
 
+/-- Conditional expectation operator -/
 notation "𝔼[" X "|" B "//" P "]" => expect_cnd P X B
-
--- expectation for a joint probability space and random variable
-notation "𝔼[" PX "|" B "]" => expect_cnd PX.1 PX.2 B
 
 variable {k : ℕ} (L : FinRV n (Fin k))
 
--- creates a random variable
+/-- Expectation conditioned on a random variable. It creates a random variable -/
 def expect_cnd_rv : Fin n → ℚ := fun i ↦ 𝔼[ X | L =ᵣ (L i) // P ]
 
+/-- Expectation conditioned on a random variable. It creates a random variable -/
 notation "𝔼[" X "|ᵣ" L "//" P "]" => expect_cnd_rv P X L
-
 
 --- some basic properties
 
@@ -377,3 +377,5 @@ theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L 
        simp only [h, ne_eq, isUnit_iff_ne_zero, not_false_eq_true, IsUnit.mul_div_cancel_right]
 
 end Expectation_properties
+
+#lint 

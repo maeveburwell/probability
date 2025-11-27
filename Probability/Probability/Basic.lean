@@ -46,7 +46,7 @@ theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
 
 ------------------------------ Expectation ---------------------------
 
-namespace Ex
+section Expectation 
 
 variable {n : ℕ} {P : Findist n}
 variable {k : ℕ} {X : FinRV n ℚ} {B : FinRV n Bool} {L : FinRV n (Fin k)}
@@ -73,10 +73,9 @@ theorem law_total_exp : 𝔼[𝔼[X |ᵣ L // P] // P] = 𝔼[X // P] :=
     _ =  ∑ i : Fin k, 𝔼[X * (L =ᵢ i) // P] := by apply Fintype.sum_congr; intro i; apply exp_congr; rw[indi_eq_indr] 
     _ = 𝔼[X // P]  := by rw [←exp_decompose]
 
+end Expectation 
 
-end Ex
-
-namespace Pr
+section Probability 
 
 variable {k : ℕ}  {L : FinRV n (Fin k)}
 
@@ -91,4 +90,7 @@ theorem law_of_total_probs : ℙ[B // P] =  ∑ i, ℙ[B * (L =ᵣ i) // P]  :=
      by_cases h1 : L ω = i 
      repeat by_cases h2 : B ω; repeat simp [h1, h2, 𝕀, indicator ]
 
-end Pr
+
+end Probability 
+
+#lint 
