@@ -39,7 +39,7 @@ structure MDP : Type where
 
 end Definitions
 
-variable (M : MDP)
+variable {M : MDP}
 
 section Histories
 
@@ -48,17 +48,18 @@ inductive Hist (M : MDP)  : Type where
   | init : Fin M.S → Hist M
   | foll : Hist M → Fin M.A → Fin M.S → Hist M
 
-/-- Coerces a state to a history -/
+/-- Coerces a single state to a history of length 0 -/
 instance : Coe (Fin M.S) (Hist M) where
   coe s := Hist.init s
 
-/-- The length of the history corresponds to the zero-based step of the decision -/
-@[reducible] def Hist.length : Hist M → ℕ
+/-- The length of the history is the number of actions it contains -/
+def Hist.length : Hist M → ℕ
   | init _ => 0
   | Hist.foll h _ _ => 1 + length h
 
-/-- Nonempty histories -/
+/-- Subtype representing nonempty histories -/
 abbrev HistNE (m : MDP) : Type := {h : Hist m // h.length ≥ 1}
+-- TODO: Why do we need this?
 
 /-- Returns the last state of the history -/
 def Hist.last : Hist M → Fin M.S
@@ -67,12 +68,11 @@ def Hist.last : Hist M → Fin M.S
 
 /-- Appends the state and action to the history --/
 def Hist.append (h : Hist M) (as : Fin M.A × Fin M.S) : Hist M := h.foll as.1 as.2
--- TODO: remove?
 
 def Hist.one (s₀ : Fin M.S) (a : Fin M.A) (s : Fin M.S) : Hist M := (Hist.init s₀).foll a s
 
 /-- Return the prefix of hist of length k -/
-def Hist.prefix (k : ℕ)  (h : Hist M) : Hist M :=
+def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
     match h with
       | Hist.init s => Hist.init s
       | Hist.foll hp a s =>
@@ -80,7 +80,11 @@ def Hist.prefix (k : ℕ)  (h : Hist M) : Hist M :=
         else hp.prefix k
 
 
+def tuple2hist : Hist M × (Fin M.A) × (Fin M.S) → HistNE M
+  | ⟨h, as⟩ => ⟨h.append as, Nat.le.intro rfl⟩
 
+def hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S) 
+  | ⟨Hist.foll h a s, _ ⟩ => ⟨h, a, s⟩
 
 
 end Histories
