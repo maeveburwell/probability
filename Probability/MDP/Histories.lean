@@ -47,8 +47,9 @@ def MDP.setS : Finset (Fin M.S) := Finset.attachFin (Finset.range M.S) (fun _ h 
 /-- Set of all actions -/
 def MDP.setA : Finset (Fin M.A) := Finset.attachFin (Finset.range M.A) (fun _ h ↦ Finset.mem_range.mp h)
 
-theorem MDP.SA_ne : 0 < M.S * M.A := Nat.mul_pos M.S_ne M.A_ne
+def MDP.SA := M.S * M.A
 
+theorem MDP.SA_ne : 0 < M.SA := Nat.mul_pos M.S_ne M.A_ne
 
 end Definitions
 
@@ -82,12 +83,16 @@ def Hist.last : Hist M → Fin M.S
 
 
 /-- Number of histories of length t. -/
-def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * (M.S * M.A)^t 
+def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t 
 
 theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
 
 example (m n o : ℕ) (h : o > 0) (h2 : m > n) : o * m > o * n := by exact Nat.mul_lt_mul_of_pos_left h2 h
-example (m n o : ℕ) (h : o > 0) (h2 : m > n) : m / o > n / o := by apply?
+example (m n o : ℕ) (h : o > 0) (h2 : m > n) : m * o > n * o := by exact Nat.mul_lt_mul_of_pos_right h2 h
+example (m n o : ℕ) (h : o > 0) (h2 : m > n) (h3: o ∣ n) (h4 : o ∣ m) : m / o > n / o := by  exact Nat.div_lt_div_of_lt_of_dvd h4 h2
+example (m n k : ℕ) (h : k > 0) : m = m*k/k := by exact Eq.symm (Nat.mul_div_left m h)
+
+
 
 /-- Construct i-th history of length n -/
 def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t := 
@@ -96,16 +101,24 @@ def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t :=
       let ii : Fin M.S := ⟨i.1, by have h := i.2; simp_all [MDP.numhist] ⟩
       ⟨Hist.init ii,  rfl⟩
   | Nat.succ t' =>
-      let s : Fin M.S := ⟨i % M.S,  Nat.mod_lt i M.S_ne ⟩
-      let a : Fin M.A := ⟨(i / M.S) % M.A, Nat.mod_lt (i/M.S) M.A_ne⟩
-      let ii : Fin (M.numhist t') := ⟨(i / (M.S * M.A)) , 
-                by have h:= i.2; 
-                   unfold MDP.numhist at *; 
-                   have := M.SA_ne; 
-                   sorry
-                ⟩
-      let h' := M.idx_to_hist t' ii
-      ⟨ h'.1.foll a s , sorry ⟩ 
+      let sa : ℕ := i % M.SA 
+      let s : Fin M.S := ⟨sa  % M.S,  Nat.mod_lt sa M.S_ne ⟩
+      let a : Fin M.A := ⟨(sa / M.S) % M.A, Nat.mod_lt (sa/M.S) M.A_ne⟩
+      let ni : ℕ := (i - sa) / M.SA
+      let h1 : M.SA ∣ (i - sa) := Nat.dvd_sub_mod ↑i
+      let h2 : ni < M.numhist t' :=  
+        by have h := i.2
+           unfold MDP.numhist at h ⊢
+           have h6 : M.SA ∣ M.S*M.SA^t'.succ := by refine Nat.dvd_mul_left_of_dvd ?_ M.S; exact Dvd.intro_left (M.SA.pow t') rfl
+           have h7 : M.S*M.SA^t' = M.S*M.SA^t'.succ / M.SA :=
+              by calc M.S*M.SA^t' = M.S*M.SA^t'* M.SA / M.SA := Eq.symm (Nat.mul_div_left (M.S*M.SA^t') M.SA_ne)
+                      _ = M.S*M.SA^t'.succ / M.SA :=  by rw [Nat.mul_assoc]; rw [← Nat.pow_succ]
+           subst ni 
+           rw [h7]
+           exact Nat.div_lt_div_of_lt_of_dvd h6 (Nat.sub_lt_of_lt h)
+      let h' := M.idx_to_hist t' ⟨ni, h2⟩
+      ⟨ h'.1.foll a s , 
+        by simp only [Hist.length, h'.2, Nat.succ_eq_add_one]; exact Nat.add_comm 1 t'⟩ 
 
 
 /-- Return the prefix of hist of length k -/
@@ -118,7 +131,7 @@ def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
 
 
 def MDP.tuple2hist : Hist M × (Fin M.A) × (Fin M.S) → HistNE M
-  | ⟨h, as⟩ => ⟨h.append as, Nat.le.intro rfl⟩
+  | ⟨h, as⟩ => ⟨h.foll as.1 as.2, Nat.le.intro rfl⟩
 
 def MDP.hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S) 
   | ⟨Hist.foll h a s, _ ⟩ => ⟨h, a, s⟩
