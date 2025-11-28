@@ -66,6 +66,7 @@ instance : Coe (Fin M.S) (Hist M) where
   coe s := Hist.init s
 
 /-- History's length = the number of actions taken -/
+@[simp]
 def Hist.length : Hist M → ℕ
   | init _ => 0
   | Hist.foll h _ _ => 1 + length h
@@ -83,6 +84,7 @@ def Hist.last : Hist M → Fin M.S
 
 
 /-- Number of histories of length t. -/
+@[simp]
 def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t 
 
 theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
@@ -94,7 +96,7 @@ example (m n k : ℕ) (h : k > 0) : m = m*k/k := by exact Eq.symm (Nat.mul_div_l
 
 
 
-/-- Construct i-th history of length n -/
+/-- Construct i-th history of length t -/
 def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t := 
   match t with
   | Nat.zero => 
@@ -119,6 +121,52 @@ def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t :=
       let h' := M.idx_to_hist t' ⟨ni, h2⟩
       ⟨ h'.1.foll a s , 
         by simp only [Hist.length, h'.2, Nat.succ_eq_add_one]; exact Nat.add_comm 1 t'⟩ 
+
+-- TODO: try abel_nf?
+
+lemma Nat.sum_one_prod_cancel (n : ℕ) {m : ℕ} (h : 0 < m) : (m-1) * n + n = m*n := 
+  by rw [Nat.sub_one_mul]
+     apply Nat.sub_add_cancel
+     exact Nat.le_mul_of_pos_left n h 
+
+/-- Compute the index of a history  -/
+def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) := 
+    match h with 
+    | Hist.init s => ⟨s, by simp only [numhist, Hist.length, pow_zero, mul_one, Fin.is_lt]⟩
+    | Hist.foll h' a s => 
+        let n' := M.hist_to_idx h'
+        let n := n' * M.SA + (a * M.S + s)
+        have h : a * M.S + s < M.SA := 
+            by unfold MDP.SA
+               calc a * M.S + s < a * M.S + M.S := 
+                        by grw [Nat.le_sub_one_of_lt s.2]
+                           apply Nat.add_lt_add_iff_left.mpr 
+                           exact Nat.sub_one_lt_of_lt  M.S_ne 
+                    _ ≤ (M.A-1) * M.S + M.S := by grw [Nat.le_sub_one_of_lt a.2]
+                    _ ≤ M.SA := 
+                        by unfold MDP.SA
+                           have := M.A_ne
+                           rw [Nat.sum_one_prod_cancel]
+                           · rw [Nat.mul_comm]
+                           · exact M.A_ne 
+        ⟨n, 
+         by have xx : ↑n' ≤ M.numhist h'.length - 1 := Nat.le_sub_one_of_lt n'.2
+            have h2 : a * M.S + s ≤ M.SA - 1 := Nat.le_sub_one_of_lt h 
+            unfold numhist at xx ⊢
+            unfold Hist.length
+            subst n
+            rw [Nat.pow_add]
+            rw [← Nat.mul_assoc]
+            rw [Nat.mul_comm]
+            rw [Nat.mul_assoc]
+            nth_rw 3 [Nat.mul_comm]
+            sorry 
+            --grw [h2]
+            --grw [xx]
+            --rw [Nat.sub_one_mul]
+            ⟩
+
+example {m n : ℕ} (h : m < n) : m ≤ n - 1 := by exact Nat.le_sub_one_of_lt h
 
 
 /-- Return the prefix of hist of length k -/
@@ -189,13 +237,10 @@ def HistoriesHorizon : ℕ → Finset (Hist M)
   | Nat.succ t => ((HistoriesHorizon t) ×ˢ M.setA ×ˢ M.setS).map emb_tuple2hist
 
 
-#synth SProd (Finset ℕ) (Finset ℕ) (Finset (ℕ × ℕ))
-#check Fintype
-
 abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
 
---theorem Histories
 
+example {a b c : ℚ} : a * (b + c) = a * b + a * c :=  by exact Rat.mul_add a b c
 
 
 end Histories
