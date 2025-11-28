@@ -42,12 +42,12 @@ variable (M : MDP)
 def MDP.maxS : Fin M.S := ⟨M.S-1, by simp [M.S_ne]⟩
 def MDP.maxA : Fin M.A := ⟨M.A-1, by simp [M.A_ne]⟩
 
-example :  ∀ x ∈ Finset.range n, x < n := fun x y ↦ Finset.mem_range.mp y 
-
 /-- Set of all states -/
 def MDP.setS : Finset (Fin M.S) := Finset.attachFin (Finset.range M.S) (fun _ h ↦ Finset.mem_range.mp h)
 /-- Set of all actions -/
 def MDP.setA : Finset (Fin M.A) := Finset.attachFin (Finset.range M.A) (fun _ h ↦ Finset.mem_range.mp h)
+
+theorem MDP.SA_ne : 0 < M.S * M.A := Nat.mul_pos M.S_ne M.A_ne
 
 
 end Definitions
@@ -61,28 +61,52 @@ inductive Hist (M : MDP)  : Type where
   | init : Fin M.S → Hist M
   | foll : Hist M → Fin M.A → Fin M.S → Hist M
 
-/-- Coerces a single state to a history of length 0 -/
 instance : Coe (Fin M.S) (Hist M) where
   coe s := Hist.init s
 
-/-- The length of the history is the number of actions it contains -/
+/-- History's length = the number of actions taken -/
 def Hist.length : Hist M → ℕ
   | init _ => 0
   | Hist.foll h _ _ => 1 + length h
 
-/-- Subtype representing nonempty histories -/
-abbrev HistNE (m : MDP) : Type := {h : Hist m // h.length ≥ 1}
--- TODO: Why do we need this?
+
+def MDP.HistT (M : MDP) (t : ℕ) : Type := {m : Hist M // m.length = t}
+
+/-- Nonempty histories -/
+abbrev HistNE (M : MDP) : Type := {m : Hist M // m.length ≥ 1}
 
 /-- Returns the last state of the history -/
 def Hist.last : Hist M → Fin M.S
   | init s => s
   | Hist.foll _ _ s => s
 
-/-- Appends the state and action to the history --/
-def Hist.append (h : Hist M) (as : Fin M.A × Fin M.S) : Hist M := h.foll as.1 as.2
 
-def Hist.one (s₀ : Fin M.S) (a : Fin M.A) (s : Fin M.S) : Hist M := (Hist.init s₀).foll a s
+/-- Number of histories of length t. -/
+def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * (M.S * M.A)^t 
+
+theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
+
+example (m n o : ℕ) (h : o > 0) (h2 : m > n) : o * m > o * n := by exact Nat.mul_lt_mul_of_pos_left h2 h
+example (m n o : ℕ) (h : o > 0) (h2 : m > n) : m / o > n / o := by apply?
+
+/-- Construct i-th history of length n -/
+def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t := 
+  match t with
+  | Nat.zero => 
+      let ii : Fin M.S := ⟨i.1, by have h := i.2; simp_all [MDP.numhist] ⟩
+      ⟨Hist.init ii,  rfl⟩
+  | Nat.succ t' =>
+      let s : Fin M.S := ⟨i % M.S,  Nat.mod_lt i M.S_ne ⟩
+      let a : Fin M.A := ⟨(i / M.S) % M.A, Nat.mod_lt (i/M.S) M.A_ne⟩
+      let ii : Fin (M.numhist t') := ⟨(i / (M.S * M.A)) , 
+                by have h:= i.2; 
+                   unfold MDP.numhist at *; 
+                   have := M.SA_ne; 
+                   sorry
+                ⟩
+      let h' := M.idx_to_hist t' ii
+      ⟨ h'.1.foll a s , sorry ⟩ 
+
 
 /-- Return the prefix of hist of length k -/
 def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
