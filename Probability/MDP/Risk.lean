@@ -8,6 +8,23 @@ variable {n : ℕ}
 
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
+theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
+  (ht : t1 ≤ t2) : cdf P X t1 ≤ cdf P X t2 := by
+  simp [cdf]
+  apply exp_monotone
+  intro ω
+  by_cases h1 : X ω ≤ t1
+  · have h2 : X ω ≤ t2 := le_trans h1 ht
+    simp [FinRV.leq, 𝕀, indicator, h1, h2]
+  · simp [𝕀, indicator, FinRV.leq, h1]
+    by_cases h2 : X ω ≤ t2
+    · simp [h2]
+    · simp [h2] ---these lines seem really unnecessary but idk how to fix it
+
+
+
+
+
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def rangeOfRV (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 
@@ -19,7 +36,7 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   if h : S.Nonempty then
     S.min' h
   else
-    0
+    0 --this is illegal i know -- Keith can fix it :)
 
 notation "VaR[" α "," X "//" P "]" => VaR P X α
 
