@@ -37,10 +37,7 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   else
     0 --this is illegal i know -- Keith can fix it :)
 
-notation "VaR[" α "," X "//" P "]" => VaR P X α
--- TODO (Marek): What do you think about : 
--- notation "VaR[ X "//" P "," α "]" => VaR P X α
--- I think that the α goes better with the probability that the variable
+notation "VaR[" X "//" P ", " α "]" => VaR P X α
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
@@ -74,7 +71,7 @@ def tailInd (X : FinRV n ℚ) (t : ℚ) : FinRV n ℚ :=
   fun ω => if X ω > t then 1 else 0
 
 /-- Conditional Value-at-Risk (CVaR) of X at level α under P.
-CVaR =  E[X * I[X > VaR] ] / P[X > VaR]
+CVaR_α(X) =  E[X * I[X > VaR] ] / P[X > VaR]
 If the tail probability is zero, CVaR is defined to be 0.
 -/
 def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
@@ -87,11 +84,11 @@ def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   else
      num / den
 
--- NOTE (Marek): The CVaR, as defined above is not convex/concave. 
+-- NOTE (Marek): The CVaR, as defined above is not convex/concave.
 -- See Page 14 at https://www.cs.unh.edu/~mpetrik/pub/tutorials/risk2/dlrl2023.pdf
--- NOTE (Marek): The CVaR above is defined for costs and not rewards 
+-- NOTE (Marek): The CVaR above is defined for costs and not rewards
 
-notation "CVaR[" α "," X "//" P "]" => CVaR P X α
+notation "CVaR[" X "//" P ", " α "]" => CVaR P X α
 
 --TODO: prove...
 -- monotonicity: (∀ ω, X ω ≤ Y ω) → CVaR[α, X // P] ≤ CVaR[α, Y // P]
