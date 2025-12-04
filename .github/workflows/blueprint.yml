@@ -25,8 +25,10 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for all branches and tags
-
+          fetch-depth: 0
+      - name: Set Jekyll Metadata Environment Variables 🛠️
+        run: |
+          echo "PAGES_REPO_NWO=${{ github.repository }}" >> $GITHUB_ENV
       - name: Install elan
         run: curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
 
@@ -52,7 +54,7 @@ jobs:
 
       - name: Build project API documentation
         run: ~/.elan/bin/lake -R -Kenv=dev build Probability:docs
-      
+        
       - name: Check for `home_page` folder # this is meant to detect a Jekyll-based website
         id: check_home_page
         run: |
@@ -99,6 +101,7 @@ jobs:
         run: |
           find home_page/docs -name "*.trace" -delete
           find home_page/docs -name "*.hash" -delete
+          
 
       - name: Bundle dependencies
         uses: ruby/setup-ruby@v1
