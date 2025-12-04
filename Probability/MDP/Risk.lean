@@ -1,4 +1,5 @@
 import Probability.Probability.Basic
+import Mathlib.Data.EReal.Basic
 
 namespace Risk
 
@@ -7,6 +8,20 @@ open Findist FinRV
 variable {n : ℕ}
 
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
+
+theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
+  (ht : t1 ≤ t2) : cdf P X t1 ≤ cdf P X t2 := by
+  simp [cdf]
+  apply exp_monotone
+  intro ω
+  by_cases h1 : X ω ≤ t1
+  · have h2 : X ω ≤ t2 := le_trans h1 ht
+    simp [FinRV.leq, 𝕀, indicator, h1, h2]
+  · simp [𝕀, indicator, FinRV.leq, h1]
+    by_cases h2 : X ω ≤ t2
+    · simp [h2]
+    · simp [h2] ---these lines seem really unnecessary but idk how to fix it
+
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def rangeOfRV (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
@@ -18,38 +33,70 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   if h : S.Nonempty then
     S.min' h
   else
-    0
+    0 --this is illegal i know -- Keith can fix it :)
 
-notation "VaR[" α "," X "//" P "]" => VaR P X α
--- TODO (Marek): What do you think about : 
--- notation "VaR[ X "//" P "," α "]" => VaR P X α
--- I think that the α goes better with the probability that the variable
+notation "VaR[" X "//" P ", " α "]" => VaR P X α
+
+def VaR2 (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : EReal :=
+  let S : Finset ℚ := (rangeOfRV X).filter (fun t => cdf P X t ≥ α)
+  if h : S.Nonempty then
+    (S.min' h : ℝ)
+  else
+    ⊤ --Idk if I fixed it and I also saw that VaR_R does this much more nicely.
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
-  have hcdf : ∀ t : ℚ, cdf P Y t ≤ cdf P X t := by
-    intro t
-    simp [cdf]
-    apply exp_monotone
-    intro ω
-    have h1 : Y ω ≤ t → X ω ≤ t := by
-      intro hY
-      exact le_trans (hXY ω) hY
-    by_cases hY : Y ω ≤ t
-    · have hX : X ω ≤ t := by exact h1 hY
-      simp [𝕀, indicator, FinRV.leq, hY, hX]
-    · simp [𝕀, indicator, FinRV.leq, hY]
-      by_cases hx2 : X ω ≤ t
-      · simp [hx2]
-      · simp [hx2] ---these lines seem really unnecessary but idk how to fix it
+  let Sx : Set ℚ := { t : ℚ | cdf P X t ≥ α }
+  let Sy : Set ℚ := { t : ℚ | cdf P Y t ≥ α }
+  have hx : VaR P X α = Sx.min := rfl
+  have hy : VaR_R P Y α = sInf Sy := rfl
 
+--(Emily) I am now thinking of just trying to keep it in Q
+--so I wouln't use anything between these lines!
+------------------- defined over the reals to prove monotonicity ---------------------------
+noncomputable def cdfR (P : Findist n) (X : FinRV n ℝ) (t : ℝ) : ℝ := ℙ[X ≤ᵣ t // P]
+
+theorem cdfR_monotone (P : Findist n) (X : FinRV n ℝ) (t1 t2 : ℝ)
+  (ht : t1 ≤ t2) : cdfR P X t1 ≤ cdfR P X t2 := by
+  simp [cdfR]
+  apply exp_monotone
+  intro ω
+  by_cases h1 : X ω ≤ t1
+  · have h2 : X ω ≤ t2 := le_trans h1 ht
+    simp [FinRV.leq, 𝕀, indicator, h1, h2]
+  · simp [𝕀, indicator, FinRV.leq, h1]
+    by_cases h2 : X ω ≤ t2
+    · simp [h2]
+    · simp [h2]
+
+/-- Value-at-Risk of X at level α: VaR_α(X) = inf {t:ℝ | P[X ≤ t] ≥ α } -/
+noncomputable def VaR_R (P : Findist n) (X : FinRV n ℝ) (α : ℝ) : ℝ :=
+  sInf { t : ℝ | cdfR P X t ≥ α }
+
+theorem VaR_R_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
+  (hXY : ∀ ω, X ω ≤ Y ω) : VaR_R P X α ≤ VaR_R P Y α := by
+  let Sx : Set ℝ := { t : ℝ | cdfR P X t ≥ α }
+  let Sy : Set ℝ := { t : ℝ | cdfR P Y t ≥ α }
+  have hx : VaR_R P X α = sInf Sx := rfl
+  have hy : VaR_R P Y α = sInf Sy := rfl
+  have hsubset : Sy ⊆ Sx := by
+    unfold Sy Sx
+    intro t ht
+    have h_cdf : ∀ t, cdfR P X t ≥ cdfR P Y t := by
+      intro t
+
+      sorry
+    sorry
+  rw [hx, hy]
   sorry
 
+-------------------------------------------------------------------
+
 theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
-  VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
+  VaR_Q P (fun ω => X ω + c) α = VaR_Q P X α + c := sorry
 
 theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
-  (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
+  (hc : c > 0) : VaR_Q P (fun ω => c * X ω) α = c * VaR_Q P X α := sorry
 
 
 /-- Tail indicator: 1 if X(ω) > t, else 0. -/
@@ -57,11 +104,11 @@ def tailInd (X : FinRV n ℚ) (t : ℚ) : FinRV n ℚ :=
   fun ω => if X ω > t then 1 else 0
 
 /-- Conditional Value-at-Risk (CVaR) of X at level α under P.
-CVaR =  E[X * I[X > VaR] ] / P[X > VaR]
+CVaR_α(X) =  E[X * I[X > VaR] ] / P[X > VaR]
 If the tail probability is zero, CVaR is defined to be 0.
 -/
 def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  let v := VaR P X α
+  let v := VaR_Q P X α
   let B : FinRV n ℚ := tailInd X v
   let num := 𝔼[X * B // P]
   let den := ℙ[X >ᵣ v // P]
@@ -70,11 +117,11 @@ def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   else
      num / den
 
--- NOTE (Marek): The CVaR, as defined above is not convex/concave. 
+-- NOTE (Marek): The CVaR, as defined above is not convex/concave.
 -- See Page 14 at https://www.cs.unh.edu/~mpetrik/pub/tutorials/risk2/dlrl2023.pdf
--- NOTE (Marek): The CVaR above is defined for costs and not rewards 
+-- NOTE (Marek): The CVaR above is defined for costs and not rewards
 
-notation "CVaR[" α "," X "//" P "]" => CVaR P X α
+notation "CVaR[" X "//" P ", " α "]" => CVaR P X α
 
 --TODO: prove...
 -- monotonicity: (∀ ω, X ω ≤ Y ω) → CVaR[α, X // P] ≤ CVaR[α, Y // P]
