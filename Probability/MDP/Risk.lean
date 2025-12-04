@@ -78,10 +78,10 @@ theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
 -------------------------------------------------------------------
 
 theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
-  VaR_Q P (fun ω => X ω + c) α = VaR_Q P X α + c := sorry
+  VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
 
 theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
-  (hc : c > 0) : VaR_Q P (fun ω => c * X ω) α = c * VaR_Q P X α := sorry
+  (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
 
 
 /-- Tail indicator: 1 if X(ω) > t, else 0. -/
@@ -93,7 +93,7 @@ CVaR_α(X) =  E[X * I[X > VaR] ] / P[X > VaR]
 If the tail probability is zero, CVaR is defined to be 0.
 -/
 def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  let v := VaR_Q P X α
+  let v := VaR P X α
   let B : FinRV n ℚ := tailInd X v
   let num := 𝔼[X * B // P]
   let den := ℙ[X >ᵣ v // P]
