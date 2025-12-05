@@ -34,7 +34,7 @@ end Findist
 
 ------------------------------ Probability ---------------------------
 
-variable {n : ℕ} {P : Findist n} {B C : FinRV n Bool}
+variable {n : ℕ} {P : Findist n} {A B C : FinRV n Bool}
 
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
     by rw [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_dists_add, one_of_ind_bool_or_not]
@@ -42,6 +42,7 @@ theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 :=
 
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by rw [←prob_compl_sums_to_one (P:=P) (B:=B)]; ring 
+
 
 
 ------------------------------ Expectation ---------------------------
