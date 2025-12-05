@@ -10,7 +10,7 @@ def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P
 
 theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
   (ht : t1 ≤ t2) : cdf P X t1 ≤ cdf P X t2 := by
-  simp [cdf]
+  unfold cdf
   apply exp_monotone
   intro ω
   by_cases h1 : X ω ≤ t1
@@ -18,8 +18,7 @@ theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
     simp [FinRV.leq, 𝕀, indicator, h1, h2]
   · simp [𝕀, indicator, FinRV.leq, h1]
     by_cases h2 : X ω ≤ t2
-    · simp [h2]
-    · simp [h2] ---these lines seem really unnecessary but idk how to fix it
+    repeat simp [h2]
 
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
@@ -51,8 +50,7 @@ theorem cdfR_monotone (P : Findist n) (X : FinRV n ℝ) (t1 t2 : ℝ)
     simp [FinRV.leq, 𝕀, indicator, h1, h2]
   · simp [𝕀, indicator, FinRV.leq, h1]
     by_cases h2 : X ω ≤ t2
-    · simp [h2]
-    · simp [h2]
+    repeat simp [h2]
 
 /-- Value-at-Risk of X at level α: VaR_α(X) = inf {t:ℝ | P[X ≤ t] ≥ α } -/
 noncomputable def VaR_R (P : Findist n) (X : FinRV n ℝ) (α : ℝ) : ℝ :=
