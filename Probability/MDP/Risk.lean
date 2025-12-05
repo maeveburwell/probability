@@ -21,6 +21,20 @@ theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
     · simp [h2]
     · simp [h2] ---these lines seem really unnecessary but idk how to fix it
 
+theorem cdf_monotone_xy (P : Findist n) (X Y : FinRV n ℚ) (t : ℚ)
+  (h : X ≤ Y) : cdf P X t ≥ cdf P Y t := by
+  simp [cdf]
+  apply exp_monotone
+  intro ω
+  have h2 := h ω
+  by_cases h1 : Y ω ≤ t
+  · have h3 : X ω ≤ t := le_trans h2 h1
+    simp [FinRV.leq, 𝕀, indicator, h3, h1]
+  · simp [𝕀, indicator, FinRV.leq, h1]
+    by_cases h4 : X ω ≤ t
+    · simp [h4]
+    · simp [h4]
+
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def rangeOfRV (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
@@ -35,6 +49,11 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
     0 --this is illegal i know -- Keith can fix it :)
 
 notation "VaR[" X "//" P ", " α "]" => VaR P X α
+
+theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
+  (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
+
+  sorry
 
 --(Emily) I am now thinking of just trying to keep it in Q
 --so I wouln't use anything between these lines!
@@ -58,7 +77,7 @@ theorem cdfR_monotone (P : Findist n) (X : FinRV n ℝ) (t1 t2 : ℝ)
 noncomputable def VaR_R (P : Findist n) (X : FinRV n ℝ) (α : ℝ) : ℝ :=
   sInf { t : ℝ | cdfR P X t ≥ α }
 
-theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
+theorem VaR_R_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
   (hXY : ∀ ω, X ω ≤ Y ω) : VaR_R P X α ≤ VaR_R P Y α := by
   let Sx : Set ℝ := { t : ℝ | cdfR P X t ≥ α }
   let Sy : Set ℝ := { t : ℝ | cdfR P Y t ≥ α }
@@ -69,6 +88,8 @@ theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
     intro t ht
     have h_cdf : ∀ t, cdfR P X t ≥ cdfR P Y t := by
       intro t
+      unfold cdfR
+      --apply exp_monotone
 
       sorry
     sorry
