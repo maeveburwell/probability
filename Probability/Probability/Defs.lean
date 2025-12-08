@@ -156,10 +156,10 @@ def preimage (f : FinRV n ρ) : ρ → Set (Fin n) :=
 end FinRV
 
 /-- Boolean indicator function -/
-def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
+def indicator  [OfNat ℚ 0] [OfNat ℚ 1] (cond : Bool) : ℚ := cond.rec 0 1
 
 /-- Boolean indicator function -/
-abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
+abbrev 𝕀 [OfNat ℚ 0] [OfNat ℚ 1] : Bool → ℚ := indicator
 
 
 variable {k : ℕ} {L : FinRV n (Fin k)}

@@ -8,32 +8,19 @@ variable {n : ℕ}
 
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
-variable {P : Findist n} {X : FinRV n ℚ} {t t₁ t₂ : ℚ}
+variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
+
+
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
-  intro ht 
-  unfold cdf
-  apply exp_monotone
-  intro ω
-  by_cases h1 : X ω ≤ t₁
-  · have h2 : X ω ≤ t₂ := le_trans h1 ht
-    simp [FinRV.leq, 𝕀, indicator, h1, h2]
-  · simp [𝕀, indicator, FinRV.leq, h1]
-    by_cases h2 : X ω ≤ t₂
-    repeat simp [h2]
+  intro ht; unfold cdf
+  exact exp_monotone <| rvle_monotone (le_refl X) ht 
+  
 
 /-- Shows CDF is monotone in random variable  -/
 theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
-  intro h
-  simp [cdf]
-  apply exp_monotone
-  intro ω
-  by_cases h1 : Y ω ≤ t
-  · have h3 : X ω ≤ t := le_trans (h ω) h1
-    simp [FinRV.leq, 𝕀, indicator, h3, h1]
-  · simp [𝕀, indicator, FinRV.leq, h1]
-    by_cases h4 : X ω ≤ t
-    repeat simp [h4]
+  intro h; unfold cdf
+  exact exp_monotone <| rvle_monotone h (le_refl t) 
 
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
