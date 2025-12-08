@@ -8,31 +8,32 @@ variable {n : ℕ}
 
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
-theorem cdf_monotone (P : Findist n) (X : FinRV n ℚ) (t1 t2 : ℚ)
-  (ht : t1 ≤ t2) : cdf P X t1 ≤ cdf P X t2 := by
+variable {P : Findist n} {X : FinRV n ℚ} {t t₁ t₂ : ℚ}
+/-- shows CDF is non-decreasing -/
+theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
+  intro ht 
   unfold cdf
   apply exp_monotone
   intro ω
-  by_cases h1 : X ω ≤ t1
-  · have h2 : X ω ≤ t2 := le_trans h1 ht
+  by_cases h1 : X ω ≤ t₁
+  · have h2 : X ω ≤ t₂ := le_trans h1 ht
     simp [FinRV.leq, 𝕀, indicator, h1, h2]
   · simp [𝕀, indicator, FinRV.leq, h1]
-    by_cases h2 : X ω ≤ t2
+    by_cases h2 : X ω ≤ t₂
     repeat simp [h2]
 
-theorem cdf_monotone_xy (P : Findist n) (X Y : FinRV n ℚ) (t : ℚ)
-  (h : X ≤ Y) : cdf P X t ≥ cdf P Y t := by
+/-- Shows CDF is monotone in random variable  -/
+theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
+  intro h
   simp [cdf]
   apply exp_monotone
   intro ω
-  have h2 := h ω
   by_cases h1 : Y ω ≤ t
-  · have h3 : X ω ≤ t := le_trans h2 h1
+  · have h3 : X ω ≤ t := le_trans (h ω) h1
     simp [FinRV.leq, 𝕀, indicator, h3, h1]
   · simp [𝕀, indicator, FinRV.leq, h1]
     by_cases h4 : X ω ≤ t
-    · simp [h4]
-    · simp [h4]
+    repeat simp [h4]
 
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
@@ -136,3 +137,19 @@ notation "CVaR[" X "//" P ", " α "]" => CVaR P X α
 
 
 end Risk
+
+--- ************************* Another approach (Marek) ****************************************************
+
+section Risk2
+
+variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q : ℚ)
+
+/-- Checks if the function is a quantile --/
+def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α  
+
+/-- Set of quantiles at a level α  --/
+def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q} 
+
+
+
+end Risk2
