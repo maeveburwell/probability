@@ -14,20 +14,20 @@ variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
   intro ht; unfold cdf
-  exact exp_monotone <| rvle_monotone (le_refl X) ht 
-  
+  exact exp_monotone <| rvle_monotone (le_refl X) ht
+
 
 /-- Shows CDF is monotone in random variable  -/
 theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
   intro h; unfold cdf
-  exact exp_monotone <| rvle_monotone h (le_refl t) 
+  exact exp_monotone <| rvle_monotone h (le_refl t)
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 
---def FinQuantile (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ := 
+--def FinQuantile (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
 
--- TODO: consider also this: https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun 
+-- TODO: consider also this: https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun
 
 -- TODO: should we call this FinVaR? and show it is equal to a more standard definition of VaR
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
@@ -47,6 +47,38 @@ theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : X ≤ Y) : VaR P X α ≤ VaR P Y α := by
 
   sorry
+
+
+------------------Caleb's definition of VaR------------------------
+theorem min_subset (A B : Finset ℕ) (h : B ⊆ A) (hA : A.Nonempty) (hB : B.Nonempty)  : A.min' hA ≤ B.min' hB :=
+  by
+    have hminB : B.min' hB ∈ B := Finset.min'_mem B hB
+    have hminA : B.min' hB ∈ A := h hminB
+    exact Finset.min'_le A (B.min' hB) hminA
+
+def prodDenomRV (X : FinRV n ℚ) : ℕ := ∏ q ∈ range X, q.den
+
+theorem RV_QtoZ (X : FinRV n ℚ) (ω : Fin n) :
+  ∃ z : ℤ, X ω * (prodDenomRV X : ℚ) = z := sorry
+
+theorem Lx_nonempty (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :
+  let Lx : Finset ℚ := (range X).filter (fun t => cdf P X t ≤ 1-α)
+  Lx.Nonempty := sorry
+
+-- def min_Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :
+--   let Lx : Finset ℚ := (range X).filter (fun t => cdf P X t ≤ 1-α)
+--   Lx.min' (Lx_nonempty P X α) := sorry
+
+
+
+
+
+def VaR_caleb (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ := sorry
+
+------------------------------------------------------------------------
+
+
+
 
 --(Emily) I am now thinking of just trying to keep it in Q
 --so I wouln't use anything between these lines!
@@ -138,13 +170,13 @@ section Risk2
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
 /-- Checks if the function is a quantile --/
-def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α  
+def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
 
 /-- Set of quantiles at a level α  --/
-def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q} 
+def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q}
 
-def is_VaR : Prop := (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u 
+def is_VaR : Prop := (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
-theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]  ) := sorry 
+theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]  ) := sorry
 
 end Risk2
