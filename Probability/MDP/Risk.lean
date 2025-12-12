@@ -22,23 +22,29 @@ theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
   intro h; unfold cdf
   exact exp_monotone <| rvle_monotone h (le_refl t) 
 
-
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
-def rangeOfRV (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
+def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 
+--def FinQuantile (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ := 
+
+-- TODO: consider also this: https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun 
+
+-- TODO: should we call this FinVaR? and show it is equal to a more standard definition of VaR
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
 If we assume 0 ≤ α ∧ α ≤ 1, then the "else 0" branch is never used. -/
 def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  let S : Finset ℚ := (rangeOfRV X).filter (fun t => cdf P X t ≥ α)
+  let S : Finset ℚ := (range X).filter (fun t => cdf P X t ≥ α)
   if h : S.Nonempty then
     S.min' h
   else
     0 --this is illegal i know -- Keith can fix it :)
 
+-- TODO: Show that VaR is a left (or right?) inverse for CDF
+
 notation "VaR[" X "//" P ", " α "]" => VaR P X α
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
-  (hXY : ∀ ω, X ω ≤ Y ω) : VaR P X α ≤ VaR P Y α := by
+  (hXY : X ≤ Y) : VaR P X α ≤ VaR P Y α := by
 
   sorry
 
@@ -129,7 +135,7 @@ end Risk
 
 section Risk2
 
-variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q : ℚ)
+variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
 /-- Checks if the function is a quantile --/
 def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α  
@@ -137,6 +143,8 @@ def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] �
 /-- Set of quantiles at a level α  --/
 def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q} 
 
+def is_VaR : Prop := (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u 
 
+theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]  ) := sorry 
 
 end Risk2

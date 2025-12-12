@@ -127,6 +127,14 @@ infix:50 "=ᵢ" => FinRV.eqi
 /-- Boolean random variable represening Y ≤ y inequality -/
 infix:50 "≤ᵣ" => FinRV.leq
 
+
+/-- Boolean random variable represening Y ≤ y inequality -/
+@[simp] def lt [LT ρ] [DecidableLT ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
+  (fun ω ↦ Y ω < y)
+
+/-- Boolean random variable represening Y ≤ y inequality -/
+infix:50 "<ᵣ" => FinRV.lt
+
 /-- Boolean random variable represening Y ≤ y inequality -/
 @[simp] def geq [LE ρ] [DecidableLE ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   (fun ω ↦ Y ω ≥ y)

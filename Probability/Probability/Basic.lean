@@ -45,8 +45,6 @@ theorem rvle_monotone (h1 : X ≤ Y) (h2: t₁ ≤ t₂) : 𝕀 ∘ (Y ≤ᵣ t�
     · by_cases h5 : X ω ≤ t₂
       repeat simp [h3, h5, 𝕀, indicator] 
       
- 
-
 end RandomVariables
 
 ------------------------------ Probability ---------------------------
