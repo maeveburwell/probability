@@ -59,22 +59,38 @@ theorem min_subset (A B : Finset ℕ) (h : B ⊆ A) (hA : A.Nonempty) (hB : B.No
 
 def prodDenomRV (X : FinRV n ℚ) : ℕ := ∏ q ∈ range X, q.den
 
+
+def X' (X : FinRV n ℚ) : FinRV n ℚ :=
+  fun ω => X ω * (prodDenomRV X : ℚ)
+
 theorem RV_QtoZ (X : FinRV n ℚ) (ω : Fin n) :
-  ∃ z : ℤ, X ω * (prodDenomRV X : ℚ) = z := sorry
+  ∃ z : ℤ, X ω * (prodDenomRV X : ℚ) = (z : ℚ) := sorry
+
+def X'_num (X : FinRV n ℚ) : FinRV n ℤ :=
+  fun ω => (X ω * (prodDenomRV X : ℚ)).num
+
+theorem X'_num_inQ (X : FinRV n ℚ) (ω : Fin n) :
+  X ω * (prodDenomRV X : ℚ) = (X'_num X ω : ℚ) := sorry
+
+
+def Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : Finset ℚ :=
+  (range X).filter (fun t => cdf P X t ≤ (1 : ℚ) - α)
 
 theorem Lx_nonempty (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :
-  let Lx : Finset ℚ := (range X).filter (fun t => cdf P X t ≤ 1-α)
-  Lx.Nonempty := sorry
+  (Lx P X α).Nonempty := sorry
 
--- def min_Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :
---   let Lx : Finset ℚ := (range X).filter (fun t => cdf P X t ≤ 1-α)
---   Lx.min' (Lx_nonempty P X α) := sorry
+def min_Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :=
+  (Lx P X α).min' (Lx_nonempty P X α)
+
+--Caleb has a handwritten proof showing this definition is equivalent
+def VaR_caleb (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
+  (min_Lx P X α) / prodDenomRV X
 
 
 
-
-
-def VaR_caleb (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ := sorry
+theorem VaR_caleb_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
+  (hXY : X ≤ Y) : VaR_caleb P X α ≤ VaR_caleb P Y α := by
+  sorry
 
 ------------------------------------------------------------------------
 
