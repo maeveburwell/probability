@@ -27,7 +27,8 @@ def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 
 --def FinQuantile (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
 
--- TODO: consider also this: https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun
+-- TODO: consider also this: 
+-- https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun
 
 -- TODO: should we call this FinVaR? and show it is equal to a more standard definition of VaR
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
@@ -167,7 +168,21 @@ end Risk
 
 section Risk2
 
-variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ} 
+
+theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by 
+  ext ω
+  unfold FinRV.leq FinRV.gt 
+  simp 
+  grind  
+
+
+theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P]= 1 := by 
+  rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
+
+variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ) 
+
+  
 
 /-- Checks if the function is a quantile --/
 def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α

@@ -225,7 +225,6 @@ end RandomVariable
 
 ------------------------------ Probability ---------------------------
 
-
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
 /-- Probability of B -/
@@ -369,6 +368,11 @@ theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by sim
 /-- Additivity of expectation --/
 theorem exp_additive {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
   by unfold expect; exact dotProduct_sum P.p Finset.univ Xs
+
+theorem exp_additive_two : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := 
+  by unfold expect; 
+     sorry 
+     --exact dotProduct_sum P.p Finset.univ Xs
 
 /-- Expectation is monotone  -/
 theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
