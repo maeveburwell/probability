@@ -4,6 +4,9 @@ import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators
 
+import Mathlib.Data.Fin.Tuple.Sort 
+
+
 /-!
   # Basic properties for probability spaces and expectations
 
@@ -19,7 +22,7 @@ variable {n : ℕ} {P : Findist n} {B : FinRV n Bool}
 
 theorem ge_zero : 0 ≤ ℙ[B // P] := 
     by rw [prob_eq_exp_ind]
-       calc 0 = 𝔼[0 // P] := exp_const.symm 
+       calc 0 = 𝔼[0 //P] := exp_const.symm 
             _ ≤ 𝔼[𝕀 ∘ B//P] := exp_monotone ind_nneg
        
 
@@ -52,13 +55,11 @@ end RandomVariables
 variable {n : ℕ} {P : Findist n} {A B C : FinRV n Bool}
 
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
-    by rw [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_dists_add, one_of_ind_bool_or_not]
+    by rw [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive_two, one_of_ind_bool_or_not]
        exact exp_one 
 
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by rw [←prob_compl_sums_to_one (P:=P) (B:=B)]; ring 
-
-
 
 
 ------------------------------ Expectation ---------------------------
@@ -110,4 +111,33 @@ theorem law_of_total_probs : ℙ[B // P] =  ∑ i, ℙ[B * (L =ᵣ i) // P]  :=
 
 end Probability 
 
-#lint 
+section Probability_Permutation
+
+variable {n : ℕ} {P : Findist n} {A B : FinRV n Bool} {X Y : FinRV n ℚ}
+
+example (σ : Equiv.Perm (Fin n)) (f g : Fin n → ℚ) : f ⬝ᵥ g = (f ∘ σ) ⬝ᵥ (g ∘ σ) := 
+  by exact Eq.symm (comp_equiv_dotProduct_comp_equiv f g σ)
+
+example (σ : Equiv.Perm (Fin n)) : (1 : Fin n → ℚ) = (1 : Fin n → ℚ) ∘ σ := rfl
+
+def Findist.perm (P : Findist n) (σ : Equiv.Perm (Fin n)) : Findist n where 
+  p :=  P.p ∘ σ
+  prob := by 
+    have h1 : 1 = (1 : Fin n → ℚ) ∘ σ := rfl 
+    rw [h1, comp_equiv_dotProduct_comp_equiv 1 P.p σ]
+    exact P.prob
+  nneg := fun ω => P.nneg (σ ω)
+
+variable (σ : Equiv.Perm (Fin n))
+
+theorem exp_equiv_perm : 𝔼[X ∘ σ // P.perm σ] = 𝔼[X // P] := by
+  unfold expect Findist.perm 
+  exact (comp_equiv_dotProduct_comp_equiv P.1 X σ)
+
+example : (𝕀 ∘ A ∘ σ) = (𝕀 ∘ A) ∘ σ := by rfl 
+
+theorem prob_equiv_perm : ℙ[A ∘ σ // P.perm σ] = ℙ[A // P] := by 
+  have h1 : (𝕀 ∘ A ∘ σ) = (𝕀 ∘ A) ∘ σ := by rfl 
+  rw [prob_eq_exp_ind, h1, exp_equiv_perm, ←prob_eq_exp_ind] 
+  
+end Probability_Permutation 

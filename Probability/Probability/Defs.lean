@@ -363,19 +363,14 @@ theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘
 /-- Expectation is homogeneous under product -/
 theorem exp_homogenous : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [expect, dotProduct_smul, smul_eq_mul]
 
-theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect]
-
 /-- Additivity of expectation --/
 theorem exp_additive {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
   by unfold expect; exact dotProduct_sum P.p Finset.univ Xs
-
-theorem exp_additive_two : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := 
-  by unfold expect; 
-     sorry 
-     --exact dotProduct_sum P.p Finset.univ Xs
+     
+theorem exp_additive_two : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect]
 
 /-- Expectation is monotone  -/
-theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
+theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] := dotProduct_le_dotProduct_of_nonneg_left h P.nneg
 
 ---- ** conditional expectation -----
 
@@ -385,7 +380,6 @@ theorem exp_decompose : 𝔼[X // P] = ∑ i, 𝔼[X * (L =ᵢ i) // P] :=
   by nth_rewrite 1 [rv_decompose X L]
      rewrite [exp_additive]
      simp 
-
 
 /-- Expectation of a conditional constant. Only when probability is positive.  -/
 theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L =ᵣ i // P] = g i := 
@@ -397,4 +391,21 @@ theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L 
 
 end Expectation_properties
 
-#lint 
+
+-- Derived properties from the properties of expectation
+section Probability_properties
+
+variable {n : ℕ} {P : Findist n} {A B : FinRV n Bool}
+
+theorem ind_monotone : (∀ ω, A ω → B ω) → (𝕀∘A) ≤ (𝕀∘B) := by
+  intro h ω
+  specialize h ω
+  by_cases h1 : A ω
+  · simp_all [indicator] 
+  · by_cases h2 : B ω
+    repeat simp_all [indicator]
+
+
+
+
+end Probability_properties 

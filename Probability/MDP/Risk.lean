@@ -1,4 +1,6 @@
 import Probability.Probability.Basic
+import Mathlib.Data.EReal.Basic 
+import Mathlib.Data.Set.Operations
 
 namespace Risk
 
@@ -46,9 +48,10 @@ notation "VaR[" X "//" P ", " α "]" => VaR P X α
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : X ≤ Y) : VaR P X α ≤ VaR P Y α := by
-
   sorry
 
+
+example (A B : Set EReal) (h : A ⊆ B) : sSup A ≤ sSup B := sSup_le_sSup h
 
 ------------------Caleb's definition of VaR------------------------
 theorem min_subset (A B : Finset ℕ) (h : B ⊆ A) (hA : A.Nonempty) (hB : B.Nonempty)  : A.min' hA ≤ B.min' hB :=
@@ -146,43 +149,18 @@ theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
   (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
 
 
-/-- Tail indicator: 1 if X(ω) > t, else 0. -/
-def tailInd (X : FinRV n ℚ) (t : ℚ) : FinRV n ℚ :=
-  fun ω => if X ω > t then 1 else 0
-
-/-- Conditional Value-at-Risk (CVaR) of X at level α under P.
-CVaR_α(X) =  E[X * I[X > VaR] ] / P[X > VaR]
-If the tail probability is zero, CVaR is defined to be 0.
--/
-def CVaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  let v := VaR P X α
-  let B : FinRV n ℚ := tailInd X v
-  let num := 𝔼[X * B // P]
-  let den := ℙ[X >ᵣ v // P]
-  if _ : den = 0 then
-     0
-  else
-     num / den
-
--- NOTE (Marek): The CVaR, as defined above is not convex/concave.
--- See Page 14 at https://www.cs.unh.edu/~mpetrik/pub/tutorials/risk2/dlrl2023.pdf
--- NOTE (Marek): The CVaR above is defined for costs and not rewards
-
-notation "CVaR[" X "//" P ", " α "]" => CVaR P X α
-
---TODO: prove...
--- monotonicity: (∀ ω, X ω ≤ Y ω) → CVaR[α, X // P] ≤ CVaR[α, Y // P]
--- translation: CVaR[α, (fun ω => X ω + c) // P] = CVaR[α, X // P] + c
--- positive homogeneity: c > 0 → CVaR[α, (fun ω => c * X ω) // P] = c * CVaR[α, X // P]
--- convexity
--- CVaR ≥ VaR: CVaR[α, X // P] ≥ VaR[α, X // P]
-
 
 end Risk
 
 --- ************************* Another approach (Marek) ****************************************************
 
 section Risk2
+
+#check Set.preimage
+#synth SupSet EReal 
+#synth SupSet (WithTop ℝ)
+#check instSupSetEReal
+#check WithTop.instSupSet
 
 variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ} 
 
@@ -194,7 +172,8 @@ theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
 
 
 theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P]= 1 := by 
-  rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
+  sorry
+  --rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ) 
 
@@ -208,6 +187,17 @@ def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q}
 
 def is_VaR : Prop := (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
+
+-- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] := 
+
+theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   := 
+    by intro h ω pre
+       simp [FinRV.gt, FinRV.geq] at pre ⊢ 
+       linarith 
+       
+
 theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]  ) := sorry
+
+
 
 end Risk2
