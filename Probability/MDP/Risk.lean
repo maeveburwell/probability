@@ -177,7 +177,6 @@ theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P]= 1 := by
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ) 
 
-  
 
 /-- Checks if the function is a quantile --/
 def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
@@ -198,6 +197,40 @@ theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ 
 
 theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]  ) := sorry
 
+def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
+def RiskLevel := { α : ℚ // IsRiskLevel α}
+
+
+/-- compute a quantile for a partial sorted random variable and a partial probability 
+    used in the induction to eliminate points until we find one that has 
+    probability greater than α -/
+def quantile_srt (n : ℕ) (α : RiskLevel) (p : Fin n.succ → ℚ) (x : Fin n.succ → ℚ) 
+                 (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p) : ℚ := 
+  match n with 
+  | Nat.zero => x 0 
+  | Nat.succ n' =>
+    if h : p 0 < α.val then 
+      let α':= α.val - p 0 
+      let bnd_α : IsRiskLevel α' := by 
+        unfold IsRiskLevel  
+        subst α' 
+        specialize h2 0 
+        constructor 
+        · grw [←h]; simp 
+        · grw [←h2]; simpa using α.2.2 
+
+      quantile_srt n' ⟨α', bnd_α⟩ (Fin.tail p) (Fin.tail x) sorry sorry sorry 
+    else 
+      x 0 
+
+example (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) := sorry
+
+def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ := 
+    match n with 
+    | Nat.zero => 0 -- this case is not possible because of the probability distribution
+    | Nat.succ n' =>
+      let σ := Tuple.sort X 
+      quantile_srt n' α (P.p ∘ σ) (X ∘ σ) sorry sorry sorry 
 
 end Risk2

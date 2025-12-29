@@ -4,7 +4,7 @@ import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Data.Fintype.BigOperators
 
-import Mathlib.Data.Fin.Tuple.Sort 
+import Mathlib.Data.Fin.Tuple.Sort -- for Equiv.Perm and permutation operations
 
 
 /-!
@@ -113,7 +113,7 @@ end Probability
 
 section Probability_Permutation
 
-variable {n : ℕ} {P : Findist n} {A B : FinRV n Bool} {X Y : FinRV n ℚ}
+variable {n : ℕ} {P : Findist n} {A B : FinRV n Bool} {X Y : FinRV n ℚ} {t : ℚ}
 
 example (σ : Equiv.Perm (Fin n)) (f g : Fin n → ℚ) : f ⬝ᵥ g = (f ∘ σ) ⬝ᵥ (g ∘ σ) := 
   by exact Eq.symm (comp_equiv_dotProduct_comp_equiv f g σ)
@@ -130,14 +130,28 @@ def Findist.perm (P : Findist n) (σ : Equiv.Perm (Fin n)) : Findist n where
 
 variable (σ : Equiv.Perm (Fin n))
 
-theorem exp_equiv_perm : 𝔼[X ∘ σ // P.perm σ] = 𝔼[X // P] := by
+theorem exp_eq_perm : 𝔼[X ∘ σ // P.perm σ] = 𝔼[X // P] := by
   unfold expect Findist.perm 
   exact (comp_equiv_dotProduct_comp_equiv P.1 X σ)
 
-example : (𝕀 ∘ A ∘ σ) = (𝕀 ∘ A) ∘ σ := by rfl 
-
-theorem prob_equiv_perm : ℙ[A ∘ σ // P.perm σ] = ℙ[A // P] := by 
+theorem prob_eq_perm : ℙ[A ∘ σ // P.perm σ] = ℙ[A // P] := by 
   have h1 : (𝕀 ∘ A ∘ σ) = (𝕀 ∘ A) ∘ σ := by rfl 
-  rw [prob_eq_exp_ind, h1, exp_equiv_perm, ←prob_eq_exp_ind] 
+  rw [prob_eq_exp_ind, h1, exp_eq_perm, ←prob_eq_exp_ind] 
   
+theorem rv_le_perm : (X ∘ σ ≤ᵣ t) = (X ≤ᵣ t) ∘ σ := by unfold FinRV.leq; grind only 
+
+theorem rv_lt_perm : (X ∘ σ <ᵣ t) = (X <ᵣ t) ∘ σ := by unfold FinRV.lt; grind only 
+
+theorem rv_ge_perm : (X ∘ σ ≥ᵣ t) = (X ≥ᵣ t) ∘ σ := by unfold FinRV.geq; grind only 
+
+theorem rv_gt_perm : (X ∘ σ >ᵣ t) = (X >ᵣ t) ∘ σ := by unfold FinRV.gt; grind only 
+
+theorem prob_le_eq_perm : ℙ[X ∘ σ ≤ᵣ t // P.perm σ] = ℙ[X ≤ᵣ t // P] := by rw [rv_le_perm, prob_eq_perm]
+
+theorem prob_lt_eq_perm : ℙ[X ∘ σ <ᵣ t // P.perm σ] = ℙ[X <ᵣ t // P] := by rw [rv_lt_perm, prob_eq_perm]
+
+theorem prob_ge_eq_perm : ℙ[X ∘ σ ≥ᵣ t // P.perm σ] = ℙ[X ≥ᵣ t // P] := by rw [rv_ge_perm, prob_eq_perm]
+
+theorem prob_gt_eq_perm : ℙ[X ∘ σ >ᵣ t // P.perm σ] = ℙ[X >ᵣ t // P] := by rw [rv_gt_perm, prob_eq_perm]
+
 end Probability_Permutation 
