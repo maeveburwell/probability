@@ -201,6 +201,12 @@ def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
 def RiskLevel := { α : ℚ // IsRiskLevel α}
 
+theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) := 
+    by unfold Monotone at h ⊢ 
+       unfold Fin.tail 
+       intro a b h2 
+       exact h (Fin.succ_le_succ_iff.mpr h2)
+      
 
 /-- compute a quantile for a partial sorted random variable and a partial probability 
     used in the induction to eliminate points until we find one that has 
@@ -219,16 +225,14 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p : Fin n.succ → ℚ) (x : Fin n.
         constructor 
         · grw [←h]; simp 
         · grw [←h2]; simpa using α.2.2 
-
-      quantile_srt n' ⟨α', bnd_α⟩ (Fin.tail p) (Fin.tail x) sorry sorry sorry 
+      quantile_srt n' ⟨α', bnd_α⟩ (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) sorry 
     else 
       x 0 
 
-example (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) := sorry
 
 def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ := 
     match n with 
-    | Nat.zero => 0 -- this case is not possible because of the probability distribution
+    | Nat.zero => 0 -- this case is impossible because n > 0 for Findist 
     | Nat.succ n' =>
       let σ := Tuple.sort X 
       quantile_srt n' α (P.p ∘ σ) (X ∘ σ) sorry sorry sorry 
