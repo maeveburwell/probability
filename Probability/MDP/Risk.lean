@@ -164,6 +164,8 @@ section Risk2
 
 variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ} 
 
+--TODO: can we use isLUB
+
 theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by 
   ext ω
   unfold FinRV.leq FinRV.gt 
@@ -195,7 +197,9 @@ theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ 
        linarith 
        
 
-theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]  ) := sorry
+-- this proves that if we have the property we also have the VaR; then all remains is 
+-- to show existence which we can shows constructively by actually computing the value
+theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]) := sorry
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
@@ -208,7 +212,7 @@ theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fi
        exact h (Fin.succ_le_succ_iff.mpr h2)
       
 
-/-- compute a quantile for a partial sorted random variable and a partial probability 
+/-- compute a quantile for a (partial) sorted random variable and a partial probability 
     used in the induction to eliminate points until we find one that has 
     probability greater than α -/
 def quantile_srt (n : ℕ) (α : RiskLevel) (p : Fin n.succ → ℚ) (x : Fin n.succ → ℚ) 
@@ -218,14 +222,18 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p : Fin n.succ → ℚ) (x : Fin n.
   | Nat.succ n' =>
     if h : p 0 < α.val then 
       let α':= α.val - p 0 
-      let bnd_α : IsRiskLevel α' := by 
-        unfold IsRiskLevel  
-        subst α' 
-        specialize h2 0 
+      have bnd_α : IsRiskLevel α' := by 
+        unfold IsRiskLevel; subst α'; specialize h2 0 
         constructor 
         · grw [←h]; simp 
         · grw [←h2]; simpa using α.2.2 
-      quantile_srt n' ⟨α', bnd_α⟩ (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) sorry 
+      have h': α' < 1 ⬝ᵥ (Fin.tail p) := by 
+        unfold Fin.tail; subst α'
+        rw [one_dotProduct] at ⊢ h3
+        calc α.val - p 0 < ∑ i, p i - p 0 := by linarith  
+        _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succAbove p 0]; simp
+          _ = ∑ i : Fin n'.succ, p i.succ := by ring
+      quantile_srt n' ⟨α', bnd_α⟩ (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h'
     else 
       x 0 
 
