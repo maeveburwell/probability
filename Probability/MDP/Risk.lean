@@ -199,7 +199,7 @@ theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ 
 
 -- this proves that if we have the property we also have the VaR; then all remains is 
 -- to show existence which we can shows constructively by actually computing the value
-theorem var_def : is_VaR P X α v ↔ (α ≥ ℙ[X <ᵣ v // P] ∧ α < ℙ[ X ≤ᵣ v // P]) := sorry
+theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) := sorry
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
@@ -215,12 +215,13 @@ theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fi
 /-- compute a quantile for a (partial) sorted random variable and a partial probability 
     used in the induction to eliminate points until we find one that has 
     probability greater than α -/
-def quantile_srt (n : ℕ) (α : RiskLevel) (p : Fin n.succ → ℚ) (x : Fin n.succ → ℚ) 
-                 (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p) : ℚ := 
+def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ) 
+                 (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p) 
+                 (h4 : 0 < 1 ⬝ᵥ p) : Fin n.succ := 
   match n with 
-  | Nat.zero => x 0 
+  | Nat.zero => 0 
   | Nat.succ n' =>
-    if h : p 0 < α.val then 
+    if h : p 0 ≤ α.val then  -- recursive case: keep going
       let α':= α.val - p 0 
       have bnd_α : IsRiskLevel α' := by 
         unfold IsRiskLevel; subst α'; specialize h2 0 
@@ -231,18 +232,23 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p : Fin n.succ → ℚ) (x : Fin n.
         unfold Fin.tail; subst α'
         rw [one_dotProduct] at ⊢ h3
         calc α.val - p 0 < ∑ i, p i - p 0 := by linarith  
-        _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succAbove p 0]; simp
+        _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succ]
           _ = ∑ i : Fin n'.succ, p i.succ := by ring
-      quantile_srt n' ⟨α', bnd_α⟩ (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h'
-    else 
-      x 0 
+      Fin.succ <| quantile_srt n' ⟨α', bnd_α⟩ 
+        (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h' sorry 
+    else -- return the value case
+      0 
 
+theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ} 
+  (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p) 
+        (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) : 
+          (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := sorry 
 
 def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ := 
     match n with 
     | Nat.zero => 0 -- this case is impossible because n > 0 for Findist 
     | Nat.succ n' =>
       let σ := Tuple.sort X 
-      quantile_srt n' α (P.p ∘ σ) (X ∘ σ) sorry sorry sorry 
+      X <| quantile_srt n' α (P.p ∘ σ) (X ∘ σ) sorry sorry sorry sorry
 
 end Risk2
