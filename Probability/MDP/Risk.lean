@@ -190,7 +190,7 @@ def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] �
 /-- Set of quantiles at a level α  --/
 def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q}
 
-def is_VaR : Prop := (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
+def is_VaR : Prop := IsGreatest (𝕢Set P X α) v -- (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
 -- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] := 
 
@@ -228,8 +228,7 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
     q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := sorry 
 
 
--- TODO: can we get a direct proof that removes the contradictions?
-
+-- TODO: can we get a direct proof that removes the proofs by contractiction?
 
 -- this proves that if we have the property we also have the VaR; then all remains is 
 -- to show existence which we can shows constructively by actually computing the value
@@ -238,31 +237,32 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
      · intro h 
        unfold is_VaR at h 
        constructor
-       · unfold 𝕢Set is_𝕢 at h
+       · unfold 𝕢Set is_𝕢 IsGreatest at h
          have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all  
          rw [prob_ge_of_lt] at h1 
          linarith 
-       · by_contra goalneg; push_neg at goalneg 
+       · by_contra! goalneg
          obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v 
          have h3 : q ∈ 𝕢Set P X α := by 
           rewrite [←hq.2] at goalneg 
           have qlb := qset_lb h.1 
           grw [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
           exact qset_of_cond_lt ⟨qlb, goalneg⟩
-         have := (h.2 q h3) 
+         unfold IsGreatest upperBounds at h 
+         have := (h.2 h3) 
          linarith 
      · intro h 
        unfold is_VaR 
        constructor 
        · have h1 := le_of_lt h.2 
          exact qset_of_cond_lt ⟨h1, h.1⟩
-       · by_contra goalneg 
-         push_neg at goalneg 
+       · unfold upperBounds
+         by_contra! goalneg 
+         simp at goalneg 
          obtain ⟨q, hq⟩ := goalneg 
          have := qset_ub_lt hq.1 
          have := prob_lt_le_monotone P X hq.2 
          linarith 
-
 
 example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h 
 
