@@ -79,6 +79,12 @@ theorem prob_le_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y ≤ᵣ t₁ // P]
   intro hxy ht 
   exact exp_monotone (rvle_monotone hxy ht)
 
+
+theorem prob_lt_montone {q : ℚ} : X ≤ Y → t₁ ≤ t₂ → ℙ[Y <ᵣ t₁ // P] ≤ ℙ[X <ᵣ t₂ // P] := by 
+  intro hxy ht
+  exact exp_monotone (rvlt_monotone hxy ht)
+
+
 ------------------------------ Expectation ---------------------------
 
 section Expectation 

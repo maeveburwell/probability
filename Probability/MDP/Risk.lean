@@ -205,6 +205,12 @@ theorem qset_lb : q ∈ 𝕢Set P X α → ℙ[ X ≤ᵣ q // P ] ≥ α := by i
 
 theorem qset_ub : q ∈ 𝕢Set P X α → ℙ[ X ≥ᵣ q // P] ≥ 1-α := by intro h; simp_all [𝕢Set, is_𝕢]
 
+theorem qset_ub_lt : q ∈ 𝕢Set P X α → ℙ[ X <ᵣ q // P] ≤ α := 
+  by intro h 
+     have := qset_ub h 
+     rewrite [prob_ge_of_lt] at this 
+     linarith 
+
 theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ 𝕢Set P X α := 
     by intro h; simp_all [𝕢Set, is_𝕢]
 
@@ -218,9 +224,9 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
 theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  : 
     ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := sorry 
 
-theorem prob_lt_le_mon {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := sorry 
+theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} : 
+    q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := sorry 
 
-theorem prob_lt_mon {q : ℚ} : q ≥ t → ℙ[X <ᵣ q // P] ≥ ℙ[X <ᵣ t // P] := by sorry
 
 -- TODO: can we get a direct proof that removes the contradictions?
 
@@ -245,7 +251,18 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
           exact qset_of_cond_lt ⟨qlb, goalneg⟩
          have := (h.2 q h3) 
          linarith 
-     · sorry  
+     · intro h 
+       unfold is_VaR 
+       constructor 
+       · have h1 := le_of_lt h.2 
+         exact qset_of_cond_lt ⟨h1, h.1⟩
+       · by_contra goalneg 
+         push_neg at goalneg 
+         obtain ⟨q, hq⟩ := goalneg 
+         have := qset_ub_lt hq.1 
+         have := prob_lt_le_monotone P X hq.2 
+         linarith 
+
 
 example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h 
 
