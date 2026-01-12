@@ -173,7 +173,7 @@ theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
   grind  
 
 
-theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P]= 1 := by 
+theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by 
   sorry
   --rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
 
@@ -197,9 +197,26 @@ theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ 
        linarith 
        
 
+-- for discrete random variables
+theorem prob_lt_epsi_eq_le : ∃ε > 0, ℙ[X <ᵣ t + ε // P] = ℙ[X ≤ᵣ t // P] := sorry 
+
+theorem prob_lt_le_mon {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := sorry 
+
+
 -- this proves that if we have the property we also have the VaR; then all remains is 
 -- to show existence which we can shows constructively by actually computing the value
-theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) := sorry
+theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) := 
+  by constructor
+     · intro h 
+       unfold is_VaR 𝕢Set is_𝕢 at h 
+       constructor
+       · have h1 : ℙ[X≤ᵣv//P] ≥ α ∧ ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all  
+         sorry 
+       · sorry 
+     · sorry  
+
+example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h 
+
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
@@ -249,6 +266,6 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
     | Nat.zero => 0 -- this case is impossible because n > 0 for Findist 
     | Nat.succ n' =>
       let σ := Tuple.sort X 
-      X <| quantile_srt n' α (P.p ∘ σ) (X ∘ σ) sorry sorry sorry sorry
+      X <| quantile_srt n' α (P.p ∘ σ) (X ∘ σ) (Tuple.monotone_sort X) sorry sorry sorry
 
 end Risk2
