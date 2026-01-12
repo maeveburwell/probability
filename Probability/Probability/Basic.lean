@@ -36,6 +36,8 @@ theorem in_prob (P : Findist n) : Prob ℙ[B // P] := ⟨ge_zero, le_one⟩
 end Findist
 
 
+-------- Mnotonicity of ranodm variables --------------------------------------------
+
 section RandomVariables
 
 variable {n : ℕ} {P : Findist n} {A B : FinRV n Bool} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
@@ -47,12 +49,24 @@ theorem rvle_monotone (h1 : X ≤ Y) (h2: t₁ ≤ t₂) : 𝕀 ∘ (Y ≤ᵣ t�
       simp [FinRV.leq, 𝕀, indicator, h3, h4] 
     · by_cases h5 : X ω ≤ t₂
       repeat simp [h3, h5, 𝕀, indicator] 
+
+theorem rvlt_monotone (h1 : X ≤ Y) (h2: t₁ ≤ t₂) : 𝕀 ∘ (Y <ᵣ t₁) ≤ 𝕀 ∘ (X <ᵣ t₂) := by 
+    intro ω   
+    by_cases h3 : Y ω < t₁
+    · have h4 : X ω < t₂ := 
+        calc X ω ≤ Y ω := h1 ω
+             _ < t₁ := h3
+             _ ≤ t₂ := h2 
+      simp [FinRV.lt, 𝕀, indicator, h3, h4] 
+    · by_cases h5 : X ω < t₂
+      repeat simp [h3, h5, 𝕀, indicator] 
+
       
 end RandomVariables
 
 ------------------------------ Probability ---------------------------
 
-variable {n : ℕ} {P : Findist n} {A B C : FinRV n Bool}
+variable {n : ℕ} {P : Findist n} {A B C : FinRV n Bool} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
 theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 := 
     by rw [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive_two, one_of_ind_bool_or_not]
@@ -61,6 +75,9 @@ theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 :=
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by rw [←prob_compl_sums_to_one (P:=P) (B:=B)]; ring 
 
+theorem prob_le_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y ≤ᵣ t₁ // P] ≤ ℙ[X ≤ᵣ t₂ // P] := by 
+  intro hxy ht 
+  exact exp_monotone (rvle_monotone hxy ht)
 
 ------------------------------ Expectation ---------------------------
 
@@ -110,6 +127,8 @@ theorem law_of_total_probs : ℙ[B // P] =  ∑ i, ℙ[B * (L =ᵣ i) // P]  :=
 
 
 end Probability 
+
+---- Prababilities and permutations 
 
 section Probability_Permutation
 

@@ -12,26 +12,21 @@ def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P
 
 variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
-
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
   intro ht; unfold cdf
-  exact exp_monotone <| rvle_monotone (le_refl X) ht
-
+  apply prob_le_monotone (le_refl X) ht  
 
 /-- Shows CDF is monotone in random variable  -/
 theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
   intro h; unfold cdf
-  exact exp_monotone <| rvle_monotone h (le_refl t)
+  apply prob_le_monotone h (le_refl t)  
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 
---def FinQuantile (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-
 -- TODO: consider also this: 
 -- https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun
-
 -- TODO: should we call this FinVaR? and show it is equal to a more standard definition of VaR
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
 If we assume 0 ≤ α ∧ α ≤ 1, then the "else 0" branch is never used. -/
@@ -148,8 +143,6 @@ theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
 theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
   (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
 
-
-
 end Risk
 
 --- ************************* Another approach (Marek) ****************************************************
@@ -172,10 +165,21 @@ theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
   simp 
   grind  
 
-
 theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by 
   sorry
   --rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
+
+theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := sorry 
+
+theorem prob_le_of_gt :  ℙ[X ≤ᵣ t // P] = 1 - ℙ[X >ᵣ t // P] := sorry 
+
+
+theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := sorry 
+
+theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := sorry 
+
+theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := sorry 
+
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ) 
 
@@ -188,19 +192,37 @@ def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q}
 
 def is_VaR : Prop := (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
-
 -- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] := 
+
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : ℚ} {q v : ℚ} 
 
 theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   := 
     by intro h ω pre
        simp [FinRV.gt, FinRV.geq] at pre ⊢ 
        linarith 
-       
+
+theorem qset_lb : q ∈ 𝕢Set P X α → ℙ[ X ≤ᵣ q // P ] ≥ α := by intro h; simp_all [𝕢Set, is_𝕢]
+
+theorem qset_ub : q ∈ 𝕢Set P X α → ℙ[ X ≥ᵣ q // P] ≥ 1-α := by intro h; simp_all [𝕢Set, is_𝕢]
+
+theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ 𝕢Set P X α := 
+    by intro h; simp_all [𝕢Set, is_𝕢]
+
+theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ 𝕢Set P X α := 
+    by intro h1 
+       have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
+       exact qset_of_cond ⟨h1.1, h2⟩
+
 
 -- for discrete random variables
-theorem prob_lt_epsi_eq_le : ∃ε > 0, ℙ[X <ᵣ t + ε // P] = ℙ[X ≤ᵣ t // P] := sorry 
+theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  : 
+    ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := sorry 
 
 theorem prob_lt_le_mon {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := sorry 
+
+theorem prob_lt_mon {q : ℚ} : q ≥ t → ℙ[X <ᵣ q // P] ≥ ℙ[X <ᵣ t // P] := by sorry
+
+-- TODO: can we get a direct proof that removes the contradictions?
 
 
 -- this proves that if we have the property we also have the VaR; then all remains is 
@@ -208,15 +230,24 @@ theorem prob_lt_le_mon {q : ℚ} : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ
 theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) := 
   by constructor
      · intro h 
-       unfold is_VaR 𝕢Set is_𝕢 at h 
+       unfold is_VaR at h 
        constructor
-       · have h1 : ℙ[X≤ᵣv//P] ≥ α ∧ ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all  
-         sorry 
-       · sorry 
+       · unfold 𝕢Set is_𝕢 at h
+         have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all  
+         rw [prob_ge_of_lt] at h1 
+         linarith 
+       · by_contra goalneg; push_neg at goalneg 
+         obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v 
+         have h3 : q ∈ 𝕢Set P X α := by 
+          rewrite [←hq.2] at goalneg 
+          have qlb := qset_lb h.1 
+          grw [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
+          exact qset_of_cond_lt ⟨qlb, goalneg⟩
+         have := (h.2 q h3) 
+         linarith 
      · sorry  
 
 example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h 
-
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
