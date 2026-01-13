@@ -198,11 +198,11 @@ theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := by
 
 theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := by
   rw [← prob_lt_compl_ge]
-  ring 
+  ring
 
 theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := by
   rw [← prob_lt_compl_ge]
-  ring 
+  ring
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
@@ -242,61 +242,61 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
-theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False := 
+theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
     by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
 
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
-              ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) := 
+              ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
-       if h : 𝓨.Nonempty then 
-          let y := 𝓨.min' h 
+       if h : 𝓨.Nonempty then
+          let y := 𝓨.min' h
           by have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
              have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
              use y
-             constructor 
+             constructor
              · by_contra! le
-               exact false_of_le_gt le hy2.2 
-             · unfold FinRV.leq FinRV.lt 
-               ext ω 
+               exact false_of_le_gt le hy2.2
+             · unfold FinRV.leq FinRV.lt
+               ext ω
                rw [decide_eq_decide]
-               constructor 
-               · intro h2 
+               constructor
+               · intro h2
                  have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
-                 have hxω : X ω ∉ 𝓨 := by 
-                    by_contra! inY 
-                    have : y ≤ X ω := Finset.min'_le 𝓨 (X ω) inY 
+                 have hxω : X ω ∉ 𝓨 := by
+                    by_contra! inY
+                    have : y ≤ X ω := Finset.min'_le 𝓨 (X ω) inY
                     exact false_of_le_gt this h2
                  rw [Finset.mem_filter] at hxω
                  push_neg at hxω
                  exact hxω xωx
-               · intro h2 
+               · intro h2
                  grewrite [h2]
                  exact hy2.2
-       else 
-          by unfold Finset.Nonempty at h 
+       else
+          by unfold Finset.Nonempty at h
              push_neg at h
-             have a : ∀ω, X ω ≤ t := by 
+             have a : ∀ω, X ω ≤ t := by
                by_contra! a
                obtain ⟨ω, hω⟩ := a
                have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
                have : X ω ∈ 𝓨 := Finset.mem_filter.mpr ⟨xωx, hω⟩
-               specialize h (X ω) 
-               contradiction 
+               specialize h (X ω)
+               contradiction
              let q := t + 1
              have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (a ω) rfl
-             have ab : (X <ᵣ q) = (X ≤ᵣ t) := by 
-                ext ω; unfold FinRV.leq FinRV.lt; grind only 
+             have ab : (X <ᵣ q) = (X ≤ᵣ t) := by
+                ext ω; unfold FinRV.leq FinRV.lt; grind only
              exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
 
--- will follow from rv_lt_epsi_eq_lt by congrence 
+-- will follow from rv_lt_epsi_eq_lt by congrence
 theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
-              ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := 
-    match n with 
+              ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
+    match n with
     | Nat.zero => False.elim P.nonempty'
     | Nat.succ _ =>
-      let ⟨q, hq⟩ := rv_lt_epsi_eq_le P X t 
+      let ⟨q, hq⟩ := rv_lt_epsi_eq_le P X t
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
 example (ω : Fin n.succ) : ω ∈ Finset.univ := Finset.mem_univ ω
@@ -336,7 +336,7 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
             grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
             exact qset_of_cond_lt ⟨qlb, hc⟩
          unfold is_VaR IsGreatest upperBounds at h
-         exact false_of_le_gt (h.2 h3) hq.1 
+         exact false_of_le_gt (h.2 h3) hq.1
      · intro h
        unfold is_VaR
        constructor
@@ -394,11 +394,29 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
       0
 
 theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ}
-  (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
-        (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) :
-          (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := sorry
+      (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
+      (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) :
+      (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := by
+        subst h5
+        induction n with
+        | zero =>
+          constructor
+          · have h6 : 0 ≤ α.val := α.property.left
+            simp [h6]
+          · have h7 : (α.val : ℚ) < p 0 := by
+              rw [one_dotProduct] at h3
+              simpa [Fin.sum_univ_succ] using h3
+            simpa [quantile_srt] using h7
+        | succ n ih =>
+          by_cases h8 : p 0 ≤ α.val
+          · sorry -- recursive case (I tried but really struggled with it)
+          · have h9 : p 0 > α.val := lt_of_not_ge h8
+            constructor
+            · have h0 : 0 ≤ α.val := α.property.left
+              simp [quantile_srt, h8, h0]
+            · simpa [quantile_srt, h8] using h9
 
--- TODO: consider removing the proofs from the definition of FinVaR? 
+-- TODO: consider removing the proofs from the definition of FinVaR?
 
 def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
     match n with
