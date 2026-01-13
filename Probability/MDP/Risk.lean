@@ -250,48 +250,52 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
+theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False := 
+    by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
+
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
               ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) := 
-       let Ω : Finset (Fin n.succ)  := Finset.univ    
-       let 𝓧 : Finset ℚ := Ω.image X
+       let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        if h : 𝓨.Nonempty then 
           let y := 𝓨.min' h 
           by have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
              have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
-             have hy3 (z : ℚ) : z ∈ 𝓨 → z ≥ y :=  fun a => Finset.min'_le 𝓨 z a
              use y
              constructor 
-             · by_contra!
-               have := hy2.2 
-               linarith  
+             · by_contra! le
+               exact false_of_le_gt le hy2.2 
              · unfold FinRV.leq FinRV.lt 
                ext ω 
-               simp 
+               rw [decide_eq_decide]
                constructor 
                · intro h2 
-                 have hω : ω ∈ Ω := Finset.mem_univ ω   
-                 have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X hω
-                 have hxω : X ω ∉ 𝓨 := by by_contra! inY; have := hy3 (X ω) inY; linarith 
+                 have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+                 have hxω : X ω ∉ 𝓨 := by 
+                    by_contra! inY 
+                    have : y ≤ X ω := Finset.min'_le 𝓨 (X ω) inY 
+                    exact false_of_le_gt this h2
                  rw [Finset.mem_filter] at hxω
                  push_neg at hxω
                  exact hxω xωx
                · intro h2 
-                 linarith 
+                 grewrite [h2]
+                 exact hy2.2
        else 
           by unfold Finset.Nonempty at h 
              push_neg at h
              have a : ∀ω, X ω ≤ t := by 
                by_contra! a
                obtain ⟨ω, hω⟩ := a
-               have : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
-               have : X ω ∈ 𝓨 := by grind only [= Finset.mem_filter, = Finset.mem_image] -- TODO: simplify
+               have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+               have : X ω ∈ 𝓨 := Finset.mem_filter.mpr ⟨xωx, hω⟩
                specialize h (X ω) 
                contradiction 
              let q := t + 1
              have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (a ω) rfl
-             have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; unfold FinRV.leq FinRV.lt; simp; grind only -- TODO: simplify 
+             have ab : (X <ᵣ q) = (X ≤ᵣ t) := by 
+                ext ω; unfold FinRV.leq FinRV.lt; grind only 
              exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
 
 -- will follow from rv_lt_epsi_eq_lt by congrence 
