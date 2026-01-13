@@ -1,5 +1,5 @@
 import Probability.Probability.Basic
-import Mathlib.Data.EReal.Basic 
+import Mathlib.Data.EReal.Basic
 import Mathlib.Data.Set.Operations
 
 namespace Risk
@@ -15,17 +15,17 @@ variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
   intro ht; unfold cdf
-  apply prob_le_monotone (le_refl X) ht  
+  apply prob_le_monotone (le_refl X) ht
 
 /-- Shows CDF is monotone in random variable  -/
 theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
   intro h; unfold cdf
-  apply prob_le_monotone h (le_refl t)  
+  apply prob_le_monotone h (le_refl t)
 
 /-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
 def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 
--- TODO: consider also this: 
+-- TODO: consider also this:
 -- https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun
 -- TODO: should we call this FinVaR? and show it is equal to a more standard definition of VaR
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
@@ -150,38 +150,38 @@ end Risk
 section Risk2
 
 #check Set.preimage
-#synth SupSet EReal 
+#synth SupSet EReal
 #synth SupSet (WithTop ℝ)
 #check instSupSetEReal
 #check WithTop.instSupSet
 
-variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ} 
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ}
 
 --TODO: can we use isLUB
 
-theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by 
+theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
   ext ω
-  unfold FinRV.leq FinRV.gt 
-  simp 
-  grind  
+  unfold FinRV.leq FinRV.gt
+  simp
+  grind
 
-theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by 
+theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by
   sorry
   --rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
 
-theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := sorry 
+theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := sorry
 
-theorem prob_le_of_gt :  ℙ[X ≤ᵣ t // P] = 1 - ℙ[X >ᵣ t // P] := sorry 
-
-
-theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := sorry 
-
-theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := sorry 
-
-theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := sorry 
+theorem prob_le_of_gt :  ℙ[X ≤ᵣ t // P] = 1 - ℙ[X >ᵣ t // P] := sorry
 
 
-variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ) 
+theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := sorry
+
+theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := sorry
+
+theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := sorry
+
+
+variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
 
 /-- Checks if the function is a quantile --/
@@ -192,47 +192,66 @@ def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q}
 
 def is_VaR : Prop := IsGreatest (𝕢Set P X α) v -- (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
--- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] := 
+-- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] :=
 
-variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : ℚ} {q v : ℚ} 
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : ℚ} {q v : ℚ}
 
-theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   := 
+theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   :=
     by intro h ω pre
-       simp [FinRV.gt, FinRV.geq] at pre ⊢ 
-       linarith 
+       simp [FinRV.gt, FinRV.geq] at pre ⊢
+       linarith
 
 theorem qset_lb : q ∈ 𝕢Set P X α → ℙ[ X ≤ᵣ q // P ] ≥ α := by intro h; simp_all [𝕢Set, is_𝕢]
 
 theorem qset_ub : q ∈ 𝕢Set P X α → ℙ[ X ≥ᵣ q // P] ≥ 1-α := by intro h; simp_all [𝕢Set, is_𝕢]
 
-theorem qset_ub_lt : q ∈ 𝕢Set P X α → ℙ[ X <ᵣ q // P] ≤ α := 
-  by intro h 
-     have := qset_ub h 
-     rewrite [prob_ge_of_lt] at this 
-     linarith 
+theorem qset_ub_lt : q ∈ 𝕢Set P X α → ℙ[ X <ᵣ q // P] ≤ α :=
+  by intro h
+     have := qset_ub h
+     rewrite [prob_ge_of_lt] at this
+     linarith
 
-theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ 𝕢Set P X α := 
+theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ 𝕢Set P X α :=
     by intro h; simp_all [𝕢Set, is_𝕢]
 
-theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ 𝕢Set P X α := 
-    by intro h1 
+theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ 𝕢Set P X α :=
+    by intro h1
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
 
 -- for discrete random variables
-theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  : 
-    ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := sorry 
+theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
+    ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := sorry
 
-theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} : 
-    q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] := sorry 
+theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
+    q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
+    by
+      intro h
+      unfold probability
+      unfold dotProduct
+      apply Finset.sum_le_sum
+      intro ω hω
+      have h1 : 0 ≤ P.p ω := by exact P.nneg ω
+      have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
+        by
+          by_cases h3 : X ω ≤ t
+          · have h4 : X ω < q := lt_of_le_of_lt h3 h
+            simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
+          · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
+            by_cases h5 : decide (X ω < q)
+            · simp [h5]
+            · simp [h5]
+      exact mul_le_mul_of_nonneg_left h2 h1
+
+
 
 
 -- TODO: can we get a direct proof that removes the proofs by contractiction?
 
--- this proves that if we have the property we also have the VaR; then all remains is 
+-- this proves that if we have the property we also have the VaR; then all remains is
 -- to show existence which we can shows constructively by actually computing the value
-theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) := 
+theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
      · intro h 
        constructor
@@ -268,50 +287,89 @@ def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
 def RiskLevel := { α : ℚ // IsRiskLevel α}
 
-theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) := 
-    by unfold Monotone at h ⊢ 
-       unfold Fin.tail 
-       intro a b h2 
+theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
+    by unfold Monotone at h ⊢
+       unfold Fin.tail
+       intro a b h2
        exact h (Fin.succ_le_succ_iff.mpr h2)
-      
 
-/-- compute a quantile for a (partial) sorted random variable and a partial probability 
-    used in the induction to eliminate points until we find one that has 
+
+/-- compute a quantile for a (partial) sorted random variable and a partial probability
+    used in the induction to eliminate points until we find one that has
     probability greater than α -/
-def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ) 
-                 (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p) 
-                 (h4 : 0 < 1 ⬝ᵥ p) : Fin n.succ := 
-  match n with 
-  | Nat.zero => 0 
+def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
+                 (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
+                 (h4 : 0 < 1 ⬝ᵥ p) : Fin n.succ :=
+  match n with
+  | Nat.zero => 0
   | Nat.succ n' =>
     if h : p 0 ≤ α.val then  -- recursive case: keep going
-      let α':= α.val - p 0 
-      have bnd_α : IsRiskLevel α' := by 
-        unfold IsRiskLevel; subst α'; specialize h2 0 
-        constructor 
-        · grw [←h]; simp 
-        · grw [←h2]; simpa using α.2.2 
-      have h': α' < 1 ⬝ᵥ (Fin.tail p) := by 
+      let α':= α.val - p 0
+      have bnd_α : IsRiskLevel α' := by
+        unfold IsRiskLevel; subst α'; specialize h2 0
+        constructor
+        · grw [←h]; simp
+        · grw [←h2]; simpa using α.2.2
+      have h': α' < 1 ⬝ᵥ (Fin.tail p) := by
         unfold Fin.tail; subst α'
         rw [one_dotProduct] at ⊢ h3
-        calc α.val - p 0 < ∑ i, p i - p 0 := by linarith  
+        calc α.val - p 0 < ∑ i, p i - p 0 := by linarith
         _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succ]
           _ = ∑ i : Fin n'.succ, p i.succ := by ring
-      Fin.succ <| quantile_srt n' ⟨α', bnd_α⟩ 
-        (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h' sorry 
+      Fin.succ <| quantile_srt n' ⟨α', bnd_α⟩
+        (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h'
+        (by
+          have h1 : 0 ≤ α' := by exact bnd_α.left
+          have h2 : 0 < (1 ⬝ᵥ (Fin.tail p)) := by exact lt_of_le_of_lt h1 h'
+          exact h2)
     else -- return the value case
-      0 
+      0
 
-theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ} 
-  (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p) 
-        (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) : 
-          (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := sorry 
+theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ}
+  (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
+        (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) :
+          (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := sorry
 
-def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ := 
-    match n with 
-    | Nat.zero => 0 -- this case is impossible because n > 0 for Findist 
+def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
+    match n with
+    | Nat.zero => 0 -- this case is impossible because n > 0 for Findist
     | Nat.succ n' =>
-      let σ := Tuple.sort X 
-      X <| quantile_srt n' α (P.p ∘ σ) (X ∘ σ) (Tuple.monotone_sort X) sorry sorry sorry
+      let σ := Tuple.sort X
+      X <| quantile_srt n' α (P.p ∘ σ) (X ∘ σ)
+      (Tuple.monotone_sort X)
+      (by intro ω; simpa [Function.comp] using P.nneg (σ ω))
+      --h3 : α.val < 1 ⬝ᵥ p
+      (by
+        have h1 : (1 : Fin (Nat.succ n') → ℚ) ∘ σ ⬝ᵥ P.p ∘ σ = 1 ⬝ᵥ P.p :=
+          comp_equiv_dotProduct_comp_equiv (1 : Fin (Nat.succ n') → ℚ) P.p σ
+        have h2 : ((1 : Fin (Nat.succ n') → ℚ) ∘ σ) = 1 := by
+          funext i
+          simp [Function.comp]
+        have h3 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := by
+          simpa [h2] using h1
+        have h4 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = 1 := by
+          calc
+            (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := h3
+            _ = 1 := P.prob
+        have h5 : α.val < 1 := by
+          simpa using (α.property).right
+        simpa [h4] using h5)
+      --h4 : 0 < 1 ⬝ᵥ p
+      ----this is all the same except for the last line
+      ----is there a way to avoid repeating it???
+      (by
+        have h1 : (1 : Fin (Nat.succ n') → ℚ) ∘ σ ⬝ᵥ P.p ∘ σ = 1 ⬝ᵥ P.p :=
+          comp_equiv_dotProduct_comp_equiv (1 : Fin (Nat.succ n') → ℚ) P.p σ
+        have h2 : ((1 : Fin (Nat.succ n') → ℚ) ∘ σ) = 1 := by
+          funext i
+          simp [Function.comp]
+        have h3 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := by
+          simpa [h2] using h1
+        have h4 : (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = 1 := by
+          calc
+            (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := h3
+            _ = 1 := P.prob
+        simp [h4])
+
 
 end Risk2
