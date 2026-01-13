@@ -300,7 +300,11 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
         _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succ]
           _ = ∑ i : Fin n'.succ, p i.succ := by ring
       Fin.succ <| quantile_srt n' ⟨α', bnd_α⟩
-        (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h' sorry
+        (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h'
+        (by
+          have h1 : 0 ≤ α' := by exact bnd_α.left
+          have h2 : 0 < (1 ⬝ᵥ (Fin.tail p)) := by exact lt_of_le_of_lt h1 h'
+          exact h2)
     else -- return the value case
       0
 
