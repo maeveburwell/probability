@@ -166,8 +166,19 @@ theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
   grind
 
 theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by
-  sorry
-  --rewrite [prob_eq_exp_ind, prob_eq_exp_ind, ←exp_additive]
+  rw [prob_eq_exp_ind, prob_eq_exp_ind, ← exp_additive_two]
+  have h : (𝕀 ∘ (X ≤ᵣ t)) + (𝕀 ∘ (X >ᵣ t)) = (1 : FinRV n ℚ) := by
+    ext ω
+    unfold FinRV.leq FinRV.gt
+    simp [𝕀, indicator]
+    by_cases h1 : X ω ≤ t
+    · have h2 : ¬ (X ω > t) := not_lt_of_ge h1
+      simp [h1, h2]
+    · have h3 : X ω > t := lt_of_not_ge h1
+      simp [h1, h3]
+  rw [h]
+  exact exp_one
+
 
 theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := sorry
 
@@ -247,35 +258,35 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
 -- to show existence which we can shows constructively by actually computing the value
 theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
-     · intro h 
+     · intro h
        constructor
        · unfold is_VaR 𝕢Set is_𝕢 IsGreatest at h
-         have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all  
-         rw [prob_ge_of_lt] at h1 
-         linarith 
+         have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all
+         rw [prob_ge_of_lt] at h1
+         linarith
        · by_contra! hc
-         obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v 
-         have h3 : q ∈ 𝕢Set P X α := by 
-          rewrite [←hq.2] at hc 
-          have qlb := qset_lb h.1 
+         obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
+         have h3 : q ∈ 𝕢Set P X α := by
+          rewrite [←hq.2] at hc
+          have qlb := qset_lb h.1
           grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
           exact qset_of_cond_lt ⟨qlb, hc⟩
-         unfold is_VaR IsGreatest upperBounds at h 
-         have := (h.2 h3) 
-         linarith 
-     · intro h 
-       unfold is_VaR 
-       constructor 
+         unfold is_VaR IsGreatest upperBounds at h
+         have := (h.2 h3)
+         linarith
+     · intro h
+       unfold is_VaR
+       constructor
        · exact qset_of_cond_lt ⟨le_of_lt h.2, h.1⟩
        · unfold upperBounds
-         by_contra! hc 
-         simp at hc 
-         obtain ⟨q, hq⟩ := hc 
-         have := qset_ub_lt hq.1 
-         have := prob_lt_le_monotone P X hq.2 
-         linarith 
+         by_contra! hc
+         simp at hc
+         obtain ⟨q, hq⟩ := hc
+         have := qset_ub_lt hq.1
+         have := prob_lt_le_monotone P X hq.2
+         linarith
 
-example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h 
+example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
