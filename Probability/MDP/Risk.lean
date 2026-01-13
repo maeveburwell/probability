@@ -228,23 +228,17 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
     q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
     by
       intro h
-      unfold probability
-      unfold dotProduct
+      unfold probability dotProduct
       apply Finset.sum_le_sum
       intro ω hω
-      have h1 : 0 ≤ P.p ω := by exact P.nneg ω
       have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
         by
           by_cases h3 : X ω ≤ t
           · have h4 : X ω < q := lt_of_le_of_lt h3 h
             simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
           · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
-            by_cases h5 : decide (X ω < q)
-            · simp [h5]
-            · simp [h5]
-      exact mul_le_mul_of_nonneg_left h2 h1
-
-
+            by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
+      exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
 
 -- TODO: can we get a direct proof that removes the proofs by contractiction?
