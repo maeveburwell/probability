@@ -257,10 +257,27 @@ theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        if h : 𝓨.Nonempty then 
           let y := 𝓨.min' h 
-          by use y
+          by have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
+             have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
+             have hy3 (z : ℚ) : z ∈ 𝓨 → z ≥ y :=  fun a => Finset.min'_le 𝓨 z a
+             use y
              constructor 
-             · sorry  
-             · sorry 
+             · by_contra!
+               have := hy2.2 
+               linarith  
+             · unfold FinRV.leq FinRV.lt 
+               ext ω 
+               simp 
+               constructor 
+               · intro h2 
+                 have hω : ω ∈ Ω := Finset.mem_univ ω   
+                 have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X hω
+                 have hxω : X ω ∉ 𝓨 := by by_contra! inY; have := hy3 (X ω) inY; linarith 
+                 rw [Finset.mem_filter] at hxω
+                 push_neg at hxω
+                 exact hxω xωx
+               · intro h2 
+                 linarith 
        else 
           by unfold Finset.Nonempty at h 
              push_neg at h
