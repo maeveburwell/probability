@@ -37,7 +37,8 @@ def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   else
     0 --this is illegal i know -- Keith can fix it :)
 
--- TODO: Show that VaR is a left (or right?) inverse for CDF
+
+-- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
 notation "VaR[" X "//" P ", " α "]" => VaR P X α
 
@@ -294,10 +295,13 @@ theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  
              exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
 
 -- will follow from rv_lt_epsi_eq_lt by congrence 
-theorem prob_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
+theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
               ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := 
-    let⟨q, hq⟩ := rv_lt_epsi_eq_le P X t 
-    Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
+    match n with 
+    | Nat.zero => False.elim P.nonempty'
+    | Nat.succ _ =>
+      let ⟨q, hq⟩ := rv_lt_epsi_eq_le P X t 
+      Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
 example (ω : Fin n.succ) : ω ∈ Finset.univ := Finset.mem_univ ω
 
