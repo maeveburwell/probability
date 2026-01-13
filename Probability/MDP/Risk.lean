@@ -31,7 +31,7 @@ def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
 If we assume 0 ≤ α ∧ α ≤ 1, then the "else 0" branch is never used. -/
 def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  let S : Finset ℚ := (range X).filter (fun t => cdf P X t ≥ α)
+  let S : Finset ℚ := (Finset.univ.image X).filter (fun t => cdf P X t ≥ α)
   if h : S.Nonempty then
     S.min' h
   else
@@ -318,8 +318,6 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
 
--- TODO: can we get a direct proof that removes the proofs by contractiction?
-
 -- this proves that if we have the property we also have the VaR; then all remains is
 -- to show existence which we can shows constructively by actually computing the value
 theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
@@ -333,13 +331,12 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
        · by_contra! hc
          obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
          have h3 : q ∈ 𝕢Set P X α := by
-          rewrite [←hq.2] at hc
-          have qlb := qset_lb h.1
-          grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
-          exact qset_of_cond_lt ⟨qlb, hc⟩
+            rewrite [←hq.2] at hc
+            have qlb := qset_lb h.1
+            grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
+            exact qset_of_cond_lt ⟨qlb, hc⟩
          unfold is_VaR IsGreatest upperBounds at h
-         have := (h.2 h3)
-         linarith
+         exact false_of_le_gt (h.2 h3) hq.1 
      · intro h
        unfold is_VaR
        constructor
@@ -400,6 +397,8 @@ theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ}
   (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
         (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) :
           (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := sorry
+
+-- TODO: consider removing the proofs from the definition of FinVaR? 
 
 def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
     match n with
