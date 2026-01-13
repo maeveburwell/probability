@@ -22,20 +22,30 @@ theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
   intro h; unfold cdf
   apply prob_le_monotone h (le_refl t)
 
-/-- Finite set of values taken by a random variable X : Fin n → ℚ. -/
-def range (X : FinRV n ℚ) : Finset ℚ := Finset.univ.image X
+def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
--- TODO: consider also this:
--- https://leanprover-community.github.io/mathlib4_docs/Mathlib/MeasureTheory/Measure/Stieltjes.html#StieltjesFunction.toFun
--- TODO: should we call this FinVaR? and show it is equal to a more standard definition of VaR
+def RiskLevel := { α : ℚ // IsRiskLevel α}
+
+theorem rv_image_nonempty : (Finset.univ.image X).Nonempty := sorry 
+
+theorem prob_lt_min_eq_zero : ℙ[ X <ᵣ (Finset.univ.image X).min' rv_image_nonempty // P] = 0 := sorry 
+
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
-If we assume 0 ≤ α ∧ α ≤ 1, then the "else 0" branch is never used. -/
-def VaR (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  let S : Finset ℚ := (Finset.univ.image X).filter (fun t => cdf P X t ≥ α)
-  if h : S.Nonempty then
-    S.min' h
-  else
-    0 --this is illegal i know -- Keith can fix it :)
+If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
+def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
+  let 𝓧 := Finset.univ.image X
+  let 𝓢 : Finset ℚ := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
+  have h : 𝓢.Nonempty := by 
+    let xmin := (Finset.univ.image X).min' rv_image_nonempty
+    apply Finset.filter_nonempty_iff.mpr
+    use xmin 
+    constructor
+    · exact Finset.min'_mem 𝓧 rv_image_nonempty
+    · have : ℙ[X<ᵣxmin // P] = 0 :=  prob_lt_min_eq_zero
+      have := α.2
+      unfold IsRiskLevel at this 
+      linarith 
+  𝓢.max' h
 
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
@@ -56,7 +66,7 @@ theorem min_subset (A B : Finset ℕ) (h : B ⊆ A) (hA : A.Nonempty) (hB : B.No
     have hminA : B.min' hB ∈ A := h hminB
     exact Finset.min'_le A (B.min' hB) hminA
 
-def prodDenomRV (X : FinRV n ℚ) : ℕ := ∏ q ∈ range X, q.den
+def prodDenomRV (X : FinRV n ℚ) : ℕ := ∏ q ∈ Finset.univ.image  X, q.den
 
 
 def X' (X : FinRV n ℚ) : FinRV n ℚ :=
@@ -73,7 +83,7 @@ theorem X'_num_inQ (X : FinRV n ℚ) (ω : Fin n) :
 
 
 def Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : Finset ℚ :=
-  (range X).filter (fun t => cdf P X t ≤ (1 : ℚ) - α)
+  (Finset.univ.image X).filter (fun t => cdf P X t ≤ (1 : ℚ) - α)
 
 theorem Lx_nonempty (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :
   (Lx P X α).Nonempty := sorry
@@ -138,7 +148,7 @@ theorem VaR_R_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
 
 -------------------------------------------------------------------
 
-theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α c : ℚ) :
+theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) (c : ℚ) :
   VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
 
 theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
@@ -149,6 +159,8 @@ end Risk
 --- ************************* Another approach (Marek) ****************************************************
 
 section Risk2
+
+open Risk 
 
 variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ}
 
@@ -349,11 +361,6 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
          have := prob_lt_le_monotone P X hq.2
          linarith
 
-example {x : ℚ} (p : ℚ → Bool) (h : x ∈ {z : ℚ | p z}) : p x := h
-
-def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
-
-def RiskLevel := { α : ℚ // IsRiskLevel α}
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
     by unfold Monotone at h ⊢
@@ -416,7 +423,6 @@ theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ}
               simp [quantile_srt, h8, h0]
             · simpa [quantile_srt, h8] using h9
 
--- TODO: consider removing the proofs from the definition of FinVaR?
 
 def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
     match n with
