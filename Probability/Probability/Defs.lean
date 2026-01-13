@@ -252,8 +252,10 @@ example {a b : ℚ} (h : 0 ≤ a) (h2 : 0 ≤ b) : 0 ≤ a * b :=  Rat.mul_nonne
 
 variable {P : Findist n} {B : FinRV n Bool}
 
-theorem prod_zero_of_prob_zero : ℙ[B // P] = 0 → (P.p * (𝕀∘B) = 0) := by
+theorem prob_zero_of_prob_zero : ℙ[B // P] = 0 → (P.p * (𝕀∘B) = 0) := by
     intro h; exact prod_eq_zero_of_nneg_dp_zero P.nneg ind_nneg h
+
+theorem prob_congr_rv : B = C → ℙ[B // P] = ℙ[C // P] := fun ω => congrArg (probability P) ω
 
 ------------------------------ PMF ---------------------------
 
@@ -347,7 +349,7 @@ theorem exp_cond_eq_def  : 𝔼[X | B // P] * ℙ[B // P] = 𝔼[X * (𝕀 ∘ B
      by_cases h: ℙ[B//P] = 0
      · rw [h, Rat.mul_zero]
        unfold expect 
-       rw [dotProd_hadProd_comm, dotProd_hadProd_rotate, prod_zero_of_prob_zero h]
+       rw [dotProd_hadProd_comm, dotProd_hadProd_rotate, prob_zero_of_prob_zero h]
        exact (dotProduct_zero X).symm 
      · simp_all 
 

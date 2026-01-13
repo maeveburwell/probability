@@ -219,10 +219,39 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
-
 -- for discrete random variables
-theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
-    ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := sorry
+theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
+              ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) := 
+    by let Ω : Finset (Fin n.succ)  := Finset.univ    
+       let 𝓧 : Finset ℚ := Ω.image X
+       let 𝓨 := 𝓧.filter (fun x ↦ x > t)
+       if h : 𝓨.Nonempty then 
+           sorry
+       else 
+          unfold Finset.Nonempty at h 
+          push_neg at h
+          have a : ∀ω, X ω ≤ t := by 
+            by_contra! a
+            obtain ⟨ω, hω⟩ := a
+            have : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+            have : X ω ∈ 𝓨 := by grind only [= Finset.mem_filter, = Finset.mem_image] -- TODO: simplify
+            specialize h (X ω) 
+            contradiction 
+          let q := t + 1
+          have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (a ω) rfl
+          have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; unfold FinRV.leq FinRV.lt; simp; grind only -- TODO: simplify 
+          exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
+
+-- will follow from rv_lt_epsi_eq_lt by congrence 
+theorem prob_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
+              ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := 
+  by have h := rv_lt_epsi_eq_le P X t 
+     obtain ⟨q, hq ⟩ := h 
+     use q 
+     exact ⟨hq.1, congrArg (probability P) hq.2⟩
+  
+
+example (ω : Fin n.succ) : ω ∈ Finset.univ := Finset.mem_univ ω
 
 theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
     q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
