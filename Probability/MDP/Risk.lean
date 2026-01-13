@@ -235,31 +235,29 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
 theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) := 
   by constructor
      · intro h 
-       unfold is_VaR at h 
        constructor
-       · unfold 𝕢Set is_𝕢 IsGreatest at h
+       · unfold is_VaR 𝕢Set is_𝕢 IsGreatest at h
          have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all  
          rw [prob_ge_of_lt] at h1 
          linarith 
-       · by_contra! goalneg
+       · by_contra! hc
          obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v 
          have h3 : q ∈ 𝕢Set P X α := by 
-          rewrite [←hq.2] at goalneg 
+          rewrite [←hq.2] at hc 
           have qlb := qset_lb h.1 
-          grw [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
-          exact qset_of_cond_lt ⟨qlb, goalneg⟩
-         unfold IsGreatest upperBounds at h 
+          grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
+          exact qset_of_cond_lt ⟨qlb, hc⟩
+         unfold is_VaR IsGreatest upperBounds at h 
          have := (h.2 h3) 
          linarith 
      · intro h 
        unfold is_VaR 
        constructor 
-       · have h1 := le_of_lt h.2 
-         exact qset_of_cond_lt ⟨h1, h.1⟩
+       · exact qset_of_cond_lt ⟨le_of_lt h.2, h.1⟩
        · unfold upperBounds
-         by_contra! goalneg 
-         simp at goalneg 
-         obtain ⟨q, hq⟩ := goalneg 
+         by_contra! hc 
+         simp at hc 
+         obtain ⟨q, hq⟩ := hc 
          have := qset_ub_lt hq.1 
          have := prob_lt_le_monotone P X hq.2 
          linarith 
