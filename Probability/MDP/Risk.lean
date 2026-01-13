@@ -28,10 +28,10 @@ def RiskLevel := { α : ℚ // IsRiskLevel α}
 
 theorem rv_image_nonempty : (Finset.univ.image X).Nonempty := sorry 
 
-theorem prob_lt_min_eq_zero : ℙ[ X <ᵣ (Finset.univ.image X).min' rv_image_nonempty // P] = 0 := sorry 
+theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (Finset.univ.image X).min' rv_image_nonempty // P] = 0 := sorry 
 
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
-If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
+    If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
 def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 : Finset ℚ := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
@@ -47,10 +47,15 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
       linarith 
   𝓢.max' h
 
+variable {α : RiskLevel}
+
+theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val := sorry 
+
+theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := sorry 
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
-notation "VaR[" X "//" P ", " α "]" => VaR P X α
+notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
 theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : X ≤ Y) : VaR P X α ≤ VaR P Y α := by
