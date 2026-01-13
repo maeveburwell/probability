@@ -252,34 +252,35 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
               ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) := 
-    by let Ω : Finset (Fin n.succ)  := Finset.univ    
+       let Ω : Finset (Fin n.succ)  := Finset.univ    
        let 𝓧 : Finset ℚ := Ω.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        if h : 𝓨.Nonempty then 
-           sorry
+          let y := 𝓨.min' h 
+          by use y
+             constructor 
+             · sorry  
+             · sorry 
        else 
-          unfold Finset.Nonempty at h 
-          push_neg at h
-          have a : ∀ω, X ω ≤ t := by 
-            by_contra! a
-            obtain ⟨ω, hω⟩ := a
-            have : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
-            have : X ω ∈ 𝓨 := by grind only [= Finset.mem_filter, = Finset.mem_image] -- TODO: simplify
-            specialize h (X ω) 
-            contradiction 
-          let q := t + 1
-          have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (a ω) rfl
-          have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; unfold FinRV.leq FinRV.lt; simp; grind only -- TODO: simplify 
-          exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
+          by unfold Finset.Nonempty at h 
+             push_neg at h
+             have a : ∀ω, X ω ≤ t := by 
+               by_contra! a
+               obtain ⟨ω, hω⟩ := a
+               have : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+               have : X ω ∈ 𝓨 := by grind only [= Finset.mem_filter, = Finset.mem_image] -- TODO: simplify
+               specialize h (X ω) 
+               contradiction 
+             let q := t + 1
+             have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (a ω) rfl
+             have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; unfold FinRV.leq FinRV.lt; simp; grind only -- TODO: simplify 
+             exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
 
 -- will follow from rv_lt_epsi_eq_lt by congrence 
 theorem prob_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
               ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] := 
-  by have h := rv_lt_epsi_eq_le P X t 
-     obtain ⟨q, hq ⟩ := h 
-     use q 
-     exact ⟨hq.1, congrArg (probability P) hq.2⟩
-  
+    let⟨q, hq⟩ := rv_lt_epsi_eq_le P X t 
+    Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
 example (ω : Fin n.succ) : ω ∈ Finset.univ := Finset.mem_univ ω
 
