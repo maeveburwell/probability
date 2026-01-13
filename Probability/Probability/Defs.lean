@@ -42,6 +42,7 @@ theorem nonempty (P : Findist n) : n > 0 :=
      · have := P.prob; simp_all only [Matrix.dotProduct_of_isEmpty, zero_ne_one]
      · simp only [gt_iff_lt, lt_add_iff_pos_left, add_pos_iff, zero_lt_one, or_true]
 
+theorem nonempty' (P : Findist 0) : False := by have h := P.nonempty; simp only [gt_iff_lt, lt_self_iff_false] at h
 
 end Findist
 
@@ -127,6 +128,21 @@ infix:50 "=ᵢ" => FinRV.eqi
 /-- Boolean random variable represening Y ≤ y inequality -/
 infix:50 "≤ᵣ" => FinRV.leq
 
+
+/-- Boolean random variable represening Y ≤ y inequality -/
+@[simp] def lt [LT ρ] [DecidableLT ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
+  (fun ω ↦ Y ω < y)
+
+/-- Boolean random variable represening Y ≤ y inequality -/
+infix:50 "<ᵣ" => FinRV.lt
+
+/-- Boolean random variable represening Y ≤ y inequality -/
+@[simp] def geq [LE ρ] [DecidableLE ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
+  (fun ω ↦ Y ω ≥ y)
+
+/-- Boolean random variable represening Y ≤ y inequality -/
+infix:50 "≥ᵣ" => FinRV.geq
+
 /-- Boolean random variable represening Y > y inequality -/
 @[simp] def gt [LT ρ] [DecidableLT ρ] (Y : FinRV n ρ) (y : ρ) : FinRV n Bool :=
   fun ω ↦ Y ω > y
@@ -149,10 +165,10 @@ def preimage (f : FinRV n ρ) : ρ → Set (Fin n) :=
 end FinRV
 
 /-- Boolean indicator function -/
-def indicator  [OfNat ρ 0] [OfNat ρ 1] (cond : Bool) : ρ := cond.rec 0 1
+def indicator  [OfNat ℚ 0] [OfNat ℚ 1] (cond : Bool) : ℚ := cond.rec 0 1
 
 /-- Boolean indicator function -/
-abbrev 𝕀 [OfNat ρ 0] [OfNat ρ 1] : Bool → ρ := indicator
+abbrev 𝕀 [OfNat ℚ 0] [OfNat ℚ 1] : Bool → ℚ := indicator
 
 
 variable {k : ℕ} {L : FinRV n (Fin k)}
@@ -209,7 +225,6 @@ theorem rv_prod_const : ∀i, (g ∘ L) * (L =ᵢ i) = (g i) • (L =ᵢ i) :=
 end RandomVariable
 
 ------------------------------ Probability ---------------------------
-
 
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
@@ -349,14 +364,14 @@ theorem exp_indi_eq_exp_indr : ∀i : Fin k, 𝔼[L =ᵢ i // P] = 𝔼[𝕀 ∘
 /-- Expectation is homogeneous under product -/
 theorem exp_homogenous : 𝔼[c • X // P] = c * 𝔼[X // P] := by simp only [expect, dotProduct_smul, smul_eq_mul]
 
-theorem exp_dists_add : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect]
-
 /-- Additivity of expectation --/
 theorem exp_additive {m : ℕ} (Xs : Fin m → FinRV n ℚ) : 𝔼[∑ i : Fin m, Xs i // P] = ∑ i : Fin m, 𝔼[Xs i // P] := 
   by unfold expect; exact dotProduct_sum P.p Finset.univ Xs
+     
+theorem exp_additive_two : 𝔼[X + Y // P] = 𝔼[X // P] + 𝔼[Y // P] := by simp [expect]
 
 /-- Expectation is monotone  -/
-theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] :=  dotProduct_le_dotProduct_of_nonneg_left h P.nneg
+theorem exp_monotone (h: X ≤ Y)  : 𝔼[X // P] ≤ 𝔼[Y // P] := dotProduct_le_dotProduct_of_nonneg_left h P.nneg
 
 ---- ** conditional expectation -----
 
@@ -366,7 +381,6 @@ theorem exp_decompose : 𝔼[X // P] = ∑ i, 𝔼[X * (L =ᵢ i) // P] :=
   by nth_rewrite 1 [rv_decompose X L]
      rewrite [exp_additive]
      simp 
-
 
 /-- Expectation of a conditional constant. Only when probability is positive.  -/
 theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L =ᵣ i // P] = g i := 
@@ -378,4 +392,21 @@ theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L 
 
 end Expectation_properties
 
-#lint 
+
+-- Derived properties from the properties of expectation
+section Probability_properties
+
+variable {n : ℕ} {P : Findist n} {A B : FinRV n Bool}
+
+theorem ind_monotone : (∀ ω, A ω → B ω) → (𝕀∘A) ≤ (𝕀∘B) := by
+  intro h ω
+  specialize h ω
+  by_cases h1 : A ω
+  · simp_all [indicator] 
+  · by_cases h2 : B ω
+    repeat simp_all [indicator]
+
+
+
+
+end Probability_properties 
