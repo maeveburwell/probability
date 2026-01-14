@@ -34,7 +34,7 @@ theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (Finset.univ.image X).min' rv_image_non
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
 def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
-  let 𝓢 : Finset ℚ := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
+  let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
   have h : 𝓢.Nonempty := by 
     let xmin := (Finset.univ.image X).min' rv_image_nonempty
     apply Finset.filter_nonempty_iff.mpr
@@ -49,16 +49,21 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
 
 variable {α : RiskLevel}
 
-theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val := sorry 
-
+theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val := by 
+    generalize h : (FinVaR1 P X α) = t
+    unfold FinVaR1 at h 
+    extract_lets 𝓧 𝓢 ne𝓢 at h 
+    have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
+    exact (Finset.mem_filter.mp tS).right 
+   
 theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := sorry 
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
-theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
-  (hXY : X ≤ Y) : VaR P X α ≤ VaR P Y α := by
+theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel)
+  (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
   sorry
 
 
@@ -154,10 +159,10 @@ theorem VaR_R_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
 -------------------------------------------------------------------
 
 theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) (c : ℚ) :
-  VaR P (fun ω => X ω + c) α = VaR P X α + c := sorry
+  FinVaR1 P (fun ω => X ω + c) α = FinVaR1 P X α + c := sorry
 
-theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α c : ℚ)
-  (hc : c > 0) : VaR P (fun ω => c * X ω) α = c * VaR P X α := sorry
+theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) (c : ℚ)
+  (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c * FinVaR1 P X α := sorry
 
 end Risk
 
