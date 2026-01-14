@@ -155,10 +155,13 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
     have tlt : t < (FinRV.max P X) := by by_contra!; unfold RiskLevel IsRiskLevel at α; sorry 
     obtain ⟨q, hq⟩ := prob_lt_epsi_eq_le_of_lt P X t tlt 
     rcases hq with ⟨hqgt, hqp, hqin⟩
-    have : q ∈ 𝓢 := sorry 
+    have : q ∈ 𝓢 := by 
+      apply Finset.mem_filter.mpr 
+      constructor 
+      · exact hqin  
+      · rw [hqp]; exact hg 
     have : q ≤ t := sorry 
     linarith 
-    
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
