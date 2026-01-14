@@ -71,7 +71,7 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
     unfold FinVaR1 at h 
     extract_lets 𝓧 𝓢 ne𝓢 at h 
     by_contra!
-    sorry -- this will go; we can use rv_lt_epsi_eq_le_of_lt to show that t is in X.image 
+    sorry -- this will go; we can use rv_lt_epsi_eq_le_of_lt to show that q is in X.image 
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
@@ -281,7 +281,7 @@ theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
 
 
 theorem rv_lt_epsi_eq_le_of_lt (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
-              q < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry 
+              t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry 
 
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
@@ -406,33 +406,35 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
   | Nat.zero => 0
   | Nat.succ n' =>
     if h : p 0 ≤ α.val then  -- recursive case: keep going
-      let α':= α.val - p 0
-      have bnd_α : IsRiskLevel α' := by
-        unfold IsRiskLevel; subst α'; specialize h2 0
+      let αval':= α.val - p 0
+      have bnd_α : IsRiskLevel (α.val - p 0) := by
+        unfold IsRiskLevel; subst αval'; specialize h2 0
         constructor
         · grw [←h]; simp
         · grw [←h2]; simpa using α.2.2
-      have h': α' < 1 ⬝ᵥ (Fin.tail p) := by
-        unfold Fin.tail; subst α'
+      let α' := ⟨αval', bnd_α⟩
+      let h1' := (tail_monotone x h1) 
+      let h2' := (fun ω : Fin n'.succ ↦ h2 ω.succ)
+      let h3': αval' < 1 ⬝ᵥ (Fin.tail p) := by
+        unfold Fin.tail; subst αval'
         rw [one_dotProduct] at ⊢ h3
         calc α.val - p 0 < ∑ i, p i - p 0 := by linarith
-        _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succ]
+          _  =  (p 0 + ∑ i : Fin n'.succ, p i.succ) - p 0 := by rw [Fin.sum_univ_succ]
           _ = ∑ i : Fin n'.succ, p i.succ := by ring
-      Fin.succ <| quantile_srt n' ⟨α', bnd_α⟩
-        (Fin.tail p) (Fin.tail x) (tail_monotone x h1) (fun ω ↦ h2 ω.succ) h'
-        (by
-          have h1 : 0 ≤ α' := by exact bnd_α.left
-          have h2 : 0 < (1 ⬝ᵥ (Fin.tail p)) := by exact lt_of_le_of_lt h1 h'
-          exact h2)
+      let h4' := (lt_of_le_of_lt bnd_α.left h3')
+      Fin.succ <| quantile_srt n' α' (Fin.tail p) (Fin.tail x) h1' h2' h3' h4'
     else -- return the value case
       0
 
-theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ}
+--example {p : Fin n.succ} : ∑ i ∈ Finset.Icc 0 k.succ, p i = (∑ i ∈ Finset.Ico 0 k, p i) + p k 
+--      := sorry 
+
+theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ → ℚ)
       (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
       (h4 : 0 < 1 ⬝ᵥ p) (h5 : k = quantile_srt n α p x h1 h2 h3 h4) :
       (∑ i ∈ Finset.Ico 0 k, p i ≤ α.val) ∧ ( ∑ i ∈ Finset.Icc 0 k, p i > α.val ) := by
         subst h5
-        induction n with
+        induction n generalizing α with
         | zero =>
           constructor
           · have h6 : 0 ≤ α.val := α.property.left
@@ -443,7 +445,17 @@ theorem quant_less {α : RiskLevel} {i : ℕ} {p x : Fin n.succ → ℚ}
             simpa [quantile_srt] using h7
         | succ n ih =>
           by_cases h8 : p 0 ≤ α.val
-          · sorry -- recursive case (I tried but really struggled with it)
+          · unfold quantile_srt 
+            split_ifs
+            · extract_lets αval' _ α' h1' h2' h3' h4'
+              specialize ih α' (Fin.tail p) (Fin.tail x) h1' h2' h3' h4'
+              simp_all 
+              constructor
+              · sorry
+              · sorry 
+            · contradiction
+            --simp [h8]
+            
           · have h9 : p 0 > α.val := lt_of_not_ge h8
             constructor
             · have h0 : 0 ≤ α.val := α.property.left
