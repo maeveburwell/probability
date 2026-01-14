@@ -26,9 +26,12 @@ def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
 def RiskLevel := { α : ℚ // IsRiskLevel α}
 
-theorem rv_image_nonempty : (Finset.univ.image X).Nonempty := sorry 
+theorem rv_image_nonempty (P : Findist  n) : (Finset.univ.image X).Nonempty := 
+  match n with 
+  | Nat.zero => P.nonempty' |> False.elim  
+  | Nat.succ _ => Finset.image_nonempty.mpr Finset.univ_nonempty
 
-theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (Finset.univ.image X).min' rv_image_nonempty // P] = 0 := sorry 
+theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (Finset.univ.image X).min' (rv_image_nonempty P) // P] = 0 := sorry 
 
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
@@ -36,11 +39,11 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
   have h : 𝓢.Nonempty := by 
-    let xmin := (Finset.univ.image X).min' rv_image_nonempty
+    let xmin := (Finset.univ.image X).min' (rv_image_nonempty P)
     apply Finset.filter_nonempty_iff.mpr
     use xmin 
     constructor
-    · exact Finset.min'_mem 𝓧 rv_image_nonempty
+    · exact Finset.min'_mem 𝓧 (rv_image_nonempty P)
     · have : ℙ[X<ᵣxmin // P] = 0 :=  prob_lt_min_eq_zero
       have := α.2
       unfold IsRiskLevel at this 
@@ -56,7 +59,12 @@ theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val
     have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
     exact (Finset.mem_filter.mp tS).right 
    
-theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := sorry 
+theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by 
+    generalize h : (FinVaR1 P X α) = t
+    unfold FinVaR1 at h 
+    extract_lets 𝓧 𝓢 ne𝓢 at h 
+    by_contra!
+    sorry -- this will go; just need to strengthen rv_lt_epsi_eq_le to show that t is in X.image 
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
