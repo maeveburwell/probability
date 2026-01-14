@@ -484,9 +484,7 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
           calc
             (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ (P.p ∘ σ) = (1 : Fin (Nat.succ n') → ℚ) ⬝ᵥ P.p := h3
             _ = 1 := P.prob
-        have h5 : α.val < 1 := by
-          simpa using (α.property).right
-        simpa [h4] using h5)
+        simpa [h4] using (α.property).right)
       --h4 : 0 < 1 ⬝ᵥ p
       ----this is all the same except for the last line
       ----is there a way to avoid repeating it???
