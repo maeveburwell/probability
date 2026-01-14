@@ -26,12 +26,19 @@ def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
 def RiskLevel := { α : ℚ // IsRiskLevel α}
 
-theorem rv_image_nonempty (P : Findist  n) : (Finset.univ.image X).Nonempty := 
+theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  : 
+    (Finset.univ.image X).Nonempty := 
   match n with 
   | Nat.zero => P.nonempty' |> False.elim  
   | Nat.succ _ => Finset.image_nonempty.mpr Finset.univ_nonempty
 
-theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (Finset.univ.image X).min' (rv_image_nonempty P) // P] = 0 := sorry 
+def FinRV.min [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β := 
+  (Finset.univ.image X).min' (rv_image_nonempty P X) 
+
+def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β := 
+  (Finset.univ.image X).max' (rv_image_nonempty P X) 
+
+theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := sorry 
 
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
@@ -39,11 +46,11 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
   have h : 𝓢.Nonempty := by 
-    let xmin := (Finset.univ.image X).min' (rv_image_nonempty P)
+    let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
     apply Finset.filter_nonempty_iff.mpr
     use xmin 
     constructor
-    · exact Finset.min'_mem 𝓧 (rv_image_nonempty P)
+    · exact Finset.min'_mem 𝓧 (rv_image_nonempty P X)
     · have : ℙ[X<ᵣxmin // P] = 0 :=  prob_lt_min_eq_zero
       have := α.2
       unfold IsRiskLevel at this 
@@ -64,7 +71,7 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
     unfold FinVaR1 at h 
     extract_lets 𝓧 𝓢 ne𝓢 at h 
     by_contra!
-    sorry -- this will go; just need to strengthen rv_lt_epsi_eq_le to show that t is in X.image 
+    sorry -- this will go; we can use rv_lt_epsi_eq_le_of_lt to show that t is in X.image 
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
@@ -114,14 +121,11 @@ def VaR_caleb (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
   (min_Lx P X α) / prodDenomRV X
 
 
-
 theorem VaR_caleb_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
   (hXY : X ≤ Y) : VaR_caleb P X α ≤ VaR_caleb P Y α := by
   sorry
 
 ------------------------------------------------------------------------
-
-
 
 
 --(Emily) I am now thinking of just trying to keep it in Q
@@ -275,6 +279,10 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
 theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
     by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
 
+
+theorem rv_lt_epsi_eq_le_of_lt (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
+              q < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry 
+
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
               ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
@@ -319,6 +327,8 @@ theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  
              have ab : (X <ᵣ q) = (X ≤ᵣ t) := by
                 ext ω; unfold FinRV.leq FinRV.lt; grind only
              exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
+
+
 
 -- will follow from rv_lt_epsi_eq_lt by congrence
 theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
@@ -378,7 +388,6 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
          have := qset_ub_lt hq.1
          have := prob_lt_le_monotone P X hq.2
          linarith
-
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
     by unfold Monotone at h ⊢
