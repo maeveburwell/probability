@@ -122,8 +122,6 @@ def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t :=
       ⟨ h'.1.foll a s , 
         by simp only [Hist.length, h'.2, Nat.succ_eq_add_one]; exact Nat.add_comm 1 t'⟩ 
 
--- TODO: try abel_nf?
-
 lemma Nat.sum_one_prod_cancel (n : ℕ) {m : ℕ} (h : 0 < m) : (m-1) * n + n = m*n := 
   by rw [Nat.sub_one_mul]
      apply Nat.sub_add_cancel
@@ -135,7 +133,7 @@ def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) :=
     | Hist.init s => ⟨s, by simp only [numhist, Hist.length, pow_zero, mul_one, Fin.is_lt]⟩
     | Hist.foll h' a s => 
         let n' := M.hist_to_idx h'
-        let n := n' * M.SA + (a * M.S + s)
+        let n := M.SA * ↑n' + (a * M.S + s)
         have h : a * M.S + s < M.SA := 
             by unfold MDP.SA
                calc a * M.S + s < a * M.S + M.S := 
@@ -160,11 +158,30 @@ def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) :=
             rw [Nat.mul_comm]
             rw [Nat.mul_assoc]
             nth_rw 3 [Nat.mul_comm]
-            sorry 
-            --grw [h2]
-            --grw [xx]
-            --rw [Nat.sub_one_mul]
+            have h4 : M.SA ≤ M.SA * M.SA ^ h'.length * M.S := by 
+                rw [Nat.mul_assoc]
+                apply Nat.le_mul_of_pos_right M.SA
+                apply Nat.mul_pos 
+                · exact Nat.pow_pos M.SA_ne
+                · exact M.S_ne
+            have h5 : 0 < M.SA * M.SA ^ h'.length * M.S  := 
+              calc 0 < M.SA := M.SA_ne
+                   _ ≤  M.SA * M.SA ^ h'.length * M.S := h4  
+            calc ↑n' * M.SA + (↑a * M.S + ↑s) ≤ (M.S * M.SA ^ h'.length - 1) * M.SA + (↑a * M.S + ↑s) := by grw [xx]
+                 _ ≤ (M.S * M.SA ^ h'.length - 1) * M.SA + (M.SA - 1) := by grw [h2]
+                 _ = M.S * M.SA ^ h'.length * M.SA - M.SA + (M.SA - 1) := by rw [Nat.sub_one_mul]
+                 _ = M.SA * M.SA ^ h'.length * M.S - M.SA + (M.SA - 1) := by qify; ring_nf -- todo: we should be able to do better
+                 _ = M.SA * M.SA ^ h'.length * M.S - M.SA + M.SA - 1 := by 
+                        rw [Nat.add_sub_assoc M.SA_ne (M.SA * M.SA ^ h'.length * M.S - M.SA)]
+                 _ = M.SA * M.SA ^ h'.length * M.S + M.SA - M.SA - 1 := by rw [← Nat.sub_add_comm h4]
+                 _ = M.SA * M.SA ^ h'.length * M.S - 1 := by rw [Nat.add_sub_cancel_right]
+                 _ < M.SA * M.SA ^ h'.length * M.S := by exact Nat.sub_one_lt_of_lt h5
+                 _ = M.SA ^1 * M.SA ^ h'.length * M.S := by simp 
             ⟩
+
+example {m n o : ℕ} (h : n < o) (h1 : 1 < m)  : m^n ≤ m^o := by apply?
+
+example {m n : ℕ} (h : 0 < n) : m ≤ m * n := by exact Nat.le_mul_of_pos_right m h
 
 example {m n : ℕ} (h : m < n) : m ≤ n - 1 := by exact Nat.le_sub_one_of_lt h
 
