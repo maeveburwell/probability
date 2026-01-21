@@ -51,12 +51,43 @@ theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 :=
 
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
 
-theorem rv_lt_epsi_eq_le_of_lt (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
-              t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry 
+section rounding_existence  
+
+variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
+
+theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := 
+    by intro h0 
+       let 𝓧 := Finset.univ.image X
+       let 𝓨 := 𝓧.filter (fun x ↦ x > t)
+       have h : 𝓨.Nonempty := sorry 
+       let y := 𝓨.min' h
+       have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
+       have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
+       use y
+       constructor
+       · by_contra! le
+         exact false_of_le_gt le hy2.2
+       · constructor 
+         · unfold FinRV.leq FinRV.lt
+           ext ω
+           rw [decide_eq_decide]
+           constructor
+           · intro h2
+             have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+             have hxω : X ω ∉ 𝓨 := by
+                by_contra! inY
+                have : y ≤ X ω := Finset.min'_le 𝓨 (X ω) inY
+                exact false_of_le_gt this h2
+             rw [Finset.mem_filter] at hxω
+             push_neg at hxω
+             exact hxω xωx
+           · intro h2
+             grewrite [h2]
+             exact hy2.2
+         · exact Finset.mem_of_mem_filter y hy1 
 
 -- for discrete random variables
-theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  :
-              ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
+theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
        if h : 𝓨.Nonempty then
@@ -102,8 +133,7 @@ theorem rv_lt_epsi_eq_le (P : Findist n.succ) (X : FinRV n.succ ℚ) (t : ℚ)  
 
 
 -- will follow from rv_lt_epsi_eq_lt by congrence
-theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
-              ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
+theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
     match n with
     | Nat.zero => False.elim P.nonempty'
     | Nat.succ _ =>
@@ -111,8 +141,11 @@ theorem prob_lt_epsi_eq_le (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
 
-theorem prob_lt_epsi_eq_le_of_lt (P : Findist n) (X : FinRV n ℚ) (t : ℚ)  :
+theorem prob_lt_epsi_eq_le_of_lt   :
               t < (FinRV.max P X) → ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := sorry 
+
+end rounding_existence
+
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
