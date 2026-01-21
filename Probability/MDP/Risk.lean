@@ -169,6 +169,8 @@ theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val
     have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
     exact (Finset.mem_filter.mp tS).right 
    
+example : X ≤ X := le_refl X
+
 theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by 
     generalize h : (FinVaR1 P X α) = t
     unfold FinVaR1 at h 
@@ -177,15 +179,18 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
     have tlt : t < (FinRV.max P X) := 
         by by_contra!
            unfold RiskLevel IsRiskLevel at α
-           sorry 
+           have hh := prob_le_monotone (P := P) (le_refl X) this 
+           rw [prob_le_eq_one] at hh 
+           have := α.2.2
+           linarith 
     obtain ⟨q, hq⟩ := prob_lt_epsi_eq_le_of_lt P X t tlt 
     rcases hq with ⟨hqgt, hqp, hqin⟩
-    have : q ∈ 𝓢 := by 
+    have hqs : q ∈ 𝓢 := by 
       apply Finset.mem_filter.mpr 
       constructor 
       · exact hqin  
       · rw [hqp]; exact hg 
-    have : q ≤ t := by sorry
+    have : q ≤ t := by subst h; exact Finset.le_max' 𝓢 q hqs
     linarith 
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
