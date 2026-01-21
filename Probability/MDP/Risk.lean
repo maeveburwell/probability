@@ -29,49 +29,49 @@ theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
 
 variable {β : Type}
 
-theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  : 
-    (Finset.univ.image X).Nonempty := 
-  match n with 
-  | Nat.zero => P.nonempty' |> False.elim  
+theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  :
+    (Finset.univ.image X).Nonempty :=
+  match n with
+  | Nat.zero => P.nonempty' |> False.elim
   | Nat.succ _ => Finset.image_nonempty.mpr Finset.univ_nonempty
 
-def FinRV.min [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β := 
-  (Finset.univ.image X).min' (rv_image_nonempty P X) 
+def FinRV.min [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
+  (Finset.univ.image X).min' (rv_image_nonempty P X)
 
-def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β := 
-  (Finset.univ.image X).max' (rv_image_nonempty P X) 
+def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
+  (Finset.univ.image X).max' (rv_image_nonempty P X)
 
 variable {X : FinRV n ℚ}
 
-theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) := 
+theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) :=
     by intro ω
        have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
-       simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h 
+       simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h
 
-theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 := 
+theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 :=
     by ext ω
-       unfold FinRV.leq FinRV.max 
+       unfold FinRV.leq FinRV.max
        simpa using rv_omega_le_max P ω
 
-theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X := 
+theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X :=
     by unfold FinRV.max
        exact Finset.max'_mem (Finset.image X Finset.univ) (rv_image_nonempty P X)
 
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
 
-section rounding_existence  
+section rounding_existence
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
-theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) := 
-    by intro h0 
+theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) :=
+    by intro h0
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
-       have h : 𝓨.Nonempty := 
+       have h : 𝓨.Nonempty :=
           by apply Finset.filter_nonempty_iff.mpr
              use FinRV.max P X
              constructor
-             · exact rv_max_in_image 
+             · exact rv_max_in_image
              · exact h0
        let y := 𝓨.min' h
        have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
@@ -80,7 +80,7 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
        constructor
        · by_contra! le
          exact false_of_le_gt le hy2.2
-       · constructor 
+       · constructor
          · unfold FinRV.leq FinRV.lt
            ext ω
            rw [decide_eq_decide]
@@ -97,10 +97,10 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
            · intro h2
              grewrite [h2]
              exact hy2.2
-         · exact Finset.mem_of_mem_filter y hy1 
+         · exact Finset.mem_of_mem_filter y hy1
 
-theorem prob_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → 
-          ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := 
+theorem prob_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) →
+          ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) :=
       fun h => let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
       Exists.intro q ⟨hq.1, ⟨ congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
@@ -112,7 +112,7 @@ theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :
           · obtain ⟨q, h⟩ := rv_lt_epsi_eq_le_of_lt P X t hlt
             exact ⟨q, ⟨h.1, h.2.1⟩⟩
           · have h := rv_omega_le_max P (X:=X)
-            grw [hge] at h 
+            grw [hge] at h
             let q := t + 1
             have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (h ω) rfl
             have ab : (X <ᵣ q) = (X ≤ᵣ t) := by
@@ -133,49 +133,49 @@ def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 def RiskLevel := { α : ℚ // IsRiskLevel α}
 
 
-theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := sorry 
+theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := sorry
 
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
 def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
-  have h : 𝓢.Nonempty := by 
+  have h : 𝓢.Nonempty := by
     let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
     apply Finset.filter_nonempty_iff.mpr
-    use xmin 
+    use xmin
     constructor
     · exact Finset.min'_mem 𝓧 (rv_image_nonempty P X)
     · have : ℙ[X<ᵣxmin // P] = 0 :=  prob_lt_min_eq_zero
       have := α.2
-      unfold IsRiskLevel at this 
-      linarith 
+      unfold IsRiskLevel at this
+      linarith
   𝓢.max' h
 
 variable {α : RiskLevel}
 
-theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val := by 
+theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val := by
     generalize h : (FinVaR1 P X α) = t
-    unfold FinVaR1 at h 
-    extract_lets 𝓧 𝓢 ne𝓢 at h 
+    unfold FinVaR1 at h
+    extract_lets 𝓧 𝓢 ne𝓢 at h
     have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
-    exact (Finset.mem_filter.mp tS).right 
-   
-theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by 
+    exact (Finset.mem_filter.mp tS).right
+
+theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by
     generalize h : (FinVaR1 P X α) = t
-    unfold FinVaR1 at h 
-    extract_lets 𝓧 𝓢 ne𝓢 at h 
+    unfold FinVaR1 at h
+    extract_lets 𝓧 𝓢 ne𝓢 at h
     by_contra! hg
-    have tlt : t < (FinRV.max P X) := by by_contra!; unfold RiskLevel IsRiskLevel at α; sorry 
-    obtain ⟨q, hq⟩ := prob_lt_epsi_eq_le_of_lt P X t tlt 
+    have tlt : t < (FinRV.max P X) := by by_contra!; unfold RiskLevel IsRiskLevel at α; sorry
+    obtain ⟨q, hq⟩ := prob_lt_epsi_eq_le_of_lt P X t tlt
     rcases hq with ⟨hqgt, hqp, hqin⟩
-    have : q ∈ 𝓢 := by 
-      apply Finset.mem_filter.mpr 
-      constructor 
-      · exact hqin  
-      · rw [hqp]; exact hg 
-    have : q ≤ t := sorry 
-    linarith 
+    have : q ∈ 𝓢 := by
+      apply Finset.mem_filter.mpr
+      constructor
+      · exact hqin
+      · rw [hqp]; exact hg
+    have : q ≤ t := sorry
+    linarith
 
 -- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
@@ -354,7 +354,7 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
         · grw [←h]; simp
         · grw [←h2]; simpa using α.2.2
       let α' := ⟨αval', bnd_α⟩
-      let h1' := (tail_monotone x h1) 
+      let h1' := (tail_monotone x h1)
       let h2' := (fun ω : Fin n'.succ ↦ h2 ω.succ)
       let h3': αval' < 1 ⬝ᵥ (Fin.tail p) := by
         unfold Fin.tail; subst αval'
@@ -367,8 +367,8 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
     else -- return the value case
       0
 
---example {p : Fin n.succ} : ∑ i ∈ Finset.Icc 0 k.succ, p i = (∑ i ∈ Finset.Ico 0 k, p i) + p k 
---      := sorry 
+example {p : Fin n.succ → ℚ} : ∑ i ∈ Finset.Icc (0 : Fin n.succ) k, p i = (∑ i ∈ Finset.Ico (0: Fin n.succ) k, p i) + p k
+     := sorry
 
 theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ → ℚ)
       (h1 : Monotone x) (h2 : ∀ω, 0 ≤ p ω) (h3 : α.val < 1 ⬝ᵥ p)
@@ -386,17 +386,17 @@ theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ
             simpa [quantile_srt] using h7
         | succ n ih =>
           by_cases h8 : p 0 ≤ α.val
-          · unfold quantile_srt 
+          · unfold quantile_srt
             split_ifs
             · extract_lets αval' _ α' h1' h2' h3' h4'
               specialize ih α' (Fin.tail p) (Fin.tail x) h1' h2' h3' h4'
-              simp_all 
+              simp_all
               constructor
               · sorry
-              · sorry 
+              · sorry
             · contradiction
             --simp [h8]
-            
+
           · have h9 : p 0 > α.val := lt_of_not_ge h8
             constructor
             · have h0 : 0 ≤ α.val := α.property.left
