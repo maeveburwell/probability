@@ -197,12 +197,9 @@ notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
 #print axioms FinVaR1
 
-variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ}
-
-
+-- TODO: it is surprising that below, we can have α that is not a risk level
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
-
 
 /-- Checks if the function is a quantile --/
 def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
@@ -240,9 +237,7 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] 
        exact qset_of_cond ⟨h1.1, h2⟩
 
 
-example (ω : Fin n.succ) : ω ∈ Finset.univ := Finset.mem_univ ω
-
-theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
+theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) :
     q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
     by
       intro h
@@ -258,9 +253,6 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) {q : ℚ} :
             by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
-
--- this proves that if we have the property we also have the VaR; then all remains is
--- to show existence which we can shows constructively by actually computing the value
 theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
      · intro h
@@ -289,6 +281,15 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
          have := qset_ub_lt hq.1
          have := prob_lt_le_monotone P X hq.2
          linarith
+
+variable {α : RiskLevel}
+
+-- This is the main correctness proof
+theorem fastvar1_correct : is_VaR P X α.val (FinVaR1 P X α) := 
+    by rewrite[var_def]
+       constructor
+       · exact var1_prob_lt_var_le_alpha
+       · exact var1_prob_le_var_gt_alpha
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
     by unfold Monotone at h ⊢
