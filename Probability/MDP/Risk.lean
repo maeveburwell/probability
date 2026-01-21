@@ -43,7 +43,6 @@ def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)
 
 variable {X : FinRV n ℚ}
 
-
 theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) := 
     by intro ω
        have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
@@ -53,6 +52,10 @@ theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 :=
     by ext ω
        unfold FinRV.leq FinRV.max 
        simpa using rv_omega_le_max P ω
+
+theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X := 
+    by unfold FinRV.max
+       exact Finset.max'_mem (Finset.image X Finset.univ) (rv_image_nonempty P X)
 
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
 
@@ -64,7 +67,12 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
     by intro h0 
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
-       have h : 𝓨.Nonempty := sorry 
+       have h : 𝓨.Nonempty := 
+          by apply Finset.filter_nonempty_iff.mpr
+             use FinRV.max P X
+             constructor
+             · exact rv_max_in_image 
+             · exact h0
        let y := 𝓨.min' h
        have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
        have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
@@ -91,8 +99,10 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
              exact hy2.2
          · exact Finset.mem_of_mem_filter y hy1 
 
-example {a b : ℚ} : a < b ∨ a ≥ b := by exact lt_or_ge a b
-
+theorem prob_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → 
+          ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := 
+      fun h => let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
+      Exists.intro q ⟨hq.1, ⟨ congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
@@ -101,26 +111,19 @@ theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :
        by cases' lt_or_ge t (FinRV.max P X) with hlt hge
           · obtain ⟨q, h⟩ := rv_lt_epsi_eq_le_of_lt P X t hlt
             exact ⟨q, ⟨h.1, h.2.1⟩⟩
-          · have a : ∀ω, X ω ≤ t := sorry  
-            sorry 
-            --let q := t + 1
-            --have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (a ω) rfl
-            --have ab : (X <ᵣ q) = (X ≤ᵣ t) := by
-            --    ext ω; unfold FinRV.leq FinRV.lt; grind only
-            --exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
+          · have h := rv_omega_le_max P (X:=X)
+            grw [hge] at h 
+            let q := t + 1
+            have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (h ω) rfl
+            have ab : (X <ᵣ q) = (X ≤ᵣ t) := by
+                ext ω; unfold FinRV.leq FinRV.lt; grind only
+            exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
 
-
--- will follow from rv_lt_epsi_eq_lt by congrence
+-- will follow from rv_lt_epsi_eq_lt by congruence
 theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
-    match n with
-    | Nat.zero => False.elim P.nonempty'
-    | Nat.succ _ =>
-      let ⟨q, hq⟩ := rv_lt_epsi_eq_le P X t
+      let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
-
-theorem prob_lt_epsi_eq_le_of_lt   :
-              t < (FinRV.max P X) → ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := sorry 
 
 end rounding_existence
 
