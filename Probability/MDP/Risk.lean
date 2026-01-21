@@ -8,6 +8,9 @@ open Findist FinRV
 
 variable {n : ℕ}
 
+
+--TODO: many of the basic results below belong to Probability.Defs or Probability.Basic
+
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
 variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
@@ -59,6 +62,21 @@ theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X :=
 
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
 
+theorem rv_omega_ge_min (P : Findist n) : ∀ω, X ω ≥ (FinRV.min P X) := 
+    by intro ω
+       have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+       simpa using Finset.min'_le (Finset.image X Finset.univ) (X ω) h 
+
+theorem rv_ge_min_one : (X ≥ᵣ (FinRV.min P X)) = 1 := 
+    by ext ω
+       unfold FinRV.geq FinRV.min 
+       simpa using rv_omega_ge_min P ω
+
+theorem prob_ge_eq_one : ℙ[X ≥ᵣ (FinRV.min P X) // P] = 1 := by rw [rv_ge_min_one]; exact prob_one_of_true P
+
+theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by 
+    rw [prob_lt_of_ge, prob_ge_eq_one]; exact sub_self 1
+
 section rounding_existence  
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
@@ -67,12 +85,7 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
     by intro h0 
        let 𝓧 := Finset.univ.image X
        let 𝓨 := 𝓧.filter (fun x ↦ x > t)
-       have h : 𝓨.Nonempty := 
-          by apply Finset.filter_nonempty_iff.mpr
-             use FinRV.max P X
-             constructor
-             · exact rv_max_in_image 
-             · exact h0
+       have h : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
        let y := 𝓨.min' h
        have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
        have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
@@ -124,16 +137,11 @@ theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P]
       let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
       Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
 
-
 end rounding_existence
-
 
 def IsRiskLevel (α : ℚ) : Prop := 0 ≤ α ∧ α < 1
 
 def RiskLevel := { α : ℚ // IsRiskLevel α}
-
-
-theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := sorry 
 
 /-- Value-at-Risk of X at level α: VaR_α(X) = min { t ∈ X(Ω) | P[X ≤ t] ≥ α }.
     If we assume 0 ≤ α < 1, then the "else 0" branch is never used. -/
@@ -141,12 +149,12 @@ def FinVaR1 (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) : ℚ :=
   let 𝓧 := Finset.univ.image X
   let 𝓢 := 𝓧.filter (fun t ↦ ℙ[X <ᵣ t // P] ≤ α.val)
   have h : 𝓢.Nonempty := by 
-    let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
     apply Finset.filter_nonempty_iff.mpr
+    let xmin := (Finset.univ.image X).min' (rv_image_nonempty P X)
     use xmin 
     constructor
     · exact Finset.min'_mem 𝓧 (rv_image_nonempty P X)
-    · have : ℙ[X<ᵣxmin // P] = 0 :=  prob_lt_min_eq_zero
+    · have : ℙ[X <ᵣ xmin // P] = 0 := prob_lt_min_eq_zero
       have := α.2
       unfold IsRiskLevel at this 
       linarith 
@@ -166,7 +174,10 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
     unfold FinVaR1 at h 
     extract_lets 𝓧 𝓢 ne𝓢 at h 
     by_contra! hg
-    have tlt : t < (FinRV.max P X) := by by_contra!; unfold RiskLevel IsRiskLevel at α; sorry 
+    have tlt : t < (FinRV.max P X) := 
+        by by_contra!
+           unfold RiskLevel IsRiskLevel at α
+           sorry 
     obtain ⟨q, hq⟩ := prob_lt_epsi_eq_le_of_lt P X t tlt 
     rcases hq with ⟨hqgt, hqp, hqin⟩
     have : q ∈ 𝓢 := by 
@@ -174,72 +185,16 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
       constructor 
       · exact hqin  
       · rw [hqp]; exact hg 
-    have : q ≤ t := sorry 
+    have : q ≤ t := by sorry
     linarith 
-
--- TODO: Show that VaR is a left (or right?) inverse for CDF?
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
-theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel)
-  (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
-  sorry
-
-
+#print axioms FinVaR1
 
 variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t : ℚ}
 
---TODO: can we use isLUB
 
-theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
-  ext ω
-  unfold FinRV.leq FinRV.gt
-  simp
-  exact le_or_gt (X ω) t
-
-theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by
-  rw [prob_eq_exp_ind, prob_eq_exp_ind, ← exp_additive_two]
-  have h : (𝕀 ∘ (X ≤ᵣ t)) + (𝕀 ∘ (X >ᵣ t)) = (1 : FinRV n ℚ) := by
-    ext ω
-    unfold FinRV.leq FinRV.gt
-    simp [𝕀, indicator]
-    by_cases h1 : X ω ≤ t
-    · have h2 : ¬ (X ω > t) := not_lt_of_ge h1
-      simp [h1, h2]
-    · have h3 : X ω > t := lt_of_not_ge h1
-      simp [h1, h3]
-  rw [h]
-  exact exp_one
-
-theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := by
-  rw [← prob_le_compl_gt]
-  ring
-
-theorem prob_le_of_gt :  ℙ[X ≤ᵣ t // P] = 1 - ℙ[X >ᵣ t // P] := by
-  rw [← prob_le_compl_gt]
-  ring
-
-theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := by
-  rw [prob_eq_exp_ind, prob_eq_exp_ind, ← exp_additive_two]
-  have h : (𝕀 ∘ (X <ᵣ t)) + (𝕀 ∘ (X ≥ᵣ t)) = (1 : FinRV n ℚ) := by
-    ext ω
-    unfold FinRV.lt FinRV.geq
-    simp [𝕀, indicator]
-    by_cases h1 : X ω < t
-    · have h2 : ¬ (X ω ≥ t) := not_le_of_gt h1
-      simp [h1, h2]
-    · have h3 : X ω ≥ t := le_of_not_gt h1
-      simp [h1, h3]
-  rw [h]
-  exact exp_one
-
-theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := by
-  rw [← prob_lt_compl_ge]
-  ring
-
-theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := by
-  rw [← prob_lt_compl_ge]
-  ring
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
@@ -444,97 +399,12 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
         simp [h4])
 
 
-
------------------ Other stuff -----------------
-
-
-example (A B : Set EReal) (h : A ⊆ B) : sSup A ≤ sSup B := sSup_le_sSup h
-
-------------------Caleb's definition of VaR------------------------
-theorem min_subset (A B : Finset ℕ) (h : B ⊆ A) (hA : A.Nonempty) (hB : B.Nonempty)  : A.min' hA ≤ B.min' hB :=
-  by
-    have hminB : B.min' hB ∈ B := Finset.min'_mem B hB
-    have hminA : B.min' hB ∈ A := h hminB
-    exact Finset.min'_le A (B.min' hB) hminA
-
-def prodDenomRV (X : FinRV n ℚ) : ℕ := ∏ q ∈ Finset.univ.image  X, q.den
+-------------------- VaR Properties -----------------------------------------------------------------------------
 
 
-def X' (X : FinRV n ℚ) : FinRV n ℚ :=
-  fun ω => X ω * (prodDenomRV X : ℚ)
-
-theorem RV_QtoZ (X : FinRV n ℚ) (ω : Fin n) :
-  ∃ z : ℤ, X ω * (prodDenomRV X : ℚ) = (z : ℚ) := sorry
-
-def X'_num (X : FinRV n ℚ) : FinRV n ℤ :=
-  fun ω => (X ω * (prodDenomRV X : ℚ)).num
-
-theorem X'_num_inQ (X : FinRV n ℚ) (ω : Fin n) :
-  X ω * (prodDenomRV X : ℚ) = (X'_num X ω : ℚ) := sorry
-
-
-def Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : Finset ℚ :=
-  (Finset.univ.image X).filter (fun t => cdf P X t ≤ (1 : ℚ) - α)
-
-theorem Lx_nonempty (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :
-  (Lx P X α).Nonempty := sorry
-
-def min_Lx (P : Findist n) (X : FinRV n ℚ) (α : ℚ) :=
-  (Lx P X α).min' (Lx_nonempty P X α)
-
---Caleb has a handwritten proof showing this definition is equivalent
-def VaR_caleb (P : Findist n) (X : FinRV n ℚ) (α : ℚ) : ℚ :=
-  (min_Lx P X α) / prodDenomRV X
-
-
-theorem VaR_caleb_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ)
-  (hXY : X ≤ Y) : VaR_caleb P X α ≤ VaR_caleb P Y α := by
+theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel)
+  (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
   sorry
-
-------------------------------------------------------------------------
-
-
---(Emily) I am now thinking of just trying to keep it in Q
---so I wouln't use anything between these lines!
-------------------- defined over the reals to prove monotonicity ---------------------------
-noncomputable def cdfR (P : Findist n) (X : FinRV n ℝ) (t : ℝ) : ℝ := ℙ[X ≤ᵣ t // P]
-
-theorem cdfR_monotone (P : Findist n) (X : FinRV n ℝ) (t1 t2 : ℝ)
-  (ht : t1 ≤ t2) : cdfR P X t1 ≤ cdfR P X t2 := by
-  simp [cdfR]
-  apply exp_monotone
-  intro ω
-  by_cases h1 : X ω ≤ t1
-  · have h2 : X ω ≤ t2 := le_trans h1 ht
-    simp [FinRV.leq, 𝕀, indicator, h1, h2]
-  · simp [𝕀, indicator, FinRV.leq, h1]
-    by_cases h2 : X ω ≤ t2
-    repeat simp [h2]
-
-/-- Value-at-Risk of X at level α: VaR_α(X) = inf {t:ℝ | P[X ≤ t] ≥ α } -/
-noncomputable def VaR_R (P : Findist n) (X : FinRV n ℝ) (α : ℝ) : ℝ :=
-  sInf { t : ℝ | cdfR P X t ≥ α }
-
-theorem VaR_R_monotone (P : Findist n) (X Y : FinRV n ℝ) (α : ℝ)
-  (hXY : ∀ ω, X ω ≤ Y ω) : VaR_R P X α ≤ VaR_R P Y α := by
-  let Sx : Set ℝ := { t : ℝ | cdfR P X t ≥ α }
-  let Sy : Set ℝ := { t : ℝ | cdfR P Y t ≥ α }
-  have hx : VaR_R P X α = sInf Sx := rfl
-  have hy : VaR_R P Y α = sInf Sy := rfl
-  have hsubset : Sy ⊆ Sx := by
-    unfold Sy Sx
-    intro t ht
-    have h_cdf : ∀ t, cdfR P X t ≥ cdfR P Y t := by
-      intro t
-      unfold cdfR
-      --apply exp_monotone
-
-      sorry
-    sorry
-  rw [hx, hy]
-  sorry
-
--------------------------------------------------------------------
 
 theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) (c : ℚ) :
   FinVaR1 P (fun ω => X ω + c) α = FinVaR1 P X α + c := sorry
