@@ -285,7 +285,7 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
 variable {α : RiskLevel}
 
 -- This is the main correctness proof
-theorem fastvar1_correct : is_VaR P X α.val (FinVaR1 P X α) :=
+theorem finvar1_correct : is_VaR P X α.val (FinVaR1 P X α) :=
     by rewrite[var_def]
        constructor
        · exact var1_prob_lt_var_le_alpha
