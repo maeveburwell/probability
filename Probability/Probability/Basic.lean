@@ -84,6 +84,55 @@ theorem prob_lt_montone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y <ᵣ t₁ // P] �
   intro hxy ht
   exact exp_monotone (rvlt_monotone hxy ht)
 
+theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
+  ext ω
+  unfold FinRV.leq FinRV.gt
+  simp
+  exact le_or_gt (X ω) t
+
+theorem prob_le_compl_gt : ℙ[X ≤ᵣ t // P] + ℙ[X >ᵣ t // P] = 1 := by
+  rw [prob_eq_exp_ind, prob_eq_exp_ind, ← exp_additive_two]
+  have h : (𝕀 ∘ (X ≤ᵣ t)) + (𝕀 ∘ (X >ᵣ t)) = (1 : FinRV n ℚ) := by
+    ext ω
+    unfold FinRV.leq FinRV.gt
+    simp [𝕀, indicator]
+    by_cases h1 : X ω ≤ t
+    · have h2 : ¬ (X ω > t) := not_lt_of_ge h1
+      simp [h1, h2]
+    · have h3 : X ω > t := lt_of_not_ge h1
+      simp [h1, h3]
+  rw [h]
+  exact exp_one
+
+theorem prob_gt_of_le : ℙ[X >ᵣ t // P] = 1 -  ℙ[X ≤ᵣ t // P] := by
+  rw [← prob_le_compl_gt]
+  ring
+
+theorem prob_le_of_gt :  ℙ[X ≤ᵣ t // P] = 1 - ℙ[X >ᵣ t // P] := by
+  rw [← prob_le_compl_gt]
+  ring
+
+theorem prob_lt_compl_ge : ℙ[X <ᵣ t // P] + ℙ[X ≥ᵣ t // P] = 1 := by
+  rw [prob_eq_exp_ind, prob_eq_exp_ind, ← exp_additive_two]
+  have h : (𝕀 ∘ (X <ᵣ t)) + (𝕀 ∘ (X ≥ᵣ t)) = (1 : FinRV n ℚ) := by
+    ext ω
+    unfold FinRV.lt FinRV.geq
+    simp [𝕀, indicator]
+    by_cases h1 : X ω < t
+    · have h2 : ¬ (X ω ≥ t) := not_le_of_gt h1
+      simp [h1, h2]
+    · have h3 : X ω ≥ t := le_of_not_gt h1
+      simp [h1, h3]
+  rw [h]
+  exact exp_one
+
+theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := by
+  rw [← prob_lt_compl_ge]
+  ring
+
+theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := by
+  rw [← prob_lt_compl_ge]
+  ring
 
 ------------------------------ Expectation ---------------------------
 
@@ -130,7 +179,6 @@ theorem law_of_total_probs : ℙ[B // P] =  ∑ i, ℙ[B * (L =ᵣ i) // P]  :=
      ext ω
      by_cases h1 : L ω = i 
      repeat by_cases h2 : B ω; repeat simp [h1, h2, 𝕀, indicator ]
-
 
 end Probability 
 

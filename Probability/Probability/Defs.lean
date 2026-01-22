@@ -202,11 +202,8 @@ theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ) := by 
 theorem one_of_bool_or_not : B + (¬ᵣ B) = (1 : FinRV n Bool) := by ext ω; unfold FinRV.not; simp
 
 theorem one_of_ind_bool_or_not : (𝕀∘B) + (𝕀∘(¬ᵣ B)) = (1 : FinRV n ℚ) :=
-    by ext ω
-       unfold FinRV.not 𝕀 indicator not
-       by_cases h : B ω
-       · simp [h]
-       · simp [h]
+    by ext ω; unfold FinRV.not 𝕀 indicator not
+       by_cases h : B ω <;> simp [h]
 
 variable {X Y: FinRV n ℚ} {Xs : Fin k → FinRV n ℚ}
 
@@ -218,9 +215,7 @@ theorem rv_prod_sum_additive  : ∑ i, Y * (Xs i) = Y * (∑ i, Xs i) :=
 variable {g : Fin k → ℚ}
 
 theorem rv_prod_const : ∀i, (g ∘ L) * (L =ᵢ i) = (g i) • (L =ᵢ i) := 
-    by intro i; ext ω; 
-       by_cases h : L ω = i 
-       repeat simp [h] 
+    by intro i; ext ω; by_cases h : L ω = i <;> simp [h] 
 
 end RandomVariable
 
@@ -392,7 +387,6 @@ theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L 
 
 end Expectation_properties
 
-
 -- Derived properties from the properties of expectation
 section Probability_properties
 
@@ -405,8 +399,5 @@ theorem ind_monotone : (∀ ω, A ω → B ω) → (𝕀∘A) ≤ (𝕀∘B) := 
   · simp_all [indicator] 
   · by_cases h2 : B ω
     repeat simp_all [indicator]
-
-
-
 
 end Probability_properties 
