@@ -201,7 +201,7 @@ notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
-/-- Checks if the function is a quantile --/
+/-- Checks if the value is a quantile --/
 def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
 
 /-- Set of quantiles at a level α  --/
