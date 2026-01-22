@@ -325,7 +325,7 @@ def quantile_srt (n : ℕ) (α : RiskLevel) (p x : Fin n.succ → ℚ)
           _ = ∑ i : Fin n'.succ, p i.succ := by ring
       let h4' := (lt_of_le_of_lt bnd_α.left h3')
       Fin.succ <| quantile_srt n' α' (Fin.tail p) (Fin.tail x) h1' h2' h3' h4'
-    else -- return the value case
+    else -- return the value case: p 0 > α
       0
 
 example {p : Fin n.succ → ℚ} : ∑ i ∈ Finset.Icc (0 : Fin n.succ) k, p i = (∑ i ∈ Finset.Ico (0: Fin n.succ) k, p i) + p k
