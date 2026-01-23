@@ -253,7 +253,7 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) :
             by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
-theorem var_def : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
+theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
      · intro h
        constructor
@@ -286,7 +286,7 @@ variable {α : RiskLevel}
 
 -- This is the main correctness proof
 theorem finvar1_correct : IsVaR P X α.val (FinVaR1 P X α) :=
-    by rewrite[var_def]
+    by rewrite[var_prob_cond]
        constructor
        · exact var1_prob_lt_var_le_alpha
        · exact var1_prob_le_var_gt_alpha
@@ -410,11 +410,29 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
 
 section VaR_properties
 
-variable {P : Findist n} {X Y : FinRV n ℚ} {α : RiskLevel} {c : ℚ}
+variable {P : Findist n} {X Y : FinRV n ℚ} {c : ℚ}
 
+variable {α : ℚ}
+
+theorem Quantile_monotone {q₁ : ℚ} (hXY : X ≤ Y) (hq: IsQuantile P X α q₁) : ∃q₂, IsQuantile P Y α q₂ ∧ q₁ ≤ q₂ := sorry  
+
+
+variable {α : RiskLevel} 
+
+example {x : ℚ} (S : Finset ℚ) (h : x ∈ S) (ne : S.Nonempty) : x ≤ S.max' ne := by exact Finset.le_max' S x h
 
 theorem VaR_monotone (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
-  sorry
+  unfold FinVaR1
+  extract_lets 𝓧₁ 𝓢₁ h₁ 𝓧₂ 𝓢₂ h₂
+  have sinS : ∀s ∈ 𝓢₁, ∃t ∈ 𝓢₂, t ≥ s := by 
+    intro s hs 
+    rewrite [Finset.mem_filter] at hs
+    sorry -- just need another probability result
+  rewrite [Finset.max'_le_iff]
+  intro y hy 
+  obtain ⟨t, ht⟩ := sinS y hy 
+  calc y ≤ t := ht.2
+       _ ≤ 𝓢₂.max' h₂ := Finset.le_max' 𝓢₂ t ht.1
 
 theorem VaR_translation_invariant : FinVaR1 P (fun ω => X ω + c) α = FinVaR1 P X α + c := sorry
 
