@@ -81,6 +81,20 @@ section rounding_existence
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
+
+-- TODO: this requires the condition that: t < (FinRV.max P X)
+
+theorem rv_ge_lt_mem_of_lt : ∃q ≥ t, (X <ᵣ q) = (X <ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry 
+
+theorem prob_ge_lt_mem_of_lt : ∃q ≥ t, ℙ[X <ᵣ q // P] = ℙ[X <ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := by 
+    obtain ⟨q, hq ⟩ := rv_ge_lt_mem_of_lt X t
+    use q 
+    constructor
+    · exact hq.1 
+    · constructor 
+      · exact congrArg (probability P) hq.2.1
+      · exact hq.2.2
+
 theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) :=
     by intro h0
        let 𝓧 := Finset.univ.image X
@@ -421,13 +435,24 @@ variable {α : RiskLevel}
 
 example {x : ℚ} (S : Finset ℚ) (h : x ∈ S) (ne : S.Nonempty) : x ≤ S.max' ne := by exact Finset.le_max' S x h
 
+
+-- TODO: this theorem looks complete but depends on a theorem that is not quite correct and needs to be fixed
+
 theorem VaR_monotone (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
   unfold FinVaR1
   extract_lets 𝓧₁ 𝓢₁ h₁ 𝓧₂ 𝓢₂ h₂
   have sinS : ∀s ∈ 𝓢₁, ∃t ∈ 𝓢₂, t ≥ s := by 
     intro s hs 
     rewrite [Finset.mem_filter] at hs
-    sorry -- just need another probability result
+    have pys : ℙ[Y <ᵣ s // P] ≤ α.val := by have := prob_lt_monotone (P:=P) hXY (le_refl s); have := hs.2; linarith 
+    obtain ⟨q, hq⟩ := prob_ge_lt_mem_of_lt P Y s 
+    use q 
+    rewrite [Finset.mem_filter]
+    constructor
+    · constructor 
+      · unfold 𝓧₂; exact hq.2.2
+      · rw [hq.2.1]; exact pys 
+    · exact hq.1
   rewrite [Finset.max'_le_iff]
   intro y hy 
   obtain ⟨t, ht⟩ := sinS y hy 
