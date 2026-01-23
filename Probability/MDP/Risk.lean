@@ -202,12 +202,12 @@ notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
 /-- Checks if the value is a quantile --/
-def is_𝕢  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
+def IsQuantile  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
 
 /-- Set of quantiles at a level α  --/
-def 𝕢Set : Set ℚ := { q | is_𝕢 P X α q}
+def Quantile : Set ℚ := { q | IsQuantile P X α q}
 
-def is_VaR : Prop := IsGreatest (𝕢Set P X α) v -- (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
+def IsVaR : Prop := IsGreatest (Quantile P X α) v -- (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
 -- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] :=
 
@@ -218,20 +218,20 @@ theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ 
        simp [FinRV.gt, FinRV.geq] at pre ⊢
        linarith
 
-theorem qset_lb : q ∈ 𝕢Set P X α → ℙ[ X ≤ᵣ q // P ] ≥ α := by intro h; simp_all [𝕢Set, is_𝕢]
+theorem qset_lb : q ∈ Quantile P X α → ℙ[ X ≤ᵣ q // P ] ≥ α := by intro h; simp_all [Quantile, IsQuantile]
 
-theorem qset_ub : q ∈ 𝕢Set P X α → ℙ[ X ≥ᵣ q // P] ≥ 1-α := by intro h; simp_all [𝕢Set, is_𝕢]
+theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1-α := by intro h; simp_all [Quantile, IsQuantile]
 
-theorem qset_ub_lt : q ∈ 𝕢Set P X α → ℙ[ X <ᵣ q // P] ≤ α :=
+theorem qset_ub_lt : q ∈ Quantile P X α → ℙ[ X <ᵣ q // P] ≤ α :=
   by intro h
      have := qset_ub h
      rewrite [prob_ge_of_lt] at this
      linarith
 
-theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ 𝕢Set P X α :=
-    by intro h; simp_all [𝕢Set, is_𝕢]
+theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ Quantile P X α :=
+    by intro h; simp_all [Quantile, IsQuantile]
 
-theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ 𝕢Set P X α :=
+theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ Quantile P X α :=
     by intro h1
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
@@ -253,25 +253,25 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) :
             by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
-theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
+theorem var_def : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
      · intro h
        constructor
-       · unfold is_VaR 𝕢Set is_𝕢 IsGreatest at h
+       · unfold IsVaR Quantile IsQuantile IsGreatest at h
          have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all
          rw [prob_ge_of_lt] at h1
          linarith
        · by_contra! hc
          obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
-         have h3 : q ∈ 𝕢Set P X α := by
+         have h3 : q ∈ Quantile P X α := by
             rewrite [←hq.2] at hc
             have qlb := qset_lb h.1
             grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
             exact qset_of_cond_lt ⟨qlb, hc⟩
-         unfold is_VaR IsGreatest upperBounds at h
+         unfold IsVaR IsGreatest upperBounds at h
          exact false_of_le_gt (h.2 h3) hq.1
      · intro h
-       unfold is_VaR
+       unfold IsVaR
        constructor
        · exact qset_of_cond_lt ⟨le_of_lt h.2, h.1⟩
        · unfold upperBounds
@@ -285,7 +285,7 @@ theorem var_def : is_VaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X
 variable {α : RiskLevel}
 
 -- This is the main correctness proof
-theorem finvar1_correct : is_VaR P X α.val (FinVaR1 P X α) :=
+theorem finvar1_correct : IsVaR P X α.val (FinVaR1 P X α) :=
     by rewrite[var_def]
        constructor
        · exact var1_prob_lt_var_le_alpha
@@ -408,14 +408,18 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
 -------------------- VaR Properties -----------------------------------------------------------------------------
 
 
-theorem VaR_monotone (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel)
-  (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
+section VaR_properties
+
+variable {P : Findist n} {X Y : FinRV n ℚ} {α : RiskLevel} {c : ℚ}
+
+
+theorem VaR_monotone (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
   sorry
 
-theorem VaR_translation_invariant (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) (c : ℚ) :
-  FinVaR1 P (fun ω => X ω + c) α = FinVaR1 P X α + c := sorry
+theorem VaR_translation_invariant : FinVaR1 P (fun ω => X ω + c) α = FinVaR1 P X α + c := sorry
 
-theorem VaR_positive_homog (P : Findist n) (X : FinRV n ℚ) (α : RiskLevel) (c : ℚ)
-  (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c * FinVaR1 P X α := sorry
+theorem VaR_positive_homog (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c * FinVaR1 P X α := sorry
+
+end VaR_properties
 
 end Risk
