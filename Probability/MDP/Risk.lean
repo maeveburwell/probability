@@ -215,11 +215,16 @@ notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
 
-/-- Checks if the value is a quantile --/
+/-- Proof the `q` is an `α`-quantile of `X` --/
 def IsQuantile  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
+
+/-- Proof that `q` is a lower bound on the `α`-quantile of `X` --/
+def IsQuantileLower : Prop := ℙ[ X ≥ᵣ q // P] ≥ 1-α
 
 /-- Set of quantiles at a level α  --/
 def Quantile : Set ℚ := { q | IsQuantile P X α q}
+
+def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
 
 def IsVaR : Prop := IsGreatest (Quantile P X α) v -- (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
 
