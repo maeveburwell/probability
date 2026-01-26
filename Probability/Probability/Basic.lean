@@ -75,15 +75,6 @@ theorem prob_compl_sums_to_one : ℙ[B // P] + ℙ[¬ᵣB // P] = 1 :=
 theorem prob_compl_one_minus : ℙ[¬ᵣB // P] = 1 - ℙ[B // P] :=
     by rw [←prob_compl_sums_to_one (P:=P) (B:=B)]; ring 
 
-theorem prob_le_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y ≤ᵣ t₁ // P] ≤ ℙ[X ≤ᵣ t₂ // P] := by 
-  intro hxy ht 
-  exact exp_monotone (rvle_monotone hxy ht)
-
-
-theorem prob_lt_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y <ᵣ t₁ // P] ≤ ℙ[X <ᵣ t₂ // P] := by 
-  intro hxy ht
-  exact exp_monotone (rvlt_monotone hxy ht)
-
 theorem rv_le_compl_gt : (X ≤ᵣ t) + (X >ᵣ t) = 1 := by
   ext ω
   unfold FinRV.leq FinRV.gt
@@ -133,6 +124,27 @@ theorem prob_ge_of_lt : ℙ[X ≥ᵣ t // P] = 1 -  ℙ[X <ᵣ t // P] := by
 theorem prob_lt_of_ge :  ℙ[X <ᵣ t // P] = 1 - ℙ[X ≥ᵣ t // P] := by
   rw [← prob_lt_compl_ge]
   ring
+
+theorem prob_le_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y ≤ᵣ t₁ // P] ≤ ℙ[X ≤ᵣ t₂ // P] := by 
+  intro hxy ht 
+  exact exp_monotone (rvle_monotone hxy ht)
+
+theorem prob_lt_monotone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y <ᵣ t₁ // P] ≤ ℙ[X <ᵣ t₂ // P] := by 
+  intro hxy ht
+  exact exp_monotone (rvlt_monotone hxy ht)
+
+theorem prob_ge_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y ≥ᵣ t₁ // P] ≥ ℙ[X ≥ᵣ t₂ // P] := by 
+  intro hxy ht 
+  rewrite [prob_ge_of_lt,prob_ge_of_lt] 
+  have := prob_lt_monotone (P := P) hxy ht 
+  linarith 
+
+theorem prob_gt_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y >ᵣ t₁ // P] ≥ ℙ[X >ᵣ t₂ // P] := by 
+  intro hxy ht 
+  rewrite [prob_gt_of_le,prob_gt_of_le] 
+  have := prob_le_monotone (P := P) hxy ht 
+  linarith 
+
 
 ------------------------------ Expectation ---------------------------
 

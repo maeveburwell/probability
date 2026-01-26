@@ -213,48 +213,52 @@ notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
 -- TODO: it is surprising that below, we can have α that is not a risk level
 
-variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : ℚ) (q v : ℚ)
+variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel) (q v : ℚ)
 
 /-- Proof the `q` is an `α`-quantile of `X` --/
-def IsQuantile  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α
+def IsQuantile  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val
 
 /-- Proof that `q` is a lower bound on the `α`-quantile of `X` --/
-def IsQuantileLower : Prop := ℙ[ X ≥ᵣ q // P] ≥ 1-α
+def IsQuantileLower : Prop := ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val
 
-/-- Set of quantiles at a level α  --/
+/-- Set of quantiles at a level `α`  --/
 def Quantile : Set ℚ := { q | IsQuantile P X α q}
 
+/-- Set of lower bounds on a quantile at `α` -/
 def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
 
-def IsVaR : Prop := IsGreatest (Quantile P X α) v -- (v ∈ 𝕢Set P X α) ∧ ∀u ∈ 𝕢Set P X α, v ≥ u
+/-- Value `q` is the Value at Risk at `α` of `X` and probability `P`  -/
+def IsVaR : Prop := IsGreatest (Quantile P X α) v 
+
+/-- A simpler, equivalent definition of Value at Risk  -/
+def IsVaR2 : Prop := IsGreatest (QuantileLower P X α) v 
 
 -- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] :=
 
-variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : ℚ} {q v : ℚ}
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {α : RiskLevel} {q v q₁ q₂ : ℚ}
 
 theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   :=
     by intro h ω pre
        simp [FinRV.gt, FinRV.geq] at pre ⊢
        linarith
 
-theorem qset_lb : q ∈ Quantile P X α → ℙ[ X ≤ᵣ q // P ] ≥ α := by intro h; simp_all [Quantile, IsQuantile]
+theorem qset_lb : q ∈ Quantile P X α → ℙ[ X ≤ᵣ q // P ] ≥ α.val := by intro h; simp_all [Quantile, IsQuantile]
 
-theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1-α := by intro h; simp_all [Quantile, IsQuantile]
+theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by intro h; simp_all [Quantile, IsQuantile]
 
-theorem qset_ub_lt : q ∈ Quantile P X α → ℙ[ X <ᵣ q // P] ≤ α :=
+theorem qset_ub_lt : q ∈ Quantile P X α → ℙ[ X <ᵣ q // P] ≤ α.val :=
   by intro h
      have := qset_ub h
      rewrite [prob_ge_of_lt] at this
      linarith
 
-theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X ≥ᵣ q // P] ≥ 1-α → q ∈ Quantile P X α :=
+theorem qset_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val → q ∈ Quantile P X α :=
     by intro h; simp_all [Quantile, IsQuantile]
 
-theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α ∧ ℙ[ X <ᵣ q // P] ≤ α → q ∈ Quantile P X α :=
+theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X <ᵣ q // P] ≤ α.val → q ∈ Quantile P X α :=
     by intro h1
-       have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α := by rw [prob_ge_of_lt]; linarith
+       have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
-
 
 theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) :
     q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
@@ -272,12 +276,12 @@ theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) :
             by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
-theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < ℙ[ X ≤ᵣ v // P]) :=
+theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
      · intro h
        constructor
        · unfold IsVaR Quantile IsQuantile IsGreatest at h
-         have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α := by simp_all
+         have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α.val := by simp_all
          rw [prob_ge_of_lt] at h1
          linarith
        · by_contra! hc
@@ -301,21 +305,45 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α ∧ α < �
          have := prob_lt_le_monotone P X hq.2
          linarith
 
-variable {α : RiskLevel}
 
 -- This is the main correctness proof
-theorem finvar1_correct : IsVaR P X α.val (FinVaR1 P X α) :=
+theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
     by rewrite[var_prob_cond]
        constructor
        · exact var1_prob_lt_var_le_alpha
        · exact var1_prob_le_var_gt_alpha
+
+
+theorem isquantile2_le_isquantile : IsQuantileLower P X α q₁ → ∃q₂ ≥ q₁, IsQuantile P X α q₂ := by 
+    unfold IsQuantile IsQuantileLower
+    intro h 
+    use FinVaR1 P X α 
+    sorry
+
+
+theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v := 
+    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest]
+
+theorem var_is_quantile_lower : IsVaR P X α v → IsQuantileLower P X α v := 
+    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest,IsQuantileLower,IsQuantile]
+
+
+theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
+    unfold IsVaR IsVaR2 Quantile QuantileLower
+    constructor 
+    · sorry 
+    · sorry 
+
+variable {α : RiskLevel}
+
+----------------------------- Fast VaR computation -------------------------------------------------------
+
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
     by unfold Monotone at h ⊢
        unfold Fin.tail
        intro a b h2
        exact h (Fin.succ_le_succ_iff.mpr h2)
-
 
 /-- compute a quantile for a (partial) sorted random variable and a partial probability
     used in the induction to eliminate points until we find one that has
@@ -376,7 +404,6 @@ theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ
               · sorry
             · contradiction
             --simp [h8]
-
           · have h9 : p 0 > α.val := lt_of_not_ge h8
             constructor
             · have h0 : 0 ≤ α.val := α.property.left
@@ -429,19 +456,18 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
 
 section VaR_properties
 
-variable {P : Findist n} {X Y : FinRV n ℚ} {c : ℚ}
-
-variable {α : ℚ}
-
-theorem Quantile_monotone {q₁ : ℚ} (hXY : X ≤ Y) (hq: IsQuantile P X α q₁) : ∃q₂, IsQuantile P Y α q₂ ∧ q₁ ≤ q₂ := sorry  
+variable {P : Findist n} {X Y : FinRV n ℚ} {q₁ c : ℚ} {α : RiskLevel}
 
 
+theorem quantile_le_monotone : X ≤ Y → (IsQuantileLower P X α q₁) → ∃q₂ ≥ q₁, IsQuantileLower P Y α q₂ := by 
+  intro hle hvar₁
+  unfold IsQuantileLower at ⊢ hvar₁
+  have hq₁ := le_refl q₁
+  exact ⟨q₁, ⟨hq₁, le_trans hvar₁ (prob_ge_antitone hle hq₁)⟩⟩
+    
 variable {α : RiskLevel} 
 
 example {x : ℚ} (S : Finset ℚ) (h : x ∈ S) (ne : S.Nonempty) : x ≤ S.max' ne := by exact Finset.le_max' S x h
-
-
--- TODO: this theorem looks complete but depends on a theorem that is not quite correct and needs to be fixed
 
 theorem VaR_monotone (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
   unfold FinVaR1
