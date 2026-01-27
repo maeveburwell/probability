@@ -324,14 +324,24 @@ theorem isquantile2_le_isquantile : IsQuantileLower P X α q₁ → ∃q₂ ≥ 
 theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v := 
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest]
 
-theorem var_is_quantile_lower : IsVaR P X α v → IsQuantileLower P X α v := 
+theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v := 
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest,IsQuantileLower,IsQuantile]
+
+theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v := 
+    by simp[IsQuantile, IsQuantileLower]
+
+theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := sorry
 
 
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
-    unfold IsVaR IsVaR2 Quantile QuantileLower
+    unfold IsVaR IsVaR2 
     constructor 
-    · sorry 
+    · unfold IsGreatest 
+      intro h 
+      unfold Quantile at h 
+      constructor 
+      · exact quantile_implies_quantilelower h.1
+      · sorry
     · sorry 
 
 variable {α : RiskLevel}
