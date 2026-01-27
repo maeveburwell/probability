@@ -302,11 +302,7 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α
 
 -- This is the main correctness proof
 theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
-    by rewrite[var_prob_cond]
-       constructor
-       · exact var1_prob_lt_var_le_alpha
-       · exact var1_prob_le_var_gt_alpha
-
+    by rewrite[var_prob_cond]; exact ⟨var1_prob_lt_var_le_alpha, var1_prob_le_var_gt_alpha⟩
 
 theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v := 
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest]
@@ -317,16 +313,18 @@ theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v :=
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v := 
     by simp[IsQuantile, IsQuantileLower]
 
-theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun v => quantile_implies_quantilelower
+theorem quantile_nonempty : (Quantile P X α).Nonempty := 
+  Set.nonempty_def.mpr ⟨ VaR[X// P,α], finvar1_correct  |> var_is_quantile ⟩
 
-theorem isquantilelower_le_isquantile : IsQuantileLower P X α q₁ → ∃q₂ ≥ q₁, IsQuantile P X α q₂ := by 
-    unfold IsQuantile IsQuantileLower
+theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun _ => quantile_implies_quantilelower
+
+theorem isquantilelower_le_isquantile : q₁ ∈ QuantileLower P X α → ∃q₂ ≥ q₁, q₂ ∈ Quantile P X α := by 
     intro h 
-    use FinVaR1 P X α 
+    obtain ⟨q, hq⟩ := quantile_nonempty (P:=P) (X:=X) (α:=α)
     sorry 
 
-
-
+example {A B : Set ℚ} {v : ℚ} (h : A ⊆ B) : v ∈ upperBounds B → v ∈ upperBounds A :=  fun h1 _ a1 => h1 (h a1)
+      
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
     unfold IsVaR IsVaR2 
     constructor 
@@ -341,7 +339,6 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
 variable {α : RiskLevel}
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
-
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
     by unfold Monotone at h ⊢
