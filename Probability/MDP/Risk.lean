@@ -209,10 +209,6 @@ theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val
 
 notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 
-#print axioms FinVaR1
-
--- TODO: it is surprising that below, we can have α that is not a risk level
-
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel) (q v : ℚ)
 
 /-- Proof the `q` is an `α`-quantile of `X` --/
@@ -260,8 +256,7 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X <ᵣ q //
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
-theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) :
-    q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
+theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
     by
       intro h
       unfold probability dotProduct
@@ -305,20 +300,12 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α
          have := prob_lt_le_monotone P X hq.2
          linarith
 
-
 -- This is the main correctness proof
 theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
     by rewrite[var_prob_cond]
        constructor
        · exact var1_prob_lt_var_le_alpha
        · exact var1_prob_le_var_gt_alpha
-
-
-theorem isquantile2_le_isquantile : IsQuantileLower P X α q₁ → ∃q₂ ≥ q₁, IsQuantile P X α q₂ := by 
-    unfold IsQuantile IsQuantileLower
-    intro h 
-    use FinVaR1 P X α 
-    sorry
 
 
 theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v := 
@@ -330,7 +317,14 @@ theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v :=
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v := 
     by simp[IsQuantile, IsQuantileLower]
 
-theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := sorry
+theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun v => quantile_implies_quantilelower
+
+theorem isquantilelower_le_isquantile : IsQuantileLower P X α q₁ → ∃q₂ ≥ q₁, IsQuantile P X α q₂ := by 
+    unfold IsQuantile IsQuantileLower
+    intro h 
+    use FinVaR1 P X α 
+    sorry 
+
 
 
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
