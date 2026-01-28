@@ -318,6 +318,12 @@ theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v :=
 theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v := 
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest,IsQuantileLower,IsQuantile]
 
+theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := 
+    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR2,Quantile,IsGreatest,QuantileLower]; sorry 
+
+theorem var2_is_quantilelower : IsVaR2 P X α v → IsQuantileLower P X α v := 
+    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,IsGreatest,IsQuantileLower]; sorry
+
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v := 
     by simp[IsQuantile, IsQuantileLower]
 
@@ -326,30 +332,35 @@ theorem quantile_nonempty : (Quantile P X α).Nonempty :=
 
 theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun _ => quantile_implies_quantilelower
 
-theorem isquantilelower_le_isquantile : q₁ ∈ QuantileLower P X α → ∃q₂ ≥ q₁, q₂ ∈ Quantile P X α := by 
-    intro h 
+theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Quantile P X α) := by 
+  --q₁ ∈ QuantileLower P X α → ∃q₂ ≥ q₁, q₂ ∈ Quantile P X α := by 
+    intro q₁ h 
     by_cases h2 : q₁ ∈ Quantile P X α
-    · exact ⟨q₁, le_refl q₁, h2 ⟩
+    · exact ⟨q₁, h2, le_refl q₁⟩
     · rewrite [qset_not_def] at h2
       rewrite [qsetlower_def] at h 
       cases' h2 with h2l h2r
       · obtain ⟨q₂, hq₂⟩ : (Quantile P X α).Nonempty := quantile_nonempty
         use q₂
         constructor 
+        · exact hq₂
         · by_contra! ine
           exact ge_trans (prob_le_monotone (le_refl X) (le_of_lt ine)) (qset_lb hq₂) |> false_of_lt_ge h2l 
-        · exact hq₂
       · exfalso; exact false_of_lt_ge h2r h 
 
 example {A B : Set ℚ} {v : ℚ} (h : A ⊆ B) : v ∈ upperBounds B → v ∈ upperBounds A := fun h1 _ a1 => h1 (h a1)
+
       
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
     constructor 
     · intro h 
       constructor 
       · exact var_is_quantilelower h 
-      · sorry
-    · sorry 
+      · exact (upperBounds_mono_of_isCofinalFor isquantilelower_le_isquantile) h.2
+    · intro h 
+      constructor 
+      · sorry 
+      · sorry 
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
 
