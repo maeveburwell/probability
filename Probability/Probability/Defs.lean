@@ -296,7 +296,6 @@ notation "𝔼[" X "//" P "]" => expect P X
 
 --theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P]
 
-@[simp]
 theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := by simp only [expect, probability]
 
 /-- Conditional expectation operator -/

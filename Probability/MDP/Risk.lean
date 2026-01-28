@@ -19,6 +19,8 @@ variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
     by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
 
+theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
+    fun h1 h2 => false_of_le_gt h2 h1 
 
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
@@ -80,7 +82,6 @@ theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by
 section rounding_existence
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
-
 
 -- TODO: this requires the condition that: t < (FinRV.max P X)
 
@@ -238,9 +239,18 @@ theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ 
        simp [FinRV.gt, FinRV.geq] at pre ⊢
        linarith
 
-theorem qset_lb : q ∈ Quantile P X α → ℙ[ X ≤ᵣ q // P ] ≥ α.val := by intro h; simp_all [Quantile, IsQuantile]
+theorem qset_lb : q ∈ Quantile P X α → ℙ[ X ≤ᵣ q // P ] ≥ α.val := by simp_all [Quantile, IsQuantile]
 
-theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by intro h; simp_all [Quantile, IsQuantile]
+theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [Quantile, IsQuantile]
+
+theorem qset_def : q ∈ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [Quantile, IsQuantile]
+
+theorem qset_not_def : q ∉ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] < α.val ∨ ℙ[ X ≥ᵣ q // P] < 1 - α.val := by 
+    constructor
+    · intro h2; grind  [qset_def]
+    · intro h2; grind [qset_def]
+
+theorem qsetlower_def : q ∈ QuantileLower P X α ↔ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [QuantileLower, IsQuantileLower]
 
 theorem qset_ub_lt : q ∈ Quantile P X α → ℙ[ X <ᵣ q // P] ≤ α.val :=
   by intro h
@@ -257,19 +267,17 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X <ᵣ q //
        exact qset_of_cond ⟨h1.1, h2⟩
 
 theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
-    by
-      intro h
-      unfold probability dotProduct
-      apply Finset.sum_le_sum
-      intro ω hω
-      have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
-        by
-          by_cases h3 : X ω ≤ t
-          · have h4 : X ω < q := lt_of_le_of_lt h3 h
-            simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
-          · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
-            by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
-      exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
+    by intro h
+       unfold probability dotProduct
+       apply Finset.sum_le_sum
+       intro ω hω
+       have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
+         by by_cases h3 : X ω ≤ t
+            · have h4 : X ω < q := lt_of_le_of_lt h3 h
+              simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
+            · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
+              by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
+       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
 theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
@@ -320,23 +328,28 @@ theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α
 
 theorem isquantilelower_le_isquantile : q₁ ∈ QuantileLower P X α → ∃q₂ ≥ q₁, q₂ ∈ Quantile P X α := by 
     intro h 
-    obtain ⟨q, hq⟩ := quantile_nonempty (P:=P) (X:=X) (α:=α)
-    sorry 
+    by_cases h2 : q₁ ∈ Quantile P X α
+    · exact ⟨q₁, le_refl q₁, h2 ⟩
+    · rewrite [qset_not_def] at h2
+      rewrite [qsetlower_def] at h 
+      cases' h2 with h2l h2r
+      · obtain ⟨q₂, hq₂⟩ : (Quantile P X α).Nonempty := quantile_nonempty
+        use q₂
+        constructor 
+        · by_contra! ine
+          exact ge_trans (prob_le_monotone (le_refl X) (le_of_lt ine)) (qset_lb hq₂) |> false_of_lt_ge h2l 
+        · exact hq₂
+      · exfalso; exact false_of_lt_ge h2r h 
 
-example {A B : Set ℚ} {v : ℚ} (h : A ⊆ B) : v ∈ upperBounds B → v ∈ upperBounds A :=  fun h1 _ a1 => h1 (h a1)
+example {A B : Set ℚ} {v : ℚ} (h : A ⊆ B) : v ∈ upperBounds B → v ∈ upperBounds A := fun h1 _ a1 => h1 (h a1)
       
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
-    unfold IsVaR IsVaR2 
     constructor 
-    · unfold IsGreatest 
-      intro h 
-      unfold Quantile at h 
+    · intro h 
       constructor 
-      · exact quantile_implies_quantilelower h.1
+      · exact var_is_quantilelower h 
       · sorry
     · sorry 
-
-variable {α : RiskLevel}
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
 
@@ -498,3 +511,4 @@ theorem VaR_positive_homog (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c 
 end VaR_properties
 
 end Risk
+
