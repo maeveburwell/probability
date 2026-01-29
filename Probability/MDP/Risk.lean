@@ -485,7 +485,8 @@ theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ
                       rcases h12 with h0 | h1
                       · subst h0; simp
                       · constructor
-                        · sorry
+                        · have h3 : (i : Nat) < (k' : Nat) := sorry
+                          exact Nat.succ_le_of_lt h3
 
                 have h14 : ∑ i ∈ Finset.Ico (0:Fin (Nat.succ n)) k', p i.succ ≤ α'.val := by
                   exact ih.1
