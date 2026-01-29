@@ -36,7 +36,7 @@ theorem in_prob (P : Findist n) : Prob ℙ[B // P] := ⟨ge_zero, le_one⟩
 end Findist
 
 
--------- Mnotonicity of random variables --------------------------------------------
+-------- Random variables --------------------------------------------
 
 section RandomVariables
 
@@ -61,10 +61,31 @@ theorem rvlt_monotone (h1 : X ≤ Y) (h2: t₁ ≤ t₂) : 𝕀 ∘ (Y <ᵣ t₁
     · by_cases h5 : X ω < t₂
       repeat simp [h3, h5, 𝕀, indicator] 
 
+theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 :=
+    by ext ω
+       unfold FinRV.leq FinRV.max
+       simpa using rv_omega_le_max P ω
+
+theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X :=
+    by unfold FinRV.max
+       exact Finset.max'_mem (Finset.image X Finset.univ) (rv_image_nonempty P X)
+
+theorem rv_omega_ge_min (P : Findist n) : ∀ω, X ω ≥ (FinRV.min P X) :=
+    by intro ω
+       have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+       simpa using Finset.min'_le (Finset.image X Finset.univ) (X ω) h
+
+theorem rv_ge_min_one : (X ≥ᵣ (FinRV.min P X)) = 1 :=
+    by ext ω
+       unfold FinRV.geq FinRV.min
+       simpa using rv_omega_ge_min P ω
+
       
 end RandomVariables
 
 ------------------------------ Probability ---------------------------
+
+section Probability 
 
 variable {n : ℕ} {P : Findist n} {A B C : FinRV n Bool} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
@@ -145,9 +166,22 @@ theorem prob_gt_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y >ᵣ t₁ // P] �
   have := prob_le_monotone (P := P) hxy ht 
   linarith 
 
+theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
+
+
+theorem prob_ge_eq_one : ℙ[X ≥ᵣ (FinRV.min P X) // P] = 1 := by rw [rv_ge_min_one]; exact prob_one_of_true P
+
+theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by
+    rw [prob_lt_of_ge, prob_ge_eq_one]; exact sub_self 1
+
+
+end Probability 
+
+------------------------------ CDF ---------------------------
+
 section CDF
 
-variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
+variable {n : ℕ} {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by

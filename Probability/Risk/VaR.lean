@@ -10,75 +10,10 @@ variable {n : ℕ}
 
 variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
-theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
-    by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
-
-theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
-    fun h1 h2 => false_of_le_gt h2 h1
-
-variable {β : Type}
-
-theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  :
-    (Finset.univ.image X).Nonempty :=
-  match n with
-  | Nat.zero => P.nonempty' |> False.elim
-  | Nat.succ _ => Finset.image_nonempty.mpr Finset.univ_nonempty
-
-def FinRV.min [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
-  (Finset.univ.image X).min' (rv_image_nonempty P X)
-
-def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
-  (Finset.univ.image X).max' (rv_image_nonempty P X)
-
-variable {X : FinRV n ℚ}
-
-theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) :=
-    by intro ω
-       have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
-       simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h
-
-theorem rv_le_max_one : (X ≤ᵣ (FinRV.max P X)) = 1 :=
-    by ext ω
-       unfold FinRV.leq FinRV.max
-       simpa using rv_omega_le_max P ω
-
-theorem rv_max_in_image : (FinRV.max P X) ∈ Finset.univ.image X :=
-    by unfold FinRV.max
-       exact Finset.max'_mem (Finset.image X Finset.univ) (rv_image_nonempty P X)
-
-theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
-
-theorem rv_omega_ge_min (P : Findist n) : ∀ω, X ω ≥ (FinRV.min P X) :=
-    by intro ω
-       have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
-       simpa using Finset.min'_le (Finset.image X Finset.univ) (X ω) h
-
-theorem rv_ge_min_one : (X ≥ᵣ (FinRV.min P X)) = 1 :=
-    by ext ω
-       unfold FinRV.geq FinRV.min
-       simpa using rv_omega_ge_min P ω
-
-theorem prob_ge_eq_one : ℙ[X ≥ᵣ (FinRV.min P X) // P] = 1 := by rw [rv_ge_min_one]; exact prob_one_of_true P
-
-theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by
-    rw [prob_lt_of_ge, prob_ge_eq_one]; exact sub_self 1
 
 section rounding_existence
 
 variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
-
--- TODO: this requires the condition that: t < (FinRV.max P X)
-
-theorem rv_ge_lt_mem_of_lt : ∃q ≥ t, (X <ᵣ q) = (X <ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry
-
-theorem prob_ge_lt_mem_of_lt : ∃q ≥ t, ℙ[X <ᵣ q // P] = ℙ[X <ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := by
-    obtain ⟨q, hq ⟩ := rv_ge_lt_mem_of_lt X t
-    use q
-    constructor
-    · exact hq.1
-    · constructor
-      · exact congrArg (probability P) hq.2.1
-      · exact hq.2.2
 
 theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) :=
     by intro h0
@@ -93,16 +28,13 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
        · by_contra! le
          exact false_of_le_gt le hy2.2
        · constructor
-         · unfold FinRV.leq FinRV.lt
-           ext ω
-           rw [decide_eq_decide]
+         · ext ω
+           rw [FinRV.leq,FinRV.lt,decide_eq_decide]
            constructor
            · intro h2
              have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
              have hxω : X ω ∉ 𝓨 := by
-                by_contra! inY
-                have : y ≤ X ω := Finset.min'_le 𝓨 (X ω) inY
-                exact false_of_le_gt this h2
+                by_contra! inY; exact false_of_le_gt (Finset.min'_le 𝓨 (X ω) inY) h2
              rw [Finset.mem_filter] at hxω
              push_neg at hxω
              exact hxω xωx
@@ -111,10 +43,10 @@ theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = 
              exact hy2.2
          · exact Finset.mem_of_mem_filter y hy1
 
-theorem prob_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) →
-          ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) :=
-      fun h => let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
-      Exists.intro q ⟨hq.1, ⟨ congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
+theorem prob_lt_epsi_eq_le_of_lt : 
+      t < (FinRV.max P X) → ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) :=
+          fun h => let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
+          Exists.intro q ⟨hq.1, ⟨ congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
 
 -- for discrete random variables
 theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
@@ -127,9 +59,8 @@ theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :
             grw [hge] at h
             let q := t + 1
             have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (h ω) rfl
-            have ab : (X <ᵣ q) = (X ≤ᵣ t) := by
-                ext ω; unfold FinRV.leq FinRV.lt; grind only
-            exact ⟨q, ⟨lt_add_one t, ab ⟩ ⟩
+            have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; grind only [FinRV.leq,FinRV.lt]
+            exact ⟨q, ⟨lt_add_one t, ab⟩⟩
 
 -- will follow from rv_lt_epsi_eq_lt by congruence
 theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
@@ -167,8 +98,6 @@ theorem var1_prob_lt_var_le_alpha : ℙ[X <ᵣ (FinVaR1 P X α) // P] ≤ α.val
     extract_lets 𝓧 𝓢 ne𝓢 at h
     have tS : t ∈ 𝓢 := by subst h; exact Finset.max'_mem 𝓢 ne𝓢
     exact (Finset.mem_filter.mp tS).right
-
-example : X ≤ X := le_refl X
 
 theorem var1_prob_le_var_gt_alpha : ℙ[X ≤ᵣ (FinVaR1 P X α) // P] > α.val := by
     generalize h : (FinVaR1 P X α) = t
@@ -276,34 +205,6 @@ theorem prob_lt_le_monotone : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t //
               by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
        exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
 
-theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
-  by constructor
-     · intro h
-       constructor
-       · unfold IsVaR Quantile IsQuantile IsGreatest at h
-         have h1 : ℙ[X≥ᵣv//P] ≥ 1 - α.val := by simp_all
-         rw [prob_ge_of_lt] at h1
-         linarith
-       · by_contra! hc
-         obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
-         have h3 : q ∈ Quantile P X α := by
-            rewrite [←hq.2] at hc
-            have qlb := qset_lb h.1
-            grewrite [prob_le_monotone (le_refl X) (le_of_lt hq.1)]  at qlb
-            exact qset_of_cond_lt ⟨qlb, hc⟩
-         unfold IsVaR IsGreatest upperBounds at h
-         exact false_of_le_gt (h.2 h3) hq.1
-     · intro h
-       unfold IsVaR
-       constructor
-       · exact qset_of_cond_lt ⟨le_of_lt h.2, h.1⟩
-       · unfold upperBounds
-         by_contra! hc
-         simp at hc
-         obtain ⟨q, hq⟩ := hc
-         have := qset_ub_lt hq.1
-         have := prob_lt_le_monotone (P:=P) (X:=X) hq.2
-         linarith
 
 theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
   by constructor
@@ -334,8 +235,8 @@ theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ 
 --TODO: should we also show that IsVaR is a singleton? That is, is it unique?
 
 -- This is the main correctness proof
-theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
-    by rewrite[var_prob_cond]; exact ⟨var1_prob_lt_var_le_alpha, var1_prob_le_var_gt_alpha⟩
+theorem finvar1_correct : IsVaR2 P X α (FinVaR1 P X α) :=
+    by rewrite[var2_prob_cond]; exact ⟨var1_prob_lt_var_le_alpha, var1_prob_le_var_gt_alpha⟩
 
 theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest]
@@ -343,15 +244,22 @@ theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v :=
 theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest,IsQuantileLower,IsQuantile]
 
-
 theorem var2_is_quantilelower : IsVaR2 P X α v → IsQuantileLower P X α v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR2,QuantileLower,IsGreatest,Set.mem_setOf_eq]
+
+theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by
+    intro h
+    constructor
+    · suffices ℙ[X≤ᵣv//P] > α.val by linarith 
+      exact (var2_prob_cond.mp h).2
+    · exact var2_is_quantilelower h
+
 
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v :=
     by simp[IsQuantile, IsQuantileLower]
 
 theorem quantile_nonempty : (Quantile P X α).Nonempty :=
-  Set.nonempty_def.mpr ⟨ VaR[X// P,α], finvar1_correct  |> var_is_quantile ⟩
+  Set.nonempty_def.mpr ⟨ VaR[X// P,α], finvar1_correct  |> var2_is_quantile ⟩
 
 theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun _ => quantile_implies_quantilelower
 
@@ -373,14 +281,6 @@ theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Qua
 theorem isquantile_le_isquantilelower : IsCofinalFor (Quantile P X α) (QuantileLower P X α) :=
     HasSubset.Subset.iscofinalfor quantile_subset_quantilelower
 
-theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by
-    intro h
-    constructor
-    · suffices ℙ[X≤ᵣv//P] > α.val by linarith
-      exact (var2_prob_cond.mp h).2
-    · exact var2_is_quantilelower h
-
-
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
     constructor
     · intro h
@@ -391,6 +291,10 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
       constructor
       · exact var2_is_quantile h
       · exact (upperBounds_mono_of_isCofinalFor isquantile_le_isquantilelower) h.2
+
+
+theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
+  by rw[var_eq_var2]; exact var2_prob_cond 
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
 

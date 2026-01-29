@@ -5,6 +5,16 @@ import Mathlib.Algebra.Notation.Pi.Defs -- operations on functions
 import Mathlib.Algebra.Module.PointwisePi -- for smul_pi
 import Mathlib.LinearAlgebra.Matrix.DotProduct -- for monotonicity
 
+
+----------- Generic results -----------------
+
+theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
+    by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
+
+theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
+    fun h1 h2 => false_of_le_gt h2 h1
+ 
+
 --------------------------- Findist ---------------------------------------------------------------
 
 
@@ -45,10 +55,10 @@ theorem nonempty' (P : Findist 0) : False := by have h := P.nonempty; simp only 
 
 end Findist
 
---------------------------- Random Variable -------------------------------------------------------------------
+------------------------ Random Variable --------------------------------------------------
 
 /-!
-Random variables are defined as function. The operations on random variables can be performed
+Random variables are defined as functions. The operations on random variables can be performed
 using the standard notation:
 
 - X + Y is elementwise addition
@@ -210,6 +220,28 @@ variable {g : Fin k → ℚ}
 theorem rv_prod_const : ∀i, (g ∘ L) * (L =ᵢ i) = (g i) • (L =ᵢ i) := 
     by intro i; ext ω; by_cases h : L ω = i <;> simp [h] 
 
+variable {β : Type}
+
+theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  :
+    (Finset.univ.image X).Nonempty :=
+  match n with
+  | Nat.zero => P.nonempty' |> False.elim
+  | Nat.succ _ => Finset.image_nonempty.mpr Finset.univ_nonempty
+
+def FinRV.min [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
+  (Finset.univ.image X).min' (rv_image_nonempty P X)
+
+def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
+  (Finset.univ.image X).max' (rv_image_nonempty P X)
+
+variable {X : FinRV n ℚ}
+
+theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) :=
+    by intro ω
+       have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+       simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h
+
+
 end RandomVariable
 
 ------------------------------ Probability ---------------------------
@@ -271,12 +303,6 @@ variable {n : ℕ}
 def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
 
 variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
-
-theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
-    by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
-
-theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
-    fun h1 h2 => false_of_le_gt h2 h1
 
 
 end CDF
