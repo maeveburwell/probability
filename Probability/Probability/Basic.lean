@@ -80,7 +80,77 @@ theorem rv_ge_min_one : (X ≥ᵣ (FinRV.min P X)) = 1 :=
        unfold FinRV.geq FinRV.min
        simpa using rv_omega_ge_min P ω
 
-      
+
+theorem rv_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ∀ ω, (X ≥ᵣ t₂) ω →(X >ᵣ t₁) ω   :=
+    by intro h ω pre
+       simp [FinRV.gt, FinRV.geq] at pre ⊢
+       linarith
+
+-- results for discrete probability distributions
+section Rounding 
+
+variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
+
+theorem rv_lt_epsi_eq_le_of_lt : t < (FinRV.max P X) → ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) ∧ q ∈ (Finset.univ.image X) :=
+    by intro h0
+       let 𝓧 := Finset.univ.image X
+       let 𝓨 := 𝓧.filter (fun x ↦ x > t)
+       have h : 𝓨.Nonempty := Finset.filter_nonempty_iff.mpr ⟨FinRV.max P X, ⟨rv_max_in_image, h0⟩⟩
+       let y := 𝓨.min' h
+       have hy1 : y ∈ 𝓨 := Finset.min'_mem 𝓨 h
+       have hy2 : y ∈ 𝓧 ∧ y > t := Finset.mem_filter.mp hy1
+       use y
+       constructor
+       · by_contra! le
+         exact false_of_le_gt le hy2.2
+       · constructor
+         · ext ω
+           rw [FinRV.leq,FinRV.lt,decide_eq_decide]
+           constructor
+           · intro h2
+             have xωx : X ω ∈ 𝓧 := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+             have hxω : X ω ∉ 𝓨 := by
+                by_contra! inY; exact false_of_le_gt (Finset.min'_le 𝓨 (X ω) inY) h2
+             rw [Finset.mem_filter] at hxω
+             push_neg at hxω
+             exact hxω xωx
+           · intro h2
+             grewrite [h2]
+             exact hy2.2
+         · exact Finset.mem_of_mem_filter y hy1
+
+
+theorem rv_lt_epsi_eq_le (P : Findist n) : ∃q > t, (X <ᵣ q) = (X ≤ᵣ t) :=
+       let 𝓧 := Finset.univ.image X
+       let 𝓨 := 𝓧.filter (fun x ↦ x > t)
+       by cases' lt_or_ge t (FinRV.max P X) with hlt hge
+          · obtain ⟨q, h⟩ := rv_lt_epsi_eq_le_of_lt P X t hlt
+            exact ⟨q, ⟨h.1, h.2.1⟩⟩
+          · have h := rv_omega_le_max P (X:=X)
+            grw [hge] at h
+            let q := t + 1
+            have b : ∀ω, X ω < q := fun ω => lt_add_of_le_of_pos (h ω) rfl
+            have ab : (X <ᵣ q) = (X ≤ᵣ t) := by ext ω; grind only [FinRV.leq,FinRV.lt]
+            exact ⟨q, ⟨lt_add_one t, ab⟩⟩
+
+end Rounding
+
+
+section CashInvariance 
+
+variable (c : ℚ) {x : ℚ}
+
+theorem rv_le_cashinvar : (X ≤ᵣ x) = (X + c•1 ≤ᵣ x + c) := by ext ω; simp
+
+theorem rv_lt_cashinvar : (X <ᵣ x) = (X + c•1 <ᵣ x + c) := by ext ω; simp
+
+theorem rv_ge_cashinvar : (X ≥ᵣ x) = (X + c•1 ≥ᵣ x + c) := by ext ω; simp
+
+theorem rv_gt_cashinvar : (X >ᵣ x) = (X + c•1 >ᵣ x + c) := by ext ω; simp
+
+end CashInvariance
+
+
 end RandomVariables
 
 ------------------------------ Probability ---------------------------
@@ -166,6 +236,20 @@ theorem prob_gt_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y >ᵣ t₁ // P] �
   have := prob_le_monotone (P := P) hxy ht 
   linarith 
 
+theorem prob_lt_le_monotone : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
+    by intro h
+       unfold probability dotProduct
+       apply Finset.sum_le_sum
+       intro ω hω
+       have h2 : (𝕀 ∘ (X ≤ᵣ t)) ω ≤ (𝕀 ∘ (X <ᵣ q)) ω :=
+         by by_cases h3 : X ω ≤ t
+            · have h4 : X ω < q := lt_of_le_of_lt h3 h
+              simp [FinRV.leq, FinRV.lt, 𝕀, indicator, Function.comp, h3, h4]
+            · simp [𝕀, indicator, FinRV.leq, FinRV.lt, Function.comp, h3]
+              by_cases h5 : X ω < q <;> simp [h5] -- <;> applies to both cases
+       exact mul_le_mul_of_nonneg_left h2 (P.nneg ω)
+
+
 theorem prob_le_eq_one : ℙ[X ≤ᵣ (FinRV.max P X) // P] = 1 := by rw [rv_le_max_one]; exact prob_one_of_true P
 
 
@@ -175,6 +259,36 @@ theorem prob_lt_min_eq_zero : ℙ[X <ᵣ (FinRV.min P X) // P] = 0 := by
     rw [prob_lt_of_ge, prob_ge_eq_one]; exact sub_self 1
 
 
+section Rounding ---results for discrete probability distributions
+
+variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
+
+theorem prob_lt_epsi_eq_le_of_lt : 
+      t < (FinRV.max P X) → ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] ∧ q ∈ (Finset.univ.image X) :=
+          fun h => let ⟨q, hq⟩ := rv_lt_epsi_eq_le_of_lt P X t h
+          Exists.intro q ⟨hq.1, ⟨ congrArg (probability P) hq.2.1, hq.2.2 ⟩⟩
+
+
+theorem prob_lt_epsi_eq_le : ∃q > t, ℙ[X <ᵣ q // P] = ℙ[X ≤ᵣ t // P] :=
+      let ⟨q, hq⟩ := rv_lt_epsi_eq_le X t P
+      Exists.intro q ⟨hq.1, congrArg (probability P) hq.2⟩
+
+end Rounding 
+
+
+section CashInvariance 
+
+variable (c : ℚ) {x : ℚ}
+
+theorem prob_le_cashinvar : ℙ[X ≤ᵣ x // P] = ℙ[X + c•1 ≤ᵣ x + c // P] := congrArg (probability P) (rv_le_cashinvar c)
+
+theorem prob_lt_cashinvar : ℙ[X <ᵣ x // P] = ℙ[X + c•1 <ᵣ x + c // P] := congrArg (probability P) (rv_lt_cashinvar c)
+
+theorem prob_ge_cashinvar : ℙ[X ≥ᵣ x // P] = ℙ[X + c•1 ≥ᵣ x + c // P] := congrArg (probability P) (rv_ge_cashinvar c)
+
+theorem prob_gt_cashinvar : ℙ[X >ᵣ x // P] = ℙ[X + c•1 >ᵣ x + c // P] := congrArg (probability P) (rv_gt_cashinvar c)
+
+end CashInvariance
 end Probability 
 
 ------------------------------ CDF ---------------------------
