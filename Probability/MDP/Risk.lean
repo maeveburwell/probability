@@ -409,7 +409,6 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
       · exact var2_is_quantile h  
       · exact (upperBounds_mono_of_isCofinalFor isquantile_le_isquantilelower) h.2
 
-
 ----------------------------- Fast VaR computation -------------------------------------------------------
 
 theorem tail_monotone (X : Fin (n.succ) → ℚ) (h : Monotone X) : Monotone (Fin.tail X) :=
@@ -529,39 +528,19 @@ def FinVaR (α : RiskLevel) (P : Findist n) (X : FinRV n ℚ) : ℚ :=
 
 section VaR_properties
 
-variable {P : Findist n} {X Y : FinRV n ℚ} {q₁ c : ℚ} {α : RiskLevel}
+variable {P : Findist n} {X Y : FinRV n ℚ} {q₁ v₁ v₂ c : ℚ} {α : RiskLevel}
 
-
-theorem quantile_le_monotone : X ≤ Y → (IsQuantileLower P X α q₁) → ∃q₂ ≥ q₁, IsQuantileLower P Y α q₂ := by 
-  intro hle hvar₁
-  unfold IsQuantileLower at ⊢ hvar₁
+--(IsQuantileLower P X α q₁) → ∃q₂ ≥ q₁, IsQuantileLower P Y α q₂ := by 
+theorem quantile_le_monotone : X ≤ Y → IsCofinalFor (QuantileLower P X α) (IsQuantileLower P Y α) := by
+  intro hle q₁ hvar₁
   have hq₁ := le_refl q₁
-  exact ⟨q₁, ⟨hq₁, le_trans hvar₁ (prob_ge_antitone hle hq₁)⟩⟩
+  exact ⟨q₁, ⟨le_trans hvar₁ (prob_ge_antitone hle hq₁), hq₁⟩⟩
     
+theorem var2_monotone : X ≤ Y → IsVaR2 P X α v₁ → IsVaR2 P Y α v₂ → v₁ ≤ v₂ := 
+  fun hle hv1 hv2 => upperBounds_mono_of_isCofinalFor (quantile_le_monotone hle) hv2.2 hv1.1 
+
+
 variable {α : RiskLevel} 
-
-example {x : ℚ} (S : Finset ℚ) (h : x ∈ S) (ne : S.Nonempty) : x ≤ S.max' ne := by exact Finset.le_max' S x h
-
-theorem VaR_monotone (hXY : X ≤ Y) : FinVaR1 P X α ≤ FinVaR1 P Y α := by
-  unfold FinVaR1
-  extract_lets 𝓧₁ 𝓢₁ h₁ 𝓧₂ 𝓢₂ h₂
-  have sinS : ∀s ∈ 𝓢₁, ∃t ∈ 𝓢₂, t ≥ s := by 
-    intro s hs 
-    rewrite [Finset.mem_filter] at hs
-    have pys : ℙ[Y <ᵣ s // P] ≤ α.val := by have := prob_lt_monotone (P:=P) hXY (le_refl s); have := hs.2; linarith 
-    obtain ⟨q, hq⟩ := prob_ge_lt_mem_of_lt P Y s 
-    use q 
-    rewrite [Finset.mem_filter]
-    constructor
-    · constructor 
-      · unfold 𝓧₂; exact hq.2.2
-      · rw [hq.2.1]; exact pys 
-    · exact hq.1
-  rewrite [Finset.max'_le_iff]
-  intro y hy 
-  obtain ⟨t, ht⟩ := sinS y hy 
-  calc y ≤ t := ht.2
-       _ ≤ 𝓢₂.max' h₂ := Finset.le_max' 𝓢₂ t ht.1
 
 theorem VaR_translation_invariant : FinVaR1 P (fun ω => X ω + c) α = FinVaR1 P X α + c := sorry
 
