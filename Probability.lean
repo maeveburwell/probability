@@ -4,6 +4,7 @@
 import Probability.Probability.Prelude
 import Probability.Probability.Defs
 import Probability.Probability.Basic
---import Probability.Probability.Induction
+
+import Probability.Risk.VaR
 
 import Probability.MDP.Histories
