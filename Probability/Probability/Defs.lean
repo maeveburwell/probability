@@ -5,9 +5,18 @@ import Mathlib.Algebra.Notation.Pi.Defs -- operations on functions
 import Mathlib.Algebra.Module.PointwisePi -- for smul_pi
 import Mathlib.LinearAlgebra.Matrix.DotProduct -- for monotonicity
 
+
+----------- Generic results -----------------
+
+theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
+    by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
+
+theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
+    fun h1 h2 => false_of_le_gt h2 h1
+ 
+
 --------------------------- Findist ---------------------------------------------------------------
 
-section Findist
 
 variable {n : ℕ}
 
@@ -46,16 +55,10 @@ theorem nonempty' (P : Findist 0) : False := by have h := P.nonempty; simp only 
 
 end Findist
 
---#synth (OfNat (ℕ → ℕ) 1)
---#check One.toOfNat1
---#synth One (ℕ → ℕ)
---#check Pi.instOne
-end Findist
-
---------------------------- Random Variable -------------------------------------------------------------------
+------------------------ Random Variable --------------------------------------------------
 
 /-!
-Random variables are defined as function. The operations on random variables can be performed
+Random variables are defined as functions. The operations on random variables can be performed
 using the standard notation:
 
 - X + Y is elementwise addition
@@ -202,11 +205,8 @@ theorem one_of_true : 𝕀 ∘ (1 : Fin n → Bool) = (1 : Fin n → ℚ) := by 
 theorem one_of_bool_or_not : B + (¬ᵣ B) = (1 : FinRV n Bool) := by ext ω; unfold FinRV.not; simp
 
 theorem one_of_ind_bool_or_not : (𝕀∘B) + (𝕀∘(¬ᵣ B)) = (1 : FinRV n ℚ) :=
-    by ext ω
-       unfold FinRV.not 𝕀 indicator not
-       by_cases h : B ω
-       · simp [h]
-       · simp [h]
+    by ext ω; unfold FinRV.not 𝕀 indicator not
+       by_cases h : B ω <;> simp [h]
 
 variable {X Y: FinRV n ℚ} {Xs : Fin k → FinRV n ℚ}
 
@@ -218,13 +218,34 @@ theorem rv_prod_sum_additive  : ∑ i, Y * (Xs i) = Y * (∑ i, Xs i) :=
 variable {g : Fin k → ℚ}
 
 theorem rv_prod_const : ∀i, (g ∘ L) * (L =ᵢ i) = (g i) • (L =ᵢ i) := 
-    by intro i; ext ω; 
-       by_cases h : L ω = i 
-       repeat simp [h] 
+    by intro i; ext ω; by_cases h : L ω = i <;> simp [h] 
+
+variable {β : Type}
+
+theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  :
+    (Finset.univ.image X).Nonempty :=
+  match n with
+  | Nat.zero => P.nonempty' |> False.elim
+  | Nat.succ _ => Finset.image_nonempty.mpr Finset.univ_nonempty
+
+def FinRV.min [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
+  (Finset.univ.image X).min' (rv_image_nonempty P X)
+
+def FinRV.max [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β) : β :=
+  (Finset.univ.image X).max' (rv_image_nonempty P X)
+
+variable {X : FinRV n ℚ}
+
+theorem rv_omega_le_max (P : Findist n) : ∀ω, X ω ≤ (FinRV.max P X) :=
+    by intro ω
+       have h : X ω ∈ (Finset.image X Finset.univ) := Finset.mem_image_of_mem X (Finset.mem_univ ω)
+       simpa using Finset.le_max' (Finset.image X Finset.univ) (X ω) h
+
 
 end RandomVariable
 
 ------------------------------ Probability ---------------------------
+section Probability 
 
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
@@ -262,7 +283,6 @@ theorem prod_zero_of_prob_zero : ℙ[B // P] = 0 → (P.p * (𝕀∘B) = 0) := b
 def PMF {K : ℕ} (pmf : Fin K → ℚ) (P : Findist n) (L : FinRV n (Fin K)) :=
     ∀ k : Fin K, pmf k = ℙ[ L =ᵣ k // P]
 
-namespace PMF
 
 variable {n : ℕ} {k : ℕ}  {L : FinRV n (Fin k)}
 variable {pmf : Fin k → ℚ} {P : Findist n}
@@ -272,24 +292,31 @@ theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < k :=
   | Nat.zero => Fin.pos <| L ⟨0,P.nonempty⟩
   | Nat.succ k₂ => Nat.zero_lt_succ k₂
 
+end Probability
+
+------------------------------ CDF ----------------------
+
+section CDF
+
+variable {n : ℕ}
+
+def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
+
+variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
 
-end PMF
+end CDF
 
 ------------------------------ Expectation ----------------------
 
 /-!
 Definitions and main properties of the expectation operator
 
-
 Main results
   - Monotonicity of expectations 
   - Correspondence between expectations and probabilities (indicator functions)
   - Decomposition with a discrete random variables, used in the proofs of LOTUS and TLE
 -/
-
-
-
 
 variable {n : ℕ} (P : Findist n) (X Y Z: FinRV n ℚ) (B : FinRV n Bool)
 
@@ -301,7 +328,6 @@ notation "𝔼[" X "//" P "]" => expect P X
 
 --theorem exp_eq_correct : 𝔼[X // P] = ∑ v ∈ ((List.finRange P.length).map X).toFinset, v * ℙ[ X =ᵣ v // P]
 
-@[simp]
 theorem prob_eq_exp_ind : ℙ[B // P] = 𝔼[𝕀 ∘ B // P] := by simp only [expect, probability]
 
 /-- Conditional expectation operator -/
@@ -392,7 +418,6 @@ theorem exp_cond_const : ∀ i, ℙ[L =ᵣ i //   P] ≠ 0 → 𝔼[g ∘ L | L 
 
 end Expectation_properties
 
-
 -- Derived properties from the properties of expectation
 section Probability_properties
 
@@ -405,8 +430,5 @@ theorem ind_monotone : (∀ ω, A ω → B ω) → (𝕀∘A) ≤ (𝕀∘B) := 
   · simp_all [indicator] 
   · by_cases h2 : B ω
     repeat simp_all [indicator]
-
-
-
 
 end Probability_properties 
