@@ -36,7 +36,7 @@ theorem in_prob (P : Findist n) : Prob ℙ[B // P] := ⟨ge_zero, le_one⟩
 end Findist
 
 
--------- Mnotonicity of ranodm variables --------------------------------------------
+-------- Mnotonicity of random variables --------------------------------------------
 
 section RandomVariables
 

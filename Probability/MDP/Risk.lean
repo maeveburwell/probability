@@ -246,11 +246,16 @@ theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val
 theorem qset_def : q ∈ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [Quantile, IsQuantile]
 
 theorem qset_not_def : q ∉ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] < α.val ∨ ℙ[ X ≥ᵣ q // P] < 1 - α.val := by 
-    constructor
-    · intro h2; grind  [qset_def]
-    · intro h2; grind [qset_def]
+    constructor; repeat intro h2; grind [qset_def]
 
 theorem qsetlower_def : q ∈ QuantileLower P X α ↔ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [QuantileLower, IsQuantileLower]
+
+theorem qsetlower_def_lt : q ∈ QuantileLower P X α ↔ ℙ[ X <ᵣ q // P] ≤ α.val := 
+    by constructor 
+       · intro h; have := qsetlower_def.mp h; rw [prob_lt_of_ge]; linarith
+       · intro h; rw [prob_lt_of_ge] at h;
+         suffices  ℙ[X≥ᵣq // P] ≥ 1-α.val from this   
+         linarith 
 
 theorem qset_ub_lt : q ∈ Quantile P X α → ℙ[ X <ᵣ q // P] ≤ α.val :=
   by intro h
@@ -266,7 +271,15 @@ theorem qset_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X <ᵣ q //
        have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by rw [prob_ge_of_lt]; linarith
        exact qset_of_cond ⟨h1.1, h2⟩
 
-theorem prob_lt_le_monotone (P : Findist n) (X : FinRV n ℚ) : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
+theorem qsetlower_of_cond : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val → q ∈ QuantileLower P X α :=
+    by intro h; simp_all [QuantileLower, IsQuantileLower]
+
+theorem qsetlower_of_cond_lt : ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X <ᵣ q // P] ≤ α.val → q ∈ QuantileLower P X α :=
+    by intro h1
+       have h2 : ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by rw [prob_ge_of_lt]; linarith
+       exact qsetlower_of_cond ⟨h1.1, h2⟩
+
+theorem prob_lt_le_monotone : q > t → ℙ[X <ᵣ q // P] ≥ ℙ[X ≤ᵣ t // P] :=
     by intro h
        unfold probability dotProduct
        apply Finset.sum_le_sum
@@ -305,8 +318,34 @@ theorem var_prob_cond : IsVaR P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α
          simp at hc
          obtain ⟨q, hq⟩ := hc
          have := qset_ub_lt hq.1
-         have := prob_lt_le_monotone P X hq.2
+         have := prob_lt_le_monotone (P:=P) (X:=X) hq.2
          linarith
+
+theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ α.val < ℙ[ X ≤ᵣ v // P]) :=
+  by constructor
+     · intro h
+       constructor
+       · have h1 : 1 - ℙ[X<ᵣv//P] ≥ 1 - α.val := by simp_all [IsVaR2,IsGreatest,QuantileLower,IsQuantileLower,prob_ge_of_lt]
+         linarith
+       · by_contra! hc
+         obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
+         have h3 : q ∈ QuantileLower P X α := by
+            rw [←hq.2,prob_lt_of_ge] at hc
+            suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this 
+            linarith
+         exact false_of_le_gt (h.2 h3) hq.1
+     · intro h
+       unfold IsVaR2
+       constructor
+       · exact qsetlower_of_cond_lt ⟨le_of_lt h.2, h.1⟩
+       · unfold upperBounds
+         by_contra! hc
+         simp at hc
+         obtain ⟨q, hq⟩ := hc
+         have hu : ℙ[X ≤ᵣ v // P] ≤ α.val := 
+            calc ℙ[X ≤ᵣ v // P] ≤  ℙ[X <ᵣ q // P] := prob_lt_le_monotone hq.2
+                 _ ≤ α.val := qsetlower_def_lt.mp hq.1  
+         exact false_of_lt_ge h.2 hu 
 
 -- This is the main correctness proof
 theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
@@ -318,11 +357,9 @@ theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v :=
 theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v := 
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest,IsQuantileLower,IsQuantile]
 
-theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := 
-    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR2,Quantile,IsGreatest,QuantileLower]; sorry 
 
 theorem var2_is_quantilelower : IsVaR2 P X α v → IsQuantileLower P X α v := 
-    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,IsGreatest,IsQuantileLower]; sorry
+    fun h => by simp_all only [Set.mem_setOf_eq,IsVaR2,QuantileLower,IsGreatest,Set.mem_setOf_eq]
 
 theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v := 
     by simp[IsQuantile, IsQuantileLower]
@@ -350,7 +387,13 @@ theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Qua
 
 example {A B : Set ℚ} {v : ℚ} (h : A ⊆ B) : v ∈ upperBounds B → v ∈ upperBounds A := fun h1 _ a1 => h1 (h a1)
 
-      
+theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by 
+    intro h 
+    unfold IsQuantile 
+    unfold IsVaR2 at h 
+    sorry 
+
+
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
     constructor 
     · intro h 
