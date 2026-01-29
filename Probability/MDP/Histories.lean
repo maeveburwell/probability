@@ -85,7 +85,7 @@ def Hist.last : Hist M → Fin M.S
 
 /-- Number of histories of length t. -/
 @[simp]
-def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t 
+def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t
 
 theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
 
@@ -129,55 +129,27 @@ lemma Nat.sum_one_prod_cancel (n : ℕ) {m : ℕ} (h : 0 < m) : (m-1) * n + n = 
 
 /-- Compute the index of a history  -/
 def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) := 
-    match h with 
-    | Hist.init s => ⟨s, by simp only [numhist, Hist.length, pow_zero, mul_one, Fin.is_lt]⟩
-    | Hist.foll h' a s => 
-        let n' := M.hist_to_idx h'
-        let n := M.SA * ↑n' + (a * M.S + s)
-        have h : a * M.S + s < M.SA := 
-            by unfold MDP.SA
-               calc a * M.S + s < a * M.S + M.S := 
-                        by grw [Nat.le_sub_one_of_lt s.2]
-                           apply Nat.add_lt_add_iff_left.mpr 
-                           exact Nat.sub_one_lt_of_lt  M.S_ne 
-                    _ ≤ (M.A-1) * M.S + M.S := by grw [Nat.le_sub_one_of_lt a.2]
-                    _ ≤ M.SA := 
-                        by unfold MDP.SA
-                           have := M.A_ne
-                           rw [Nat.sum_one_prod_cancel]
-                           · rw [Nat.mul_comm]
-                           · exact M.A_ne 
-        ⟨n, 
-         by have xx : ↑n' ≤ M.numhist h'.length - 1 := Nat.le_sub_one_of_lt n'.2
-            have h2 : a * M.S + s ≤ M.SA - 1 := Nat.le_sub_one_of_lt h 
-            unfold numhist at xx ⊢
-            unfold Hist.length
-            subst n
-            rw [Nat.pow_add]
-            rw [← Nat.mul_assoc]
-            rw [Nat.mul_comm]
-            rw [Nat.mul_assoc]
-            nth_rw 3 [Nat.mul_comm]
-            have h4 : M.SA ≤ M.SA * M.SA ^ h'.length * M.S := by 
-                rw [Nat.mul_assoc]
-                apply Nat.le_mul_of_pos_right M.SA
-                apply Nat.mul_pos 
-                · exact Nat.pow_pos M.SA_ne
-                · exact M.S_ne
-            have h5 : 0 < M.SA * M.SA ^ h'.length * M.S  := 
-              calc 0 < M.SA := M.SA_ne
-                   _ ≤  M.SA * M.SA ^ h'.length * M.S := h4  
-            calc ↑n' * M.SA + (↑a * M.S + ↑s) ≤ (M.S * M.SA ^ h'.length - 1) * M.SA + (↑a * M.S + ↑s) := by grw [xx]
-                 _ ≤ (M.S * M.SA ^ h'.length - 1) * M.SA + (M.SA - 1) := by grw [h2]
-                 _ = M.S * M.SA ^ h'.length * M.SA - M.SA + (M.SA - 1) := by rw [Nat.sub_one_mul]
-                 _ = M.SA * M.SA ^ h'.length * M.S - M.SA + (M.SA - 1) := by qify; ring_nf -- todo: we should be able to do better
-                 _ = M.SA * M.SA ^ h'.length * M.S - M.SA + M.SA - 1 := by 
-                        rw [Nat.add_sub_assoc M.SA_ne (M.SA * M.SA ^ h'.length * M.S - M.SA)]
-                 _ = M.SA * M.SA ^ h'.length * M.S + M.SA - M.SA - 1 := by rw [← Nat.sub_add_comm h4]
-                 _ = M.SA * M.SA ^ h'.length * M.S - 1 := by rw [Nat.add_sub_cancel_right]
-                 _ < M.SA * M.SA ^ h'.length * M.S := by exact Nat.sub_one_lt_of_lt h5
-                 _ = M.SA ^1 * M.SA ^ h'.length * M.S := by simp 
-            ⟩
+  match h with 
+  | Hist.init s => ⟨s, by simp [numhist, Hist.length]⟩
+  | Hist.foll h' a s =>  
+      let ⟨n', hn'⟩ := M.hist_to_idx h'
+      let n := M.SA * n' + (a.val * M.S + s.val)
+      have h_as : a.val * M.S + s.val < M.SA := by
+        unfold MDP.SA
+        exact Nat.add_lt_add_of_lt_of_le 
+          (Nat.mul_lt_mul_of_pos_right a.2 M.S_ne) 
+          (Nat.le_of_lt s.2)
+      ⟨n, by
+        unfold numhist Hist.length
+        calc n = M.SA * n' + (a.val * M.S + s.val) := rfl
+             _ < M.SA * (M.S * M.SA ^ h'.length) + M.SA := 
+                 Nat.add_lt_add_of_lt_of_le 
+                   (Nat.mul_lt_mul_of_pos_left hn' M.SA_ne) 
+                   (Nat.le_sub_one_of_lt h_as)
+             _ = M.S * M.SA ^ (h'.length + 1) := by
+                 unfold MDP.SA; ring
+      ⟩
+
 
 example {m n o : ℕ} (h : n < o) (h1 : 1 < m)  : m^n ≤ m^o := by apply?
 
