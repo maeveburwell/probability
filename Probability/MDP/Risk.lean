@@ -18,7 +18,7 @@ theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
     by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
 
 theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
-    fun h1 h2 => false_of_le_gt h2 h1 
+    fun h1 h2 => false_of_le_gt h2 h1
 
 /-- shows CDF is non-decreasing -/
 theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
@@ -83,14 +83,14 @@ variable (P : Findist n) (X : FinRV n ℚ) (t : ℚ)
 
 -- TODO: this requires the condition that: t < (FinRV.max P X)
 
-theorem rv_ge_lt_mem_of_lt : ∃q ≥ t, (X <ᵣ q) = (X <ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry 
+theorem rv_ge_lt_mem_of_lt : ∃q ≥ t, (X <ᵣ q) = (X <ᵣ t) ∧ q ∈ (Finset.univ.image X) := sorry
 
-theorem prob_ge_lt_mem_of_lt : ∃q ≥ t, ℙ[X <ᵣ q // P] = ℙ[X <ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := by 
+theorem prob_ge_lt_mem_of_lt : ∃q ≥ t, ℙ[X <ᵣ q // P] = ℙ[X <ᵣ t // P] ∧ q ∈ (Finset.univ.image X) := by
     obtain ⟨q, hq ⟩ := rv_ge_lt_mem_of_lt X t
-    use q 
+    use q
     constructor
-    · exact hq.1 
-    · constructor 
+    · exact hq.1
+    · constructor
       · exact congrArg (probability P) hq.2.1
       · exact hq.2.2
 
@@ -223,10 +223,10 @@ def Quantile : Set ℚ := { q | IsQuantile P X α q}
 def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
 
 /-- Value `q` is the Value at Risk at `α` of `X` and probability `P`  -/
-def IsVaR : Prop := IsGreatest (Quantile P X α) v 
+def IsVaR : Prop := IsGreatest (Quantile P X α) v
 
 /-- A simpler, equivalent definition of Value at Risk  -/
-def IsVaR2 : Prop := IsGreatest (QuantileLower P X α) v 
+def IsVaR2 : Prop := IsGreatest (QuantileLower P X α) v
 
 -- theorem prob_monotone_sharp {t₁ t₂ : ℚ} : t₁ < t₂ → ℙ[X ≥ᵣ t₂ // P] ≤ ℙ[X >ᵣ t₁ // P] :=
 
@@ -243,17 +243,17 @@ theorem qset_ub : q ∈ Quantile P X α → ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val
 
 theorem qset_def : q ∈ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [Quantile, IsQuantile]
 
-theorem qset_not_def : q ∉ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] < α.val ∨ ℙ[ X ≥ᵣ q // P] < 1 - α.val := by 
+theorem qset_not_def : q ∉ Quantile P X α ↔ ℙ[ X ≤ᵣ q // P ] < α.val ∨ ℙ[ X ≥ᵣ q // P] < 1 - α.val := by
     constructor; repeat intro h2; grind [qset_def]
 
 theorem qsetlower_def : q ∈ QuantileLower P X α ↔ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val := by simp_all [QuantileLower, IsQuantileLower]
 
-theorem qsetlower_def_lt : q ∈ QuantileLower P X α ↔ ℙ[ X <ᵣ q // P] ≤ α.val := 
-    by constructor 
+theorem qsetlower_def_lt : q ∈ QuantileLower P X α ↔ ℙ[ X <ᵣ q // P] ≤ α.val :=
+    by constructor
        · intro h; have := qsetlower_def.mp h; rw [prob_lt_of_ge]; linarith
        · intro h; rw [prob_lt_of_ge] at h;
-         suffices  ℙ[X≥ᵣq // P] ≥ 1-α.val from this   
-         linarith 
+         suffices  ℙ[X≥ᵣq // P] ≥ 1-α.val from this
+         linarith
 
 theorem qset_ub_lt : q ∈ Quantile P X α → ℙ[ X <ᵣ q // P] ≤ α.val :=
   by intro h
@@ -329,7 +329,7 @@ theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ 
          obtain ⟨q,hq⟩ := prob_lt_epsi_eq_le P X v
          have h3 : q ∈ QuantileLower P X α := by
             rw [←hq.2,prob_lt_of_ge] at hc
-            suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this 
+            suffices ℙ[X≥ᵣq//P] ≥ 1 - α.val from this
             linarith
          exact false_of_le_gt (h.2 h3) hq.1
      · intro h
@@ -340,53 +340,53 @@ theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ 
          by_contra! hc
          simp at hc
          obtain ⟨q, hq⟩ := hc
-         have hu : ℙ[X ≤ᵣ v // P] ≤ α.val := 
+         have hu : ℙ[X ≤ᵣ v // P] ≤ α.val :=
             calc ℙ[X ≤ᵣ v // P] ≤  ℙ[X <ᵣ q // P] := prob_lt_le_monotone hq.2
-                 _ ≤ α.val := qsetlower_def_lt.mp hq.1  
-         exact false_of_lt_ge h.2 hu 
+                 _ ≤ α.val := qsetlower_def_lt.mp hq.1
+         exact false_of_lt_ge h.2 hu
 
 -- This is the main correctness proof
 theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
     by rewrite[var_prob_cond]; exact ⟨var1_prob_lt_var_le_alpha, var1_prob_le_var_gt_alpha⟩
 
-theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v := 
+theorem var_is_quantile : IsVaR P X α v → IsQuantile P X α v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest]
 
-theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v := 
+theorem var_is_quantilelower : IsVaR P X α v → IsQuantileLower P X α v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR,Quantile,IsGreatest,IsQuantileLower,IsQuantile]
 
 
-theorem var2_is_quantilelower : IsVaR2 P X α v → IsQuantileLower P X α v := 
+theorem var2_is_quantilelower : IsVaR2 P X α v → IsQuantileLower P X α v :=
     fun h => by simp_all only [Set.mem_setOf_eq,IsVaR2,QuantileLower,IsGreatest,Set.mem_setOf_eq]
 
-theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v := 
+theorem quantile_implies_quantilelower : IsQuantile P X α v → IsQuantileLower P X α v :=
     by simp[IsQuantile, IsQuantileLower]
 
-theorem quantile_nonempty : (Quantile P X α).Nonempty := 
+theorem quantile_nonempty : (Quantile P X α).Nonempty :=
   Set.nonempty_def.mpr ⟨ VaR[X// P,α], finvar1_correct  |> var_is_quantile ⟩
 
 theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun _ => quantile_implies_quantilelower
 
-theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Quantile P X α) := by 
-    intro q₁ h 
+theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Quantile P X α) := by
+    intro q₁ h
     by_cases h2 : q₁ ∈ Quantile P X α
     · exact ⟨q₁, h2, le_refl q₁⟩
     · rewrite [qset_not_def] at h2
-      rewrite [qsetlower_def] at h 
+      rewrite [qsetlower_def] at h
       cases' h2 with h2l h2r
       · obtain ⟨q₂, hq₂⟩ : (Quantile P X α).Nonempty := quantile_nonempty
         use q₂
-        constructor 
+        constructor
         · exact hq₂
         · by_contra! ine
-          exact ge_trans (prob_le_monotone (le_refl X) (le_of_lt ine)) (qset_lb hq₂) |> false_of_lt_ge h2l 
-      · exfalso; exact false_of_lt_ge h2r h 
+          exact ge_trans (prob_le_monotone (le_refl X) (le_of_lt ine)) (qset_lb hq₂) |> false_of_lt_ge h2l
+      · exfalso; exact false_of_lt_ge h2r h
 
-theorem isquantile_le_isquantilelower : IsCofinalFor (Quantile P X α) (QuantileLower P X α) := 
+theorem isquantile_le_isquantilelower : IsCofinalFor (Quantile P X α) (QuantileLower P X α) :=
     HasSubset.Subset.iscofinalfor quantile_subset_quantilelower
 
-theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by 
-    intro h 
+theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by
+    intro h
     constructor
     · suffices ℙ[X≤ᵣv//P] > α.val by linarith
       exact (var2_prob_cond.mp h).2
@@ -394,14 +394,14 @@ theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by
 
 
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
-    constructor 
-    · intro h 
-      constructor 
-      · exact var_is_quantilelower h 
+    constructor
+    · intro h
+      constructor
+      · exact var_is_quantilelower h
       · exact (upperBounds_mono_of_isCofinalFor isquantilelower_le_isquantile) h.2
-    · intro h 
-      constructor 
-      · exact var2_is_quantile h  
+    · intro h
+      constructor
+      · exact var2_is_quantile h
       · exact (upperBounds_mono_of_isCofinalFor isquantile_le_isquantilelower) h.2
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
@@ -464,10 +464,29 @@ theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ
           · unfold quantile_srt
             split_ifs
             · extract_lets αval' _ α' h1' h2' h3' h4'
+              set k' := quantile_srt n α' (Fin.tail p) (Fin.tail x) h1' h2' h3' h4'
               specialize ih α' (Fin.tail p) (Fin.tail x) h1' h2' h3' h4'
               simp_all
               constructor
-              · sorry
+              · have h11 : (Finset.Ico (0:Fin (Nat.succ (Nat.succ n))) (Fin.succ k')) =
+                          insert 0 ((Finset.Ico (0:Fin (Nat.succ n)) k').map (Fin.succEmb (n:=n.succ))) :=
+                  by
+                    ext i
+                    simp [Finset.mem_Ico]
+                    constructor
+                    · intro h12
+                      by_cases h13 : i = 0
+                      · rw [h13]; simp
+                      · simp_all
+                        have h15 : 0 < i := by exact (Fin.pos_iff_ne_zero).2 h13
+                        have h16 : 1 ≤ i.val := Nat.succ_le_iff.2 (by simpa using h15)
+                        exact Fin.le_def.2 h16
+                    sorry
+                have h14 : ∑ i ∈ Finset.Ico (0:Fin (Nat.succ n)) k', p i.succ ≤ α'.val := by
+                  exact ih.1
+                rw [h11]
+                simp at h14 ⊢
+                sorry
               · sorry
             · contradiction
             --simp [h8]
@@ -525,70 +544,70 @@ section VaR_properties
 
 variable {P : Findist n} {X Y : FinRV n ℚ} {q q₁ v₁ v₂ c : ℚ} {α : RiskLevel}
 
---(IsQuantileLower P X α q₁) → ∃q₂ ≥ q₁, IsQuantileLower P Y α q₂ := by 
+--(IsQuantileLower P X α q₁) → ∃q₂ ≥ q₁, IsQuantileLower P Y α q₂ := by
 theorem quantile_le_monotone : X ≤ Y → IsCofinalFor (QuantileLower P X α) (IsQuantileLower P Y α) := by
   intro hle q₁ hvar₁
   have hq₁ := le_refl q₁
   exact ⟨q₁, ⟨le_trans hvar₁ (prob_ge_antitone hle hq₁), hq₁⟩⟩
-    
-theorem var2_monotone : X ≤ Y → IsVaR2 P X α v₁ → IsVaR2 P Y α v₂ → v₁ ≤ v₂ := 
-  fun hle hv1 hv2 => upperBounds_mono_of_isCofinalFor (quantile_le_monotone hle) hv2.2 hv1.1 
+
+theorem var2_monotone : X ≤ Y → IsVaR2 P X α v₁ → IsVaR2 P Y α v₂ → v₁ ≤ v₂ :=
+  fun hle hv1 hv2 => upperBounds_mono_of_isCofinalFor (quantile_le_monotone hle) hv2.2 hv1.1
 
 
 --- some probablity interlude that will need to be moved ---------------------
 
 variable {c x : ℚ}
 
-theorem rv_le_cashinvar (c:ℚ): (X ≤ᵣ x) = (X + c•1 ≤ᵣ x + c) := by ext ω; simp 
+theorem rv_le_cashinvar (c:ℚ): (X ≤ᵣ x) = (X + c•1 ≤ᵣ x + c) := by ext ω; simp
 
 theorem prob_le_cashinvar (c:ℚ) : ℙ[X ≤ᵣ x // P] = ℙ[X + c•1 ≤ᵣ x + c // P] := congrArg (probability P) (rv_le_cashinvar c)
 
-theorem rv_lt_cashinvar (c:ℚ) : (X <ᵣ x) = (X + c•1 <ᵣ x + c) := by ext ω; simp 
+theorem rv_lt_cashinvar (c:ℚ) : (X <ᵣ x) = (X + c•1 <ᵣ x + c) := by ext ω; simp
 
 theorem prob_lt_cashinvar (c:ℚ) : ℙ[X <ᵣ x // P] = ℙ[X + c•1 <ᵣ x + c // P] := congrArg (probability P) (rv_lt_cashinvar c)
 
-theorem rv_ge_cashinvar (c:ℚ) : (X ≥ᵣ x) = (X + c•1 ≥ᵣ x + c) := by ext ω; simp 
+theorem rv_ge_cashinvar (c:ℚ) : (X ≥ᵣ x) = (X + c•1 ≥ᵣ x + c) := by ext ω; simp
 
 theorem prob_ge_cashinvar (c:ℚ) : ℙ[X ≥ᵣ x // P] = ℙ[X + c•1 ≥ᵣ x + c // P] := congrArg (probability P) (rv_ge_cashinvar c)
 
-theorem rv_gt_cashinvar (c:ℚ) : (X >ᵣ x) = (X + c•1 >ᵣ x + c) := by ext ω; simp 
+theorem rv_gt_cashinvar (c:ℚ) : (X >ᵣ x) = (X + c•1 >ᵣ x + c) := by ext ω; simp
 
 theorem prob_gt_cashinvar (c:ℚ) : ℙ[X >ᵣ x // P] = ℙ[X + c•1 >ᵣ x + c // P] := congrArg (probability P) (rv_gt_cashinvar c)
 
 --- end probability interlude
 
-theorem quantilelower_cashinv : q ∈ QuantileLower P X α ↔ (q+c) ∈ QuantileLower P (X+c•1) α := by 
+theorem quantilelower_cashinv : q ∈ QuantileLower P X α ↔ (q+c) ∈ QuantileLower P (X+c•1) α := by
   constructor
-  · intro h; rw [qsetlower_def, prob_ge_cashinvar c] at h; exact h 
-  · intro h; rw [qsetlower_def, prob_ge_cashinvar c]; exact h 
+  · intro h; rw [qsetlower_def, prob_ge_cashinvar c] at h; exact h
+  · intro h; rw [qsetlower_def, prob_ge_cashinvar c]; exact h
 
-theorem quantilelower_cash_image : QuantileLower P (X+c•1) α = (fun x ↦ x+c) '' QuantileLower P X α := by 
+theorem quantilelower_cash_image : QuantileLower P (X+c•1) α = (fun x ↦ x+c) '' QuantileLower P X α := by
   apply Set.eq_of_subset_of_subset
   · unfold Set.image
     intro qc hqc
     --rw [quantilelower_cashinv (c:=c)] at hq
-    use qc-c 
-    constructor 
+    use qc-c
+    constructor
     · generalize hqcq : qc - c = q
       rw [quantilelower_cashinv (c:=c)]
-      have hqcq2 : qc = q + c := by rw[←hqcq]; ring 
+      have hqcq2 : qc = q + c := by rw[←hqcq]; ring
       rw [hqcq2] at hqc
-      exact hqc 
-    · simp 
-  · unfold Set.image 
+      exact hqc
+    · simp
+  · unfold Set.image
     intro q hq
-    obtain ⟨a, ha⟩ := hq 
-    rw [quantilelower_cashinv (c:=c)] at ha 
-    rw [←ha.2] 
-    exact ha.1 
+    obtain ⟨a, ha⟩ := hq
+    rw [quantilelower_cashinv (c:=c)] at ha
+    rw [←ha.2]
+    exact ha.1
 
 theorem const_monotone_univ : Monotone (fun x ↦ x + c)  := add_left_mono
 
 theorem VaR2_translation_invariant : IsVaR2 P X α v → IsVaR2 P (X+c•1) α (v+c) := by
-    intro h 
-    unfold IsVaR2 at ⊢ 
+    intro h
+    unfold IsVaR2 at ⊢
     rw [quantilelower_cash_image]
-    exact MonotoneOn.map_isGreatest (Monotone.monotoneOn add_left_mono (QuantileLower P X α)) h 
+    exact MonotoneOn.map_isGreatest (Monotone.monotoneOn add_left_mono (QuantileLower P X α)) h
 
 theorem VaR_translation_invariant : VaR[X + c•1 // P, α] = VaR[X + c•1 // P, α] + c := sorry
 
@@ -597,4 +616,3 @@ theorem VaR_positive_homog (hc : c > 0) : FinVaR1 P (fun ω => c * X ω) α = c 
 end VaR_properties
 
 end Risk
-
