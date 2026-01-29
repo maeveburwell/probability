@@ -370,7 +370,6 @@ theorem quantile_nonempty : (Quantile P X α).Nonempty :=
 theorem quantile_subset_quantilelower : Quantile P X α ⊆ QuantileLower P X α := fun _ => quantile_implies_quantilelower
 
 theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Quantile P X α) := by 
-  --q₁ ∈ QuantileLower P X α → ∃q₂ ≥ q₁, q₂ ∈ Quantile P X α := by 
     intro q₁ h 
     by_cases h2 : q₁ ∈ Quantile P X α
     · exact ⟨q₁, h2, le_refl q₁⟩
@@ -385,13 +384,18 @@ theorem isquantilelower_le_isquantile : IsCofinalFor (QuantileLower P X α) (Qua
           exact ge_trans (prob_le_monotone (le_refl X) (le_of_lt ine)) (qset_lb hq₂) |> false_of_lt_ge h2l 
       · exfalso; exact false_of_lt_ge h2r h 
 
+theorem isquantile_le_isquantilelower : IsCofinalFor (Quantile P X α) (QuantileLower P X α) := 
+    HasSubset.Subset.iscofinalfor quantile_subset_quantilelower
+
+
 example {A B : Set ℚ} {v : ℚ} (h : A ⊆ B) : v ∈ upperBounds B → v ∈ upperBounds A := fun h1 _ a1 => h1 (h a1)
 
 theorem var2_is_quantile : IsVaR2 P X α v → IsQuantile P X α v := by 
     intro h 
-    unfold IsQuantile 
-    unfold IsVaR2 at h 
-    sorry 
+    constructor
+    · suffices ℙ[X≤ᵣv//P] > α.val by linarith
+      exact (var2_prob_cond.mp h).2
+    · exact var2_is_quantilelower h
 
 
 theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
@@ -402,8 +406,9 @@ theorem var_eq_var2 : IsVaR P X α v ↔ IsVaR2 P X α v := by
       · exact (upperBounds_mono_of_isCofinalFor isquantilelower_le_isquantile) h.2
     · intro h 
       constructor 
-      · sorry 
-      · sorry 
+      · exact var2_is_quantile h  
+      · exact (upperBounds_mono_of_isCofinalFor isquantile_le_isquantilelower) h.2
+
 
 ----------------------------- Fast VaR computation -------------------------------------------------------
 
