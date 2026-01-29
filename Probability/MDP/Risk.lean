@@ -16,16 +16,6 @@ theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
 theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
     fun h1 h2 => false_of_le_gt h2 h1
 
-/-- shows CDF is non-decreasing -/
-theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
-  intro ht; unfold cdf
-  apply prob_le_monotone (le_refl X) ht
-
-/-- Shows CDF is monotone in random variable  -/
-theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
-  intro h; unfold cdf
-  apply prob_le_monotone h (le_refl t)
-
 variable {β : Type}
 
 theorem rv_image_nonempty  [DecidableEq β] [LinearOrder β] (P : Findist n) (X : FinRV n β)  :
@@ -207,7 +197,7 @@ notation "VaR[" X "//" P ", " α "]" => FinVaR1 P X α
 variable {n : ℕ} (P : Findist n) (X Y : FinRV n ℚ) (α : RiskLevel) (q v : ℚ)
 
 /-- Proof the `q` is an `α`-quantile of `X` --/
-def IsQuantile  : Prop := ℙ[ X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val
+def IsQuantile  : Prop := ℙ[X ≤ᵣ q // P ] ≥ α.val ∧ ℙ[X ≥ᵣ q // P] ≥ 1 - α.val
 
 /-- Proof that `q` is a lower bound on the `α`-quantile of `X` --/
 def IsQuantileLower : Prop := ℙ[ X ≥ᵣ q // P] ≥ 1 - α.val
@@ -218,7 +208,7 @@ def Quantile : Set ℚ := { q | IsQuantile P X α q}
 /-- Set of lower bounds on a quantile at `α` -/
 def QuantileLower : Set ℚ := {q | IsQuantileLower P X α q}
 
-/-- Value `q` is the Value at Risk at `α` of `X` and probability `P`  -/
+/-- Value `v` is the Value at Risk at `α` of `X` and probability `P`  -/
 def IsVaR : Prop := IsGreatest (Quantile P X α) v
 
 /-- A simpler, equivalent definition of Value at Risk  -/
@@ -340,6 +330,8 @@ theorem var2_prob_cond : IsVaR2 P X α v ↔ (ℙ[X <ᵣ v // P] ≤ α.val ∧ 
             calc ℙ[X ≤ᵣ v // P] ≤  ℙ[X <ᵣ q // P] := prob_lt_le_monotone hq.2
                  _ ≤ α.val := qsetlower_def_lt.mp hq.1
          exact false_of_lt_ge h.2 hu
+
+--TODO: should we also show that IsVaR is a singleton? That is, is it unique?
 
 -- This is the main correctness proof
 theorem finvar1_correct : IsVaR P X α (FinVaR1 P X α) :=
