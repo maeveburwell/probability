@@ -71,30 +71,21 @@ def Hist.length : Hist M → ℕ
   | init _ => 0
   | Hist.foll h _ _ => 1 + length h
 
-
-def MDP.HistT (M : MDP) (t : ℕ) : Type := {m : Hist M // m.length = t}
+def MDP.HistT (M : MDP) (t : ℕ) := {m : Hist M // m.length = t}
 
 /-- Nonempty histories -/
-abbrev HistNE (M : MDP) : Type := {m : Hist M // m.length ≥ 1}
+abbrev HistNE (M : MDP) := {m : Hist M // m.length ≥ 1}
 
 /-- Returns the last state of the history -/
 def Hist.last : Hist M → Fin M.S
   | init s => s
   | Hist.foll _ _ s => s
 
-
 /-- Number of histories of length t. -/
 @[simp]
 def MDP.numhist (M : MDP) (t : ℕ) : ℕ := M.S * M.SA^t
 
 theorem hist_len_zero : M.numhist 0 = M.S := by simp [MDP.numhist]
-
-example (m n o : ℕ) (h : o > 0) (h2 : m > n) : o * m > o * n := by exact Nat.mul_lt_mul_of_pos_left h2 h
-example (m n o : ℕ) (h : o > 0) (h2 : m > n) : m * o > n * o := by exact Nat.mul_lt_mul_of_pos_right h2 h
-example (m n o : ℕ) (h : o > 0) (h2 : m > n) (h3: o ∣ n) (h4 : o ∣ m) : m / o > n / o := by  exact Nat.div_lt_div_of_lt_of_dvd h4 h2
-example (m n k : ℕ) (h : k > 0) : m = m*k/k := by exact Eq.symm (Nat.mul_div_left m h)
-
-
 
 /-- Construct i-th history of length t -/
 def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t := 
@@ -111,10 +102,11 @@ def MDP.idx_to_hist (M : MDP) (t : ℕ) (i : Fin (M.numhist t)) : M.HistT t :=
       let h2 : ni < M.numhist t' :=  
         by have h := i.2
            unfold MDP.numhist at h ⊢
-           have h6 : M.SA ∣ M.S*M.SA^t'.succ := by refine Nat.dvd_mul_left_of_dvd ?_ M.S; exact Dvd.intro_left (M.SA.pow t') rfl
+           have h6 : M.SA ∣ M.S*M.SA^t'.succ := 
+                  by apply Nat.dvd_mul_left_of_dvd ?_ M.S; exact Dvd.intro_left (M.SA.pow t') rfl
            have h7 : M.S*M.SA^t' = M.S*M.SA^t'.succ / M.SA :=
               by calc M.S*M.SA^t' = M.S*M.SA^t'* M.SA / M.SA := Eq.symm (Nat.mul_div_left (M.S*M.SA^t') M.SA_ne)
-                      _ = M.S*M.SA^t'.succ / M.SA :=  by rw [Nat.mul_assoc]; rw [← Nat.pow_succ]
+                      _ = M.S*M.SA^t'.succ / M.SA :=  by rw [Nat.mul_assoc,←Nat.pow_succ]
            subst ni 
            rw [h7]
            exact Nat.div_lt_div_of_lt_of_dvd h6 (Nat.sub_lt_of_lt h)
@@ -127,8 +119,8 @@ lemma Nat.sum_one_prod_cancel (n : ℕ) {m : ℕ} (h : 0 < m) : (m-1) * n + n = 
      apply Nat.sub_add_cancel
      exact Nat.le_mul_of_pos_left n h 
 
-/-- Compute the index of a history  -/
-def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) := 
+
+/-
   match h with 
   | Hist.init s => ⟨s, by simp [numhist, Hist.length]⟩
   | Hist.foll h' a s =>  
@@ -149,14 +141,70 @@ def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) :=
              _ = M.S * M.SA ^ (h'.length + 1) := by
                  unfold MDP.SA; ring
       ⟩
+-/
 
+/-- Compute the index of a history  -/
+def MDP.hist_to_idx (M : MDP) (h : Hist M) : Fin (M.numhist h.length) := 
+    match h with 
+    | Hist.init s => ⟨s, by simp only [numhist, Hist.length, pow_zero, mul_one, Fin.is_lt]⟩
+    | Hist.foll h' a s => 
+        let n' := M.hist_to_idx h'
+        let n := M.SA * ↑n' + (a * M.S + s)
+        have h : a * M.S + s < M.SA := 
+            by unfold MDP.SA
+               calc a * M.S + s < a * M.S + M.S := 
+                        by grw [Nat.le_sub_one_of_lt s.2]
+                           exact Nat.add_lt_add_iff_left.mpr (Nat.sub_one_lt_of_lt  M.S_ne)
+                    _ ≤ (M.A-1) * M.S + M.S := by grw [Nat.le_sub_one_of_lt a.2]
+                    _ ≤ M.SA := 
+                        by unfold MDP.SA
+                           rw [Nat.sum_one_prod_cancel]
+                           · rw [Nat.mul_comm]
+                           · exact M.A_ne 
+        ⟨n, 
+         by have h1 : ↑n' ≤ M.numhist h'.length - 1 := Nat.le_sub_one_of_lt n'.2
+            have h2 : a * M.S + s ≤ M.SA - 1 := Nat.le_sub_one_of_lt h 
+            unfold numhist at h1 ⊢
+            unfold Hist.length
+            subst n
+            rw [Nat.pow_add,←Nat.mul_assoc,Nat.mul_comm,Nat.mul_assoc]
+            nth_rw 3 [Nat.mul_comm]
+            have h4 : M.SA ≤ M.SA * M.SA ^ h'.length * M.S := by 
+                rw [Nat.mul_assoc]
+                apply Nat.le_mul_of_pos_right M.SA (Nat.mul_pos (Nat.pow_pos M.SA_ne) M.S_ne)
+            have h5 : 0 < M.SA * M.SA ^ h'.length * M.S  := 
+              calc 0 < M.SA := M.SA_ne
+                   _ ≤  M.SA * M.SA ^ h'.length * M.S := h4  
+            calc ↑n' * M.SA + (↑a * M.S + ↑s) ≤ (M.S * M.SA ^ h'.length - 1) * M.SA + (↑a * M.S + ↑s) := by grw [h1]
+                 _ ≤ (M.S * M.SA ^ h'.length - 1) * M.SA + (M.SA - 1) := by grw [h2]
+                 _ = M.S * M.SA ^ h'.length * M.SA - M.SA + (M.SA - 1) := by rw [Nat.sub_one_mul]
+                 _ = M.SA * M.SA ^ h'.length * M.S - M.SA + (M.SA - 1) := by qify; ring_nf -- commutativity?
+                 _ = M.SA * M.SA ^ h'.length * M.S - M.SA + M.SA - 1 := by 
+                        rw [Nat.add_sub_assoc M.SA_ne (M.SA * M.SA ^ h'.length * M.S - M.SA)]
+                 _ = M.SA * M.SA ^ h'.length * M.S + M.SA - M.SA - 1 := by rw [← Nat.sub_add_comm h4]
+                 _ = M.SA * M.SA ^ h'.length * M.S - 1 := by rw [Nat.add_sub_cancel_right]
+                 _ < M.SA * M.SA ^ h'.length * M.S := by exact Nat.sub_one_lt_of_lt h5
+                 _ = M.SA^1 * M.SA ^ h'.length * M.S := by simp 
+            ⟩
 
-example {m n o : ℕ} (h : n < o) (h1 : 1 < m)  : m^n ≤ m^o := by apply?
+open Function 
 
-example {m n : ℕ} (h : 0 < n) : m ≤ m * n := by exact Nat.le_mul_of_pos_right m h
+def MDP.hist_to_idx' (M : MDP) (h : Hist M) : ℕ × ℕ := ⟨h.length, M.hist_to_idx h⟩
 
-example {m n : ℕ} (h : m < n) : m ≤ n - 1 := by exact Nat.le_sub_one_of_lt h
+-- TODO: note that this definition drops the Fin constraint 
+-- because I did not know how to code it with it when usig a tuple
+def MDP.idx_to_hist' (M : MDP) (ti : ℕ × ℕ) : Hist M := 
+  if h : ti.2 < M.numhist ti.1 then
+    (M.idx_to_hist ti.1 ⟨ti.2, h⟩).1
+  else
+    Hist.init ⟨0, M.S_ne⟩ -- TODO: This is an empty history 
 
+def MDP.hist_idx_valid (M : MDP) := {ti : ℕ × ℕ | ti.2 < M.numhist ti.1}
+
+theorem hist_idx_LeftInverse : ∀M : MDP, LeftInverse M.idx_to_hist' M.hist_to_idx'  := sorry 
+
+-- this is a RightInvOn because we can possibly feed an incorrect index to the history 
+theorem hist_idx_RightInverse : ∀M : MDP, Set.RightInvOn M.idx_to_hist' M.hist_to_idx' M.hist_idx_valid := sorry 
 
 /-- Return the prefix of hist of length k -/
 def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
@@ -166,14 +214,11 @@ def Hist.prefix (k : ℕ) (h : Hist M) : Hist M :=
         if hp.length + 1 ≤ k then hp.foll a s
         else hp.prefix k
 
-
 def MDP.tuple2hist : Hist M × (Fin M.A) × (Fin M.S) → HistNE M
   | ⟨h, as⟩ => ⟨h.foll as.1 as.2, Nat.le.intro rfl⟩
 
 def MDP.hist2tuple : HistNE M → Hist M × (Fin M.A) × (Fin M.S) 
   | ⟨Hist.foll h a s, _ ⟩ => ⟨h, a, s⟩
-
-open Function 
 
 -- mapping between tuples and histories are injective
 
@@ -227,9 +272,6 @@ def HistoriesHorizon : ℕ → Finset (Hist M)
 
 
 abbrev ℋₜ : ℕ → Finset (Hist M) := HistoriesHorizon
-
-
-example {a b c : ℚ} : a * (b + c) = a * b + a * c :=  by exact Rat.mul_add a b c
 
 
 end Histories
