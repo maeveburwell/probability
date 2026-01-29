@@ -4,6 +4,7 @@
 import Probability.Probability.Prelude
 import Probability.Probability.Defs
 import Probability.Probability.Basic
+import Probability.Probability.Quantile
 
 import Probability.Risk.VaR
 
