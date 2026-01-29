@@ -481,7 +481,12 @@ theorem quant_less (n : ℕ) {k : Fin n.succ} (α : RiskLevel) (p x : Fin n.succ
                         have h15 : 0 < i := by exact (Fin.pos_iff_ne_zero).2 h13
                         have h16 : 1 ≤ i.val := Nat.succ_le_iff.2 (by simpa using h15)
                         exact Fin.le_def.2 h16
-                    sorry
+                    · intro h12
+                      rcases h12 with h0 | h1
+                      · subst h0; simp
+                      · constructor
+                        · sorry
+
                 have h14 : ∑ i ∈ Finset.Ico (0:Fin (Nat.succ n)) k', p i.succ ≤ α'.val := by
                   exact ih.1
                 rw [h11]
