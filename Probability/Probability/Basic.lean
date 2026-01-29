@@ -145,6 +145,21 @@ theorem prob_gt_antitone : X ≤ Y → t₁ ≤ t₂ → ℙ[Y >ᵣ t₁ // P] �
   have := prob_le_monotone (P := P) hxy ht 
   linarith 
 
+section CDF
+
+variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
+
+/-- shows CDF is non-decreasing -/
+theorem cdf_nondecreasing : t₁ ≤ t₂ → cdf P X t₁ ≤ cdf P X t₂ := by
+  intro ht; unfold cdf
+  apply prob_le_monotone (le_refl X) ht
+
+/-- Shows CDF is monotone in random variable  -/
+theorem cdf_monotone_xy : X ≤ Y → cdf P X t ≥ cdf P Y t := by
+  intro h; unfold cdf
+  apply prob_le_monotone h (le_refl t)
+
+end CDF
 
 ------------------------------ Expectation ---------------------------
 

@@ -7,7 +7,6 @@ import Mathlib.LinearAlgebra.Matrix.DotProduct -- for monotonicity
 
 --------------------------- Findist ---------------------------------------------------------------
 
-section Findist
 
 variable {n : ℕ}
 
@@ -44,12 +43,6 @@ theorem nonempty (P : Findist n) : n > 0 :=
 
 theorem nonempty' (P : Findist 0) : False := by have h := P.nonempty; simp only [gt_iff_lt, lt_self_iff_false] at h
 
-end Findist
-
---#synth (OfNat (ℕ → ℕ) 1)
---#check One.toOfNat1
---#synth One (ℕ → ℕ)
---#check Pi.instOne
 end Findist
 
 --------------------------- Random Variable -------------------------------------------------------------------
@@ -220,6 +213,7 @@ theorem rv_prod_const : ∀i, (g ∘ L) * (L =ᵢ i) = (g i) • (L =ᵢ i) :=
 end RandomVariable
 
 ------------------------------ Probability ---------------------------
+section Probability 
 
 variable {n : ℕ} (P : Findist n) (B C : FinRV n Bool)
 
@@ -257,7 +251,6 @@ theorem prod_zero_of_prob_zero : ℙ[B // P] = 0 → (P.p * (𝕀∘B) = 0) := b
 def PMF {K : ℕ} (pmf : Fin K → ℚ) (P : Findist n) (L : FinRV n (Fin K)) :=
     ∀ k : Fin K, pmf k = ℙ[ L =ᵣ k // P]
 
-namespace PMF
 
 variable {n : ℕ} {k : ℕ}  {L : FinRV n (Fin k)}
 variable {pmf : Fin k → ℚ} {P : Findist n}
@@ -267,24 +260,37 @@ theorem pmf_rv_k_ge_1 (h : PMF pmf P L)  : 0 < k :=
   | Nat.zero => Fin.pos <| L ⟨0,P.nonempty⟩
   | Nat.succ k₂ => Nat.zero_lt_succ k₂
 
+end Probability
+
+------------------------------ CDF ----------------------
+
+section CDF
+
+variable {n : ℕ}
+
+def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
+
+variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
+
+theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
+    by intro h1 h2; grw [h1] at h2; exact (lt_self_iff_false y).mp h2
+
+theorem false_of_lt_ge {x y : ℚ} : x < y → x ≥ y → False :=
+    fun h1 h2 => false_of_le_gt h2 h1
 
 
-end PMF
+end CDF
 
 ------------------------------ Expectation ----------------------
 
 /-!
 Definitions and main properties of the expectation operator
 
-
 Main results
   - Monotonicity of expectations 
   - Correspondence between expectations and probabilities (indicator functions)
   - Decomposition with a discrete random variables, used in the proofs of LOTUS and TLE
 -/
-
-
-
 
 variable {n : ℕ} (P : Findist n) (X Y Z: FinRV n ℚ) (B : FinRV n Bool)
 

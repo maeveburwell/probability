@@ -8,10 +8,6 @@ open Findist FinRV
 
 variable {n : ℕ}
 
---TODO: many of the basic results below belong to Probability.Defs or Probability.Basic
-
-def cdf (P : Findist n) (X : FinRV n ℚ) (t : ℚ) : ℚ := ℙ[X ≤ᵣ t // P]
-
 variable {P : Findist n} {X Y : FinRV n ℚ} {t t₁ t₂ : ℚ}
 
 theorem false_of_le_gt {x y : ℚ} : x ≤ y → x > y → False :=
